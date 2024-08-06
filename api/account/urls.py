@@ -4,8 +4,9 @@ from rest_framework import routers
 from account.views import UserViewSet
 
 router = routers.DefaultRouter()
-router.register(r'users', UserViewSet)
+router.register(r'user', UserViewSet)
 
 urlpatterns = [
-    path('', include(router.urls))
+    path('users/', include(router.urls)),
+    path('auth/', include('rest_framework.urls'))
 ]
