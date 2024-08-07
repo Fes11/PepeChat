@@ -32,3 +32,6 @@ QScrollBar::add-page:vertical,
 QScrollBar::sub-page:vertical {
     background: none;
 }'''
+
+send_btn_style = '''QPushButton {background-color: #9f63ab; border-radius: 10px; padding: 5px;}
+                                        QPushButton:hover {background-color: #c67cd5;}'''
