@@ -15,13 +15,13 @@ class MessagesList(QWidget):
         super(MessagesList, self).__init__()
 
         self.setContentsMargins(0,0,0,0)
+        self.setStyleSheet('''QWidget {border: none;}''')
 
         # Для добавления файлов
         self.file_list = QListWidget(self)
 
         layout = QVBoxLayout()
         layout.setContentsMargins(0,0,0,0)
-        layout.setSpacing(5)
     
         # Поле на котором выводятся сообщения
         self.scroll_area = QScrollArea(self)
@@ -48,7 +48,6 @@ class MessagesList(QWidget):
         self.message_input.installEventFilter(self)
         self.message_input.setPlaceholderText("Напишите сообщение...")
         self.message_input.setMinimumWidth(400)
-        self.message_input.setMaximumWidth(700)
         self.message_input.setFixedHeight(40)
         self.message_input.setStyleSheet('''QTextEdit {color: white; 
                                             border-radius: 10px; 
@@ -76,7 +75,6 @@ class MessagesList(QWidget):
 
         # Слой панели для ввода
         self.input_layout = QHBoxLayout()
-        self.input_layout.addStretch()
         self.input_layout.addWidget(self.send_file)
         self.input_layout.addWidget(self.message_input)
         self.input_layout.addWidget(self.send_message_btn)

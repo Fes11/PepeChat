@@ -1,25 +1,30 @@
-from PySide6.QtGui import QIcon, QCursor
+from PySide6.QtGui import QIcon, QCursor, QPixmap
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (QTextEdit, QScrollArea, QVBoxLayout, QLabel,
                                QHBoxLayout, QWidget, QSizePolicy, QPushButton)
 
 from apps.chat.style import MAIN_BOX_COLOR
+from apps.profile.profile import MiniProfile
 
 class ChatList(QWidget):
     '''Боковая панель с чатами, поиском и кнопкой добавления чатов. '''
 
-    def __init__(self) -> None:
-        super(ChatList, self).__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setMinimumWidth(200)
+        self.setMaximumWidth(300)
 
         # Настройки ChatList
-        self.setStyleSheet(f'''QWidget {{background-color: {MAIN_BOX_COLOR}; border-radius: 10px}}''')
-        self.setMinimumHeight(600)
-        self.setMaximumWidth(250)
+        widget = QWidget()
+        widget.setContentsMargins(7, 7, 7, 0)
+        widget.setStyleSheet(f'''QWidget {{background-color: {MAIN_BOX_COLOR}; border-radius: 10px; border: none;}}''')
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0,0,0,0)
 
         # Основной слой
         self.sidebar_layout = QVBoxLayout()
-        self.sidebar_layout.setContentsMargins(0,0,0,0)
-        self.sidebar_layout.setSpacing(10)
+        self.sidebar_layout.setContentsMargins(7,7,0,0)
+        self.sidebar_layout.setSpacing(15)
 
         self.chat_scroll = QScrollArea()
         self.chat_scroll.setWidgetResizable(True)
@@ -31,28 +36,48 @@ class ChatList(QWidget):
         self.chat_list_layout.setSpacing(0)
         self.chat_list_layout.setAlignment(Qt.Alignment.AlignTop)
 
-        self.chat = QWidget()
-        self.chat.setLayout(self.chat_list_layout)
+        self.chat_list = QWidget()
+        self.chat_list.setLayout(self.chat_list_layout)
 
-        self.chat_scroll.setWidget(self.chat)
+        self.chat_scroll.setWidget(self.chat_list)
 
         # Поиск 
         self.serch = QTextEdit()
-        self.serch.setMaximumHeight(35)
+        self.serch.setMaximumHeight(40)
         self.serch.setPlaceholderText("Поиск...")
-        self.serch.setStyleSheet('''QTextEdit {background-color: #1e1b13; color: white; border-radius: 16px; padding: 5px 0 5px 10px;}''')
+        self.serch.setStyleSheet('''QTextEdit {background-color: rgba(255, 255, 255, 0.1); color: white; border-radius: 16px; padding: 8px 0 5px 10px;}''')
+
+        serch_layout = QHBoxLayout()
+
+        logo = QLabel(self)
+        pixmap = QPixmap('static/image/logo.png')
+        pixmap.scaled(30, 30)
+        logo.setPixmap(pixmap)
+        
+        serch_layout.addWidget(logo)
+        serch_layout.addWidget(self.serch)
 
         self.new_chat_btn = QPushButton('Начать новый чат \n +')
+        self.new_chat_btn.setContentsMargins(0,20,0,0)
         self.new_chat_btn.clicked.connect(self.add_chat)
         self.new_chat_btn.setStyleSheet('''QPushButton {background-color: #4a4a4a; color:white; border:none; padding: 5px;}
                                            QPushButton:hover{background-color: grey;}''')
         self.new_chat_btn.setCursor(QCursor(Qt.PointingHandCursor))
         
+        chat_list_lable = QLabel('Chats')
+        chat_list_lable.setStyleSheet('''QLabel {color: rgba(255, 255, 255, 0.35); font-size: 12px; font-weight: bold; padding-left: 2px;}''')
+
         # Добавляем виджеты
-        self.sidebar_layout.addWidget(self.serch)
+        self.sidebar_layout.addLayout(serch_layout)
         self.sidebar_layout.addWidget(self.new_chat_btn)
+        self.sidebar_layout.addWidget(chat_list_lable)
         self.sidebar_layout.addWidget(self.chat_scroll)
-        self.setLayout(self.sidebar_layout)
+        
+        widget.setLayout(self.sidebar_layout)
+
+        layout.addWidget(widget)
+        layout.addWidget(MiniProfile())
+        self.setLayout(layout)
     
     def add_chat(self):
         chat_info = QWidget()
