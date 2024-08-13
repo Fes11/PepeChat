@@ -1,4 +1,5 @@
 import sys
+import ctypes
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QFontMetrics, QIcon, QCursor, QPixmap
 from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QLabel
@@ -19,6 +20,11 @@ class Window(QMainWindow):
         self.setAutoFillBackground(False)
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
+        
+        # Устанавливаю иконку окна в панели задач
+        myappid = 'mycompany.myproduct.subproduct.version'
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+        self.setWindowIcon(QIcon('static/image/logo.png'))
 
         # Основной виджет в который добавляються все остальные слои
         self.main = QWidget()

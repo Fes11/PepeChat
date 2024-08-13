@@ -57,8 +57,10 @@ class ChatList(QWidget):
         serch_layout.addWidget(logo)
         serch_layout.addWidget(self.serch)
 
-        self.new_chat_btn = QPushButton('Начать новый чат \n +')
-        self.new_chat_btn.setContentsMargins(0,20,0,0)
+        self.new_chat_btn = QPushButton()
+        self.new_chat_btn.setFixedSize(40, 40)
+        self.new_chat_btn.setIcon(QIcon('static/image/add.png'))  # Установите путь к вашему изображению
+        self.new_chat_btn.setIconSize(QSize(25, 25))
         self.new_chat_btn.clicked.connect(self.add_chat)
         self.new_chat_btn.setStyleSheet('''QPushButton {background-color: #4a4a4a; color:white; border:none; padding: 5px;}
                                            QPushButton:hover{background-color: grey;}''')
@@ -78,8 +80,11 @@ class ChatList(QWidget):
         layout.addWidget(widget)
         layout.addWidget(MiniProfile())
         self.setLayout(layout)
+        
+        self.num = 0
     
     def add_chat(self):
+        self.num += 1
         chat_info = QWidget()
         chat_info.setStyleSheet('''QWidget {background-color: rgba(0, 0, 0, 0); color: white; padding-left: 5px;}''')
         chat_info_layout = QVBoxLayout()
@@ -87,7 +92,7 @@ class ChatList(QWidget):
         chat_info_layout.setContentsMargins(0,0,0,0)
         chat_info.setLayout(chat_info_layout)
 
-        chat_name = QLabel('Название чата')
+        chat_name = QLabel(f'Название чата {self.num}')
         chat_name.setMaximumHeight(50)
         chat_name.setStyleSheet('''QLabel {font-weight: bold; font-size: 13px;}''')
         chat_info_layout.addWidget(chat_name)

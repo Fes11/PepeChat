@@ -99,6 +99,13 @@ class MessagesList(QWidget):
         mes_avatar.setCursor(QCursor(Qt.PointingHandCursor))
         mes_avatar.setIcon(QIcon('static/image/person.png'))
         mes_avatar.setIconSize(QSize(20, 20))
+        
+        me_avatar = QPushButton()
+        me_avatar.setFixedSize(30, 30)
+        me_avatar.setStyleSheet('''QPushButton {border-radius: 15px}''')
+        me_avatar.setCursor(QCursor(Qt.PointingHandCursor))
+        me_avatar.setIcon(QIcon('static/image/ava.png'))
+        me_avatar.setIconSize(QSize(30, 30))
 
         message = WrapLabel(text)
         message_bubble = QWidget()
@@ -128,7 +135,7 @@ class MessagesList(QWidget):
                 ''')
             self.message_layout.addStretch()
             self.message_layout.addWidget(message_bubble)
-            self.message_layout.addWidget(mes_avatar)
+            self.message_layout.addWidget(me_avatar)
         else:
             message_bubble.setStyleSheet('''
                     QWidget {
