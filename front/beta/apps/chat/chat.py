@@ -1,18 +1,76 @@
 from PySide6.QtGui import QIcon, QCursor, QPixmap
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (QTextEdit, QScrollArea, QVBoxLayout, QLabel,
-                               QHBoxLayout, QWidget, QSizePolicy, QPushButton)
+                               QHBoxLayout, QWidget, QSizePolicy, QPushButton, QStackedWidget)
 
 from apps.chat.style import MAIN_BOX_COLOR
 from apps.profile.profile import MiniProfile
+from apps.chat.messages import MessagesList
+from apps.chat.chat_window import MainWindow
+from window import Window
+
+class ChatWidget(QWidget):
+    def __init__(self, num):
+        super().__init__()
+
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0,0,0,0)
+
+        chat_info = QWidget()
+        chat_info.setStyleSheet('''QWidget {background-color: rgba(0, 0, 0, 0); color: white; padding-left: 5px;}''')
+        
+        chat_info_layout = QVBoxLayout()
+        chat_info_layout.setSpacing(0)
+        chat_info_layout.setContentsMargins(0,0,0,0)
+        chat_info.setLayout(chat_info_layout)
+
+        chat_name = QLabel(f'Название чата {num}')
+        chat_name.setMaximumHeight(50)
+        chat_name.setStyleSheet('''QLabel {font-weight: bold; font-size: 13px;}''')
+        chat_info_layout.addWidget(chat_name)
+
+        last_message = QLabel('Сообщение...')
+        last_message.setMaximumHeight(50)
+        last_message.setStyleSheet('''QLabel {color: #b5b5b5;}''')
+        chat_info_layout.addWidget(last_message)
+
+        chat_avatar = QPushButton()
+        chat_avatar.setFixedSize(40, 40)
+        chat_avatar.setStyleSheet('''QPushButton {background-color: white; border-radius: 20px}''')
+        chat_avatar.setIcon(QIcon('static/image/person.png'))  # Установите путь к вашему изображению
+        chat_avatar.setIconSize(QSize(25, 25))
+
+        chat_layout = QHBoxLayout()
+        chat_layout.addWidget(chat_avatar)
+        chat_layout.addWidget(chat_info)
+
+        self.chat_widget = QPushButton()
+        self.chat_widget.setObjectName("chat_widget")
+        self.chat_widget.setFixedHeight(60)
+        self.chat_widget.setStyleSheet('''QPushButton {border:none;} QPushButton:hover {background-color: #4a4a4a;}''')
+        self.chat_widget.setCursor(QCursor(Qt.PointingHandCursor))
+        self.chat_widget.clicked.connect(self.switch_chat)
+        self.chat_widget.setLayout(chat_layout)
+
+        layout.addWidget(self.chat_widget)
+        self.setLayout(layout)        
+    
+    def switch_chat(self):
+        chat_name = self.findChild(QLabel).text()
+        print(f"Chat clicked: {chat_name}")
+
+        MainWindow().stack.setCurrentWidget(1)
+
 
 class ChatList(QWidget):
     '''Боковая панель с чатами, поиском и кнопкой добавления чатов. '''
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setMinimumWidth(200)
+        self.setMinimumSize(200, 580)
         self.setMaximumWidth(300)
+
+        self.num = 0
 
         # Настройки ChatList
         widget = QWidget()
@@ -81,42 +139,9 @@ class ChatList(QWidget):
         layout.addWidget(MiniProfile())
         self.setLayout(layout)
         
-        self.num = 0
-    
     def add_chat(self):
         self.num += 1
-        chat_info = QWidget()
-        chat_info.setStyleSheet('''QWidget {background-color: rgba(0, 0, 0, 0); color: white; padding-left: 5px;}''')
-        chat_info_layout = QVBoxLayout()
-        chat_info_layout.setSpacing(0)
-        chat_info_layout.setContentsMargins(0,0,0,0)
-        chat_info.setLayout(chat_info_layout)
-
-        chat_name = QLabel(f'Название чата {self.num}')
-        chat_name.setMaximumHeight(50)
-        chat_name.setStyleSheet('''QLabel {font-weight: bold; font-size: 13px;}''')
-        chat_info_layout.addWidget(chat_name)
-
-        last_message = QLabel('Сообщение...')
-        last_message.setMaximumHeight(50)
-        last_message.setStyleSheet('''QLabel {color: #b5b5b5;}''')
-        chat_info_layout.addWidget(last_message)
-
-        chat_avatar = QPushButton()
-        chat_avatar.setFixedSize(40, 40)
-        chat_avatar.setStyleSheet('''QPushButton {background-color: white; border-radius: 20px}''')
-        chat_avatar.setCursor(QCursor(Qt.PointingHandCursor))
-        chat_avatar.setIcon(QIcon('static/image/person.png'))  # Установите путь к вашему изображению
-        chat_avatar.setIconSize(QSize(25, 25))
-
-        chat_layout = QHBoxLayout()
-        chat_layout.addWidget(chat_avatar)
-        chat_layout.addWidget(chat_info)
-
-        chat_widget = QWidget()
-        chat_widget.setFixedHeight(60)
-        chat_widget.setStyleSheet('''QWidget:hover {background-color: #4a4a4a;}''')
-        chat_widget.setCursor(QCursor(Qt.PointingHandCursor))
-        chat_widget.setLayout(chat_layout)
-
+        chat_widget = ChatWidget(self.num)
         self.chat_list_layout.addWidget(chat_widget)
+        
+        MainWindow().stack.addWidget(MessagesList())
