@@ -25,7 +25,7 @@ class MessagesList(QWidget):
     
         # Поле на котором выводятся сообщения
         self.scroll_area = QScrollArea(self)
-        self.scroll_area.setMinimumSize(400, 500)
+        # self.scroll_area.setMinimumSize(300, 300)
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.scroll_area.setStyleSheet(f'''QWidget {{background-color: {MAIN_BOX_COLOR}; border:none; border-radius: 10px;}}''')

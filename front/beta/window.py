@@ -13,7 +13,7 @@ class Window(QMainWindow):
 
         # Базовые настройки MainWindow
         self.setWindowTitle("PepeChat")
-        self.setMinimumSize(700, 612)
+        self.setMinimumSize(840, 640)
         self.setStyleSheet(scroll_style)
 
         # Убирает стандартные рамки окна
@@ -39,9 +39,7 @@ class Window(QMainWindow):
         self.window_layout = QVBoxLayout()
         self.window_layout.setContentsMargins(0,0,0,0)
         self.window_layout.setSpacing(0)
-
         self.main.setLayout(self.window_layout)
-
         
         self.window_layout.addWidget(TopPanel(self))
         self.window_layout.addLayout(self.main_layout)

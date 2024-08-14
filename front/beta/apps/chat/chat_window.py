@@ -27,12 +27,13 @@ class MainWindow(Window):
         # Добавляем виджеты в окно
         self.chat_list = ChatList(self)
         self.main_layout.addWidget(self.chat_list)
-        self.main_layout.addStretch()
 
         self.stack = QStackedWidget(self)
         self.main_layout.addWidget(self.stack)
         # self.messages_list = MessagesList()
         # self.main_layout.addWidget(self.messages_list)
+        
+        self.main_layout.addStretch()
 
 
 class ChatWidget(QWidget):
@@ -81,11 +82,10 @@ class ChatWidget(QWidget):
         layout.addWidget(self.chat_widget)
         self.setLayout(layout)        
     
-    def switch_chat(self):
+    def switch_chat(self, num):
         chat_name = self.findChild(QLabel).text()
         print(f"Chat clicked: {chat_name}")
-
-        self.main_window.stack.setCurrentIndex(1)
+        MainWindow().stack.setCurrentIndex(3)
 
 
 class ChatList(QWidget):
@@ -94,7 +94,7 @@ class ChatList(QWidget):
     def __init__(self, main_window, parent=None):
         super().__init__(parent)
         self.main_window = main_window
-        self.setMinimumSize(200, 580)
+        self.setMinimumSize(200, 600)
         self.setMaximumWidth(300)
 
         self.num = 0
@@ -170,6 +170,8 @@ class ChatList(QWidget):
         self.num += 1
         chat_widget = ChatWidget(self, self.num)
         self.chat_list_layout.addWidget(chat_widget)
-        
+        self.main_window.main_layout.addWidget(MessagesList())
         self.main_window.stack.addWidget(MessagesList())
-        print(self.main_window.stack)
+        self.main_window.stack.addWidget(MessagesList())
+        print(f'Number of Widgets: {self.main_window.stack.count()}')
+        
