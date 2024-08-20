@@ -15,7 +15,6 @@ from PySide6.QtWidgets import (QTextEdit, QScrollArea, QVBoxLayout, QLabel,
                                QHBoxLayout, QWidget, QSizePolicy, QPushButton, QStackedWidget)
 from apps.profile.profile import MiniProfile
 
-
 class MainWindow(Window):
     '''Основное окно чата.
 
@@ -170,8 +169,7 @@ class ChatList(QWidget):
         self.num += 1
         chat_widget = ChatWidget(self, self.num)
         self.chat_list_layout.addWidget(chat_widget)
-        self.main_window.main_layout.addWidget(MessagesList())
         self.main_window.stack.addWidget(MessagesList())
-        self.main_window.stack.addWidget(MessagesList())
+
         print(f'Number of Widgets: {self.main_window.stack.count()}')
         

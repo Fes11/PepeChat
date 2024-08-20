@@ -28,8 +28,9 @@ class Window(QMainWindow):
 
         # Основной виджет в который добавляються все остальные слои
         self.main = QWidget()
+        self.main.setObjectName('main')
         self.main.setGeometry(0, 0, self.width(), self.height())
-        self.main.setStyleSheet(f'''QWidget {{background-color: {BG_COLOR};}}''')
+        self.main.setStyleSheet(f'''QWidget {{background-color: {BG_COLOR}; border-radius: 10px;}}''')
         # Основной слой в который добавляються виджеты
         self.main_layout = QHBoxLayout()
         self.main_layout.setContentsMargins(7, 0, 7, 0)

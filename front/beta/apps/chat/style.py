@@ -1,5 +1,11 @@
-BG_COLOR = '#1e1b13'
-MAIN_BOX_COLOR = '#262626'
+from PySide6.QtWidgets import QGraphicsBlurEffect
+
+BG_COLOR = 'rgba(30, 27, 19, 1)'
+MAIN_BOX_COLOR = 'rgba(38, 38, 38, 1)'
+
+ # Создаем эффект размытия
+blur_effect = QGraphicsBlurEffect()
+blur_effect.setBlurRadius(5)
 
 scroll_style = '''QScrollBar:vertical {
     background: rgb(45, 45, 68);

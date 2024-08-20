@@ -1,44 +1,85 @@
-import time
-import subprocess
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
+from PyQt6.QtWidgets import QWidget, QApplication, QVBoxLayout, QPushButton
+from PyQt6.QtCore import Qt
 
-class WatchdogHandler(FileSystemEventHandler):
-    def __init__(self, script_path):
+
+import ctypes
+from ctypes.wintypes import DWORD, ULONG
+from ctypes import windll, c_bool, c_int, POINTER, Structure
+
+
+class AccentPolicy(Structure):
+    _fields_ = [
+        ('AccentState', DWORD),
+        ('AccentFlags', DWORD),
+        ('GradientColor', DWORD),
+        ('AnimationId', DWORD),
+    ]
+
+
+class WINCOMPATTRDATA(Structure):
+    _fields_ = [
+        ('Attribute', DWORD),
+        ('Data', POINTER(AccentPolicy)),
+        ('SizeOfData', ULONG),
+    ]
+
+
+SetWindowCompositionAttribute = windll.user32.SetWindowCompositionAttribute
+SetWindowCompositionAttribute.restype = c_bool
+SetWindowCompositionAttribute.argtypes = [c_int, POINTER(WINCOMPATTRDATA)]
+
+
+class Widget(QWidget):
+    def __init__(self):
         super().__init__()
-        self.script_path = script_path
-        self.process = None
-        self.restart_script()
 
-    def on_modified(self, event):
-        if event.is_directory:
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
+
+        accent_policy = AccentPolicy()
+        accent_policy.AccentState = 3  # ACCENT_ENABLE_BLURBEHIND;
+
+        win_comp_attr_data = WINCOMPATTRDATA()
+        win_comp_attr_data.Attribute = 19  # WCA_ACCENT_POLICY
+        win_comp_attr_data.SizeOfData = ctypes.sizeof(accent_policy)
+        win_comp_attr_data.Data = ctypes.pointer(accent_policy)
+
+        hwnd = c_int(int(self.winId()))
+        ok = SetWindowCompositionAttribute(hwnd, ctypes.pointer(win_comp_attr_data))
+        print(ok)
+
+        print(ctypes.get_last_error())
+
+        self.old_pos = None
+        self.frame_color = Qt.GlobalColor.darkCyan
+
+        layout = QVBoxLayout()
+        layout.addStretch()
+        layout.addWidget(QPushButton("Закрыть окно", clicked=self.close))
+
+        self.setLayout(layout)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.old_pos = event.position().toPoint()
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.old_pos = None
+
+    def mouseMoveEvent(self, event):
+        if not self.old_pos:
             return
-        print(f"File changed: {event.src_path}")
-        self.restart_script()
 
-    def restart_script(self):
-        if self.process is not None:
-            print("Terminating current script process.")
-            self.process.terminate()
-            self.process.wait()
-        print(f"Starting script: {self.script_path}")
-        self.process = subprocess.Popen(["python", self.script_path])
+        delta = event.position().toPoint() - self.old_pos
+        self.move(self.pos() + delta)
 
-def monitor_directory(directory, script_path):
-    event_handler = WatchdogHandler(script_path)
-    observer = Observer()
-    observer.schedule(event_handler, directory, recursive=True)
-    observer.start()
 
-    try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        observer.stop()
-        print("Observer stopped.")
-    observer.join()
-    
-if __name__ == "__main__":
-    DIRECTORY_TO_WATCH = "C:/Users/user/Desktop/test/PyQt"
-    SCRIPT_TO_RUN = "C:/Users/user/Desktop/test/PyQt/main.py"
-    monitor_directory(DIRECTORY_TO_WATCH, SCRIPT_TO_RUN)
+if __name__ == '__main__':
+    app = QApplication([])
+
+    w = Widget()
+    w.resize(400, 300)
+    w.show()
+
+    app.exec()
