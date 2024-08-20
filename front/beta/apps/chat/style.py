@@ -39,5 +39,5 @@ QScrollBar::sub-page:vertical {
     background: none;
 }'''
 
-send_btn_style = '''QPushButton {background-color: #9f63ab; border-radius: 10px; padding: 5px;}
-                                        QPushButton:hover {background-color: #c67cd5;}'''
+send_btn_style = '''QPushButton {background-color: rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 5px;}
+                    QPushButton:hover {background-color: rgba(255, 255, 255, 0.4);}'''

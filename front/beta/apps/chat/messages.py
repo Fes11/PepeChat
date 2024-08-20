@@ -45,28 +45,29 @@ class MessagesList(QWidget):
         
         # Поле ввода сообщения
         self.message_input = QTextEdit()
+        self.message_input.setContentsMargins(0,0,0,0)
         self.message_input.installEventFilter(self)
         self.message_input.setPlaceholderText("Напишите сообщение...")
         self.message_input.setMinimumWidth(400)
-        self.message_input.setFixedHeight(40)
+        self.message_input.setFixedHeight(42)
         self.message_input.setStyleSheet('''QTextEdit {color: white; 
                                             border-radius: 10px; 
-                                            padding: 8px 0 0 10px; 
-                                            background-color: #4a4a4a; 
+                                            padding: 10px 0 0 10px; 
+                                            background-color: rgba(255, 255, 255, 0.1); 
                                             font-weight: bold;}''')
         # Кнопка для отправки сообщения
         self.send_message_btn = QPushButton(self)
-        self.send_message_btn.setMaximumSize(80, 40)
+        self.send_message_btn.setMaximumSize(45, 45)
         self.send_message_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        self.send_message_btn.setStyleSheet('''QPushButton {background-color: #9f63ab; border-radius: 10px; padding: 10px; font-weight: bold;}
-                                               QPushButton:hover {background-color: #c67cd5;}''')
+        self.send_message_btn.setStyleSheet('''QPushButton {background-color: rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 10px; font-weight: bold;}
+                                               QPushButton:hover {background-color: rgba(255, 255, 255, 0.4);}''')
         self.send_message_btn.setIcon(QIcon('static/image/send.png'))  # Установите путь к вашему изображению
         self.send_message_btn.setIconSize(QSize(24, 24))
         self.send_message_btn.clicked.connect(self.send_message)
 
         # Кнопка для отправки файлов
         self.send_file = QPushButton()
-        self.send_file.setFixedSize(45, 40)
+        self.send_file.setFixedSize(45, 42)
         self.send_file.setCursor(QCursor(Qt.PointingHandCursor))
         self.send_file.setStyleSheet(send_btn_style)
         self.send_file.setIcon(QIcon('static/image/paper-clip.png'))

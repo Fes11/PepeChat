@@ -141,13 +141,14 @@ class ChatList(QWidget):
         serch_layout.addWidget(logo)
         serch_layout.addWidget(self.serch)
 
-        self.new_chat_btn = QPushButton()
-        self.new_chat_btn.setFixedSize(40, 40)
+        self.new_chat_btn = QPushButton('  Создать чат')
+        self.new_chat_btn.setFixedHeight(35)
         self.new_chat_btn.setIcon(QIcon('static/image/add.png'))  # Установите путь к вашему изображению
-        self.new_chat_btn.setIconSize(QSize(25, 25))
+        self.new_chat_btn.setIconSize(QSize(16, 16))
         self.new_chat_btn.clicked.connect(self.add_chat)
-        self.new_chat_btn.setStyleSheet('''QPushButton {background-color: #4a4a4a; color:white; border:none; padding: 5px;}
-                                           QPushButton:hover{background-color: grey;}''')
+        self.new_chat_btn.setStyleSheet('''QPushButton {background-color: rgba(255, 255, 255, 0.1); color:rgba(255, 255, 255, 0.6); 
+                                                        font-weight: bold; border:none; padding: 5px; font-size: 12px;}
+                                           QPushButton:hover{background-color: rgba(255, 255, 255, 0.4);}''')
         self.new_chat_btn.setCursor(QCursor(Qt.PointingHandCursor))
         
         chat_list_lable = QLabel('Chats')
