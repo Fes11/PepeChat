@@ -20,10 +20,10 @@ class MiniProfile(QWidget):
         layout = QHBoxLayout()
         layout.setContentsMargins(0,0,0,0)
 
-        widget = QWidget()
-        widget.setMinimumWidth(200)
-        widget.setMaximumWidth(300)
-        widget.setStyleSheet(f'''QWidget {{background-color: {MAIN_BOX_COLOR}; border-radius: 10px;}}''')
+        self.widget = QWidget()
+        self.widget.setMinimumWidth(200)
+        self.widget.setMaximumWidth(300)
+        self.widget.setStyleSheet(f'''QWidget {{background-color: {MAIN_BOX_COLOR}; border-radius: 10px;}}''')
 
         main_layout = QHBoxLayout()
         main_layout.setContentsMargins(15,7,7,7)
@@ -58,17 +58,24 @@ class MiniProfile(QWidget):
         settings.setCursor(QCursor(Qt.PointingHandCursor))
         settings.setIcon(QIcon('static/image/settings.png'))  # Установите путь к вашему изображению
         settings.setIconSize(QSize(30, 30))
+        settings.clicked.connect(self.open_settings)
  
         main_layout.addWidget(avatar)
         main_layout.addWidget(profile_info)
         main_layout.addStretch()
         main_layout.addWidget(settings)
-        widget.setLayout(main_layout)
+        self.widget.setLayout(main_layout)
 
-        layout.addWidget(widget)
+        layout.addWidget(self.widget)
         self.setLayout(layout)
+
+    def open_settings(self):
+        print('Settings')
+        # self.widget.setFixedHeight(300)
+        # self.widget.move(10, 300)
 
 
 
 class FullProfile():
     ...
+

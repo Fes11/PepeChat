@@ -62,7 +62,7 @@ class ChatWidget(QWidget):
         MainWindow().stack.setCurrentWidget(1)
 
 
-class ChatList(QWidget):
+class Sidebar(QWidget):
     '''Боковая панель с чатами, поиском и кнопкой добавления чатов. '''
 
     def __init__(self, parent=None):
@@ -72,7 +72,7 @@ class ChatList(QWidget):
 
         self.num = 0
 
-        # Настройки ChatList
+        # Настройки Sidebar
         widget = QWidget()
         widget.setContentsMargins(7, 7, 7, 0)
         widget.setStyleSheet(f'''QWidget {{background-color: {MAIN_BOX_COLOR}; border-radius: 10px; border: none;}}''')
