@@ -2,7 +2,10 @@ import sys
 import ctypes
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QFontMetrics, QIcon, QCursor, QPixmap
-from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QLabel
+from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QLabel, QSizeGrip
+
+
+from BlurWindow.blurWindow import GlobalBlur
 
 from apps.chat.style import BG_COLOR, MAIN_BOX_COLOR, scroll_style
 
@@ -11,10 +14,17 @@ class Window(QMainWindow):
     def __init__(self) -> None:
         super(Window, self).__init__()
 
+        # BG_COLOR = 'rgba(0,0,0,0.6)'
+        # GlobalBlur(self.winId(), Acrylic=True, QWidget=self) # Сильный блюр
+
+        # BG_COLOR = 'rgba(0,0,0,0.8)'
+        # GlobalBlur(self.winId(), QWidget=self) # Обычный блюр
+
         # Базовые настройки MainWindow
         self.setWindowTitle("PepeChat")
         self.setMinimumSize(840, 640)
-        self.setStyleSheet(scroll_style)
+        self.resize_margin = 10
+        self.setStyleSheet(scroll_style + '''QWidget {background-color: rgba(0,0,0,0);}''')
 
         # Убирает стандартные рамки окна
         self.setAutoFillBackground(False)
@@ -30,10 +40,10 @@ class Window(QMainWindow):
         self.main = QWidget()
         self.main.setObjectName('main')
         self.main.setGeometry(0, 0, self.width(), self.height())
-        self.main.setStyleSheet(f'''QWidget {{background-color: {BG_COLOR}; border-radius: 10px;}}''')
+        self.main.setStyleSheet(f'''#main {{background-color: {BG_COLOR}; border-radius: 10px;}}''')
         # Основной слой в который добавляються виджеты
         self.main_layout = QHBoxLayout()
-        self.main_layout.setContentsMargins(7, 0, 7, 0)
+        self.main_layout.setContentsMargins(7, 0, 7, 7)
         self.main_layout.setSpacing(5)
 
         # Слой окна
@@ -44,9 +54,11 @@ class Window(QMainWindow):
         
         self.window_layout.addWidget(TopPanel(self))
         self.window_layout.addLayout(self.main_layout)
-        self.window_layout.addStretch()
 
         self.setCentralWidget(self.main)
+
+        self.sizegrip = QSizeGrip(self.main)
+        self.sizegrip.setStyleSheet("width: 5px; height: 5px; margin 0px; padding: 0px;")
 
 
 class TopPanel(QWidget):
@@ -58,30 +70,30 @@ class TopPanel(QWidget):
         icon_size = 20
 
         self.parent = parent
-        self.setStyleSheet('''QPushButton {border: none;}''')
+        self.setStyleSheet('''QWidget {background-color: rgba(0,0,0,0); border: none;}''')
         
         self.top_panel_layout = QHBoxLayout(self)
         self.top_panel_layout.setContentsMargins(0, 0, 7, 0)
         self.top_panel_layout.setSpacing(0)
 
         self.window_title = QLabel('PepeChat')
-        self.window_title.setStyleSheet('''QLabel {color: grey; margin-left: 14px; font-weight: bold;}''')
+        self.window_title.setStyleSheet('''QLabel {background-color: rgba(0,0,0,0); color: grey; margin-left: 14px; font-weight: bold;}''')
         self.top_panel_layout.addWidget(self.window_title)
         
         self.close_btn = QPushButton()
         self.close_btn.setFixedSize(width, height)
-        self.close_btn.setIcon(QIcon('static/image/close.png'))
+        self.close_btn.setIcon(QIcon('static/image/close_hover.png'))
         self.close_btn.setIconSize(QSize(icon_size, icon_size))
         self.close_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        self.close_btn.setStyleSheet('''QPushButton:hover {background-color: #fd5858;}''')
+        self.close_btn.setStyleSheet('''QPushButton {background-color: rgba(0,0,0,0);} QPushButton:hover {background-color: #fd5858;}''')
         self.close_btn.clicked.connect(self.parent.close)
         
         self.hide_btn = QPushButton()
         self.hide_btn.setFixedSize(width, height)
-        self.hide_btn.setIcon(QIcon('static/image/hide.png'))
+        self.hide_btn.setIcon(QIcon('static/image/hide_hover.png'))
         self.hide_btn.setIconSize(QSize(icon_size, icon_size))
         self.hide_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        self.hide_btn.setStyleSheet(f'''QPushButton:hover {{background-color: {MAIN_BOX_COLOR};}}''')
+        self.hide_btn.setStyleSheet(f'''QPushButton {{background-color: rgba(0,0,0,0);}} QPushButton:hover {{background-color: {MAIN_BOX_COLOR};}}''')
         self.hide_btn.clicked.connect(self.parent.showMinimized)
 
         self.is_fullscreen = False
@@ -89,10 +101,10 @@ class TopPanel(QWidget):
 
         self.fill_scrine_btn = QPushButton()
         self.fill_scrine_btn.setFixedSize(width, height)
-        self.fill_scrine_btn.setIcon(QIcon('static/image/full_scrin.png'))
+        self.fill_scrine_btn.setIcon(QIcon('static/image/full_scrin_hover.png'))
         self.fill_scrine_btn.setIconSize(QSize(icon_size, icon_size))
         self.fill_scrine_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        self.fill_scrine_btn.setStyleSheet(f'''QPushButton:hover {{background-color: {MAIN_BOX_COLOR};}}''')
+        self.fill_scrine_btn.setStyleSheet(f'''QPushButton {{background-color: rgba(0,0,0,0);}} QPushButton:hover {{background-color: {MAIN_BOX_COLOR};}}''')
         self.fill_scrine_btn.clicked.connect(self.toggle_fullscreen)
         
         self.top_panel_layout.addWidget(self.hide_btn)
@@ -102,7 +114,7 @@ class TopPanel(QWidget):
         # Перетаскивание при зажатии верхней панели
         self.mousePressEvent = self.topPanelMousePressEvent
         self.mouseMoveEvent = self.topPanelMouseMoveEvent
-
+        
     def topPanelMousePressEvent(self, event):
         self.parent.oldPos = event.globalPosition().toPoint()
         self.parent.showNormal()
@@ -126,3 +138,12 @@ class TopPanel(QWidget):
 
         # Переключаем флаг состояния окна
         self.is_fullscreen = not self.is_fullscreen
+
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+
+    window = Window()
+    window.show()
+
+    app.exec()

@@ -9,13 +9,15 @@ from PySide6.QtWidgets import (QApplication, QTextEdit, QScrollArea, QVBoxLayout
 
 from apps.chat.fields import WrapLabel
 from apps.chat.style import send_btn_style, MAIN_BOX_COLOR
+from BlurWindow.blurWindow import blur
 
 class MessagesList(QWidget):
     def __init__(self) -> None:
         super(MessagesList, self).__init__()
 
         self.setContentsMargins(0,0,0,0)
-        self.setStyleSheet('''QWidget {border: none;}''')
+        self.setMinimumWidth(600)
+        self.setStyleSheet('''QWidget {background-color: rgba(0,0,0,0); border: none;}''')
 
         # Для добавления файлов
         self.file_list = QListWidget(self)
@@ -30,12 +32,13 @@ class MessagesList(QWidget):
         self.scroll_area.setStyleSheet(f'''QWidget {{background-color: {MAIN_BOX_COLOR}; border:none; border-radius: 10px;}}''')
 
         self.text = QWidget(self)
+        self.text.setStyleSheet('''QWidget {background-color: rgba(0,0,0,0);}''')
         self.text_layout = QVBoxLayout()
         self.text_layout.addStretch()
 
         self.open_lable = QLabel('Здесь пока нет сообщений...')
         self.open_lable.setAlignment(Qt.AlignCenter)
-        self.open_lable.setStyleSheet('''QLabel {color: grey; font-size:14px; margin-bottom: 10px;}''')
+        self.open_lable.setStyleSheet('''QLabel {background-color: rgba(0,0,0,0); color: grey; font-size:14px; margin-bottom: 10px;}''')
         self.text_layout.addWidget(self.open_lable)
 
         self.scroll_area.setWidget(self.text)
@@ -108,7 +111,9 @@ class MessagesList(QWidget):
         me_avatar.setIconSize(QSize(30, 30))
 
         message = WrapLabel(text)
+        message.setStyleSheet('''WrapLabel {background: rgba(0, 0, 0, 0); color: white;}''')
         message_bubble = QWidget()
+        message_bubble.setStyleSheet('''QWidget {background: rgba(0, 0, 0, 0);}''')
         message_bubble.setContentsMargins(0,0,0,0)
         message_buble_layout = QHBoxLayout()
         message_buble_layout.setSpacing(0)
@@ -117,7 +122,7 @@ class MessagesList(QWidget):
 
         # Метка времени
         mes_time = QLabel(datetime.now().strftime('%H:%M'))
-        mes_time.setStyleSheet('QLabel { color: white; }')
+        mes_time.setStyleSheet('QLabel { color: white; background: rgba(0, 0, 0, 0);}')
         message_buble_layout.addWidget(mes_time)
 
         message_bubble.setLayout(message_buble_layout)
@@ -129,7 +134,7 @@ class MessagesList(QWidget):
             message_bubble.setStyleSheet('''
                     QWidget {
                         border-radius: 8px;
-                        background: #6b6b6b;
+                        background: rgba(123, 97, 255, 1);
                         padding: 10px;
                     }
                 ''')
@@ -140,7 +145,7 @@ class MessagesList(QWidget):
             message_bubble.setStyleSheet('''
                     QWidget {
                         border-radius: 8px;
-                        background: #545454;
+                        background: rgba(255, 255, 255, 0.1);
                         padding: 10px;
                     }
                 ''')

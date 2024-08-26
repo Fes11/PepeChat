@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QGraphicsBlurEffect
 
-BG_COLOR = 'rgba(30, 27, 19, 1)'
-MAIN_BOX_COLOR = 'rgba(38, 38, 38, 1)'
+BG_COLOR = 'rgba(30, 27, 19, 1) '
+MAIN_BOX_COLOR = 'rgba(255,255,255, 0.1)'
 
  # Создаем эффект размытия
 blur_effect = QGraphicsBlurEffect()
