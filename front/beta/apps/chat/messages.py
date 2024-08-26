@@ -133,7 +133,10 @@ class MessagesList(QWidget):
         if i % 2:
             message_bubble.setStyleSheet('''
                     QWidget {
-                        border-radius: 8px;
+                        border-top-left-radius: 8px;
+                        border-top-right-radius: 8px;
+                        border-bottom-left-radius: 8px;
+                        border-bottom-right-radius: 0px;
                         background: rgba(123, 97, 255, 1);
                         padding: 10px;
                     }
@@ -144,7 +147,10 @@ class MessagesList(QWidget):
         else:
             message_bubble.setStyleSheet('''
                     QWidget {
-                        border-radius: 8px;
+                        border-top-left-radius: 8px;
+                        border-top-right-radius: 8px;
+                        border-bottom-left-radius: 0px;
+                        border-bottom-right-radius: 8px;
                         background: rgba(255, 255, 255, 0.1);
                         padding: 10px;
                     }
