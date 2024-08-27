@@ -74,11 +74,12 @@ class ChatWidget(QWidget):
         chat_avatar.setIconSize(QSize(25, 25))
 
         self.chat_time_layout = QVBoxLayout()
-        self.chat_time_layout.setSpacing(0)
+        self.chat_time_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.chat_time_layout.setSpacing(8)
         self.chat_time_layout.setContentsMargins(0,0,0,0)
 
         chat_time = QLabel(datetime.now().strftime('%H:%M'))
-        chat_time.setStyleSheet('QLabel { color: white; background: rgba(0, 0, 0, 0);}')
+        chat_time.setStyleSheet('QLabel {color: rgba(169, 171, 173, 1); background: rgba(0, 0, 0, 0);}')
 
         # Создание эффекта свечения с использованием QGraphicsDropShadowEffect
         glow = QGraphicsDropShadowEffect(self)
@@ -96,7 +97,7 @@ class ChatWidget(QWidget):
         new_mess.setGraphicsEffect(glow)
         
         new_mess_layout = QHBoxLayout()
-        new_mess_layout.setContentsMargins(13,0,0,0)
+        new_mess_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
         new_mess_layout.addWidget(new_mess)
 
         self.chat_time_layout.addWidget(chat_time)
@@ -121,7 +122,6 @@ class ChatWidget(QWidget):
 
         layout.addWidget(self.chat_widget)
         self.setLayout(layout)
-        print(self.size().width())
 
         # if self.size().width() < 650:
         #     self.chat_name.hide()
@@ -233,5 +233,3 @@ class Sidebar(QWidget):
 
         # Добавляем виджет чата в список
         self.main_window.chat_widgets.append(self.chat_widget)
-
-        print(f'Number of Widgets: {self.main_window.stack.count()}')

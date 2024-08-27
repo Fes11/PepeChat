@@ -17,8 +17,8 @@ class Window(QMainWindow):
         # BG_COLOR = 'rgba(0,0,0,0.6)'
         # GlobalBlur(self.winId(), Acrylic=True, QWidget=self) # Сильный блюр
 
-        # BG_COLOR = 'rgba(0,0,0,0.8)'
-        # GlobalBlur(self.winId(), QWidget=self) # Обычный блюр
+        BG_COLOR = 'rgba(0,0,0,0.8)'
+        GlobalBlur(self.winId(), QWidget=self) # Обычный блюр
 
         # Базовые настройки MainWindow
         self.setWindowTitle("PepeChat")
@@ -71,6 +71,7 @@ class TopPanel(QWidget):
 
         self.parent = parent
         self.setStyleSheet('''QWidget {background-color: rgba(0,0,0,0); border: none;}''')
+        self.setMaximumHeight(height)
         
         self.top_panel_layout = QHBoxLayout(self)
         self.top_panel_layout.setContentsMargins(0, 0, 7, 0)

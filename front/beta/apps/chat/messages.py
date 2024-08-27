@@ -110,11 +110,16 @@ class MessagesList(QWidget):
         me_avatar.setIcon(QIcon('static/image/ava.png'))
         me_avatar.setIconSize(QSize(30, 30))
 
+        avatar_layout = QVBoxLayout()
+        avatar_layout.setAlignment(Qt.AlignmentFlag.AlignBottom)
+
         message = WrapLabel(text)
-        message.setStyleSheet('''WrapLabel {background: rgba(0, 0, 0, 0); color: white;}''')
+        message.setStyleSheet('''WrapLabel {font-size: 14px; background: rgba(0, 0, 0, 0); color: white;}''')
+
         message_bubble = QWidget()
         message_bubble.setStyleSheet('''QWidget {background: rgba(0, 0, 0, 0);}''')
         message_bubble.setContentsMargins(0,0,0,0)
+
         message_buble_layout = QHBoxLayout()
         message_buble_layout.setSpacing(0)
         message_buble_layout.setContentsMargins(0,0,0,0)
@@ -122,8 +127,12 @@ class MessagesList(QWidget):
 
         # Метка времени
         mes_time = QLabel(datetime.now().strftime('%H:%M'))
-        mes_time.setStyleSheet('QLabel { color: white; background: rgba(0, 0, 0, 0);}')
-        message_buble_layout.addWidget(mes_time)
+        mes_time.setStyleSheet('QLabel {color: rgba(255, 255, 255, 0.65); background: rgba(0, 0, 0, 0); font-weight: bold;}')
+
+        mes_time_layout = QVBoxLayout()
+        mes_time_layout.setAlignment(Qt.AlignmentFlag.AlignBottom)
+        mes_time_layout.addWidget(mes_time)
+        message_buble_layout.addLayout(mes_time_layout)
 
         message_bubble.setLayout(message_buble_layout)
  
@@ -143,7 +152,9 @@ class MessagesList(QWidget):
                 ''')
             self.message_layout.addStretch()
             self.message_layout.addWidget(message_bubble)
-            self.message_layout.addWidget(me_avatar)
+
+            avatar_layout.addWidget(me_avatar)
+            self.message_layout.addLayout(avatar_layout)
         else:
             message_bubble.setStyleSheet('''
                     QWidget {
@@ -155,7 +166,8 @@ class MessagesList(QWidget):
                         padding: 10px;
                     }
                 ''')
-            self.message_layout.addWidget(mes_avatar)
+            avatar_layout.addWidget(mes_avatar)
+            self.message_layout.addLayout(avatar_layout)
             self.message_layout.addWidget(message_bubble)
             self.message_layout.addStretch()
         

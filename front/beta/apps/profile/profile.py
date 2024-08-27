@@ -5,7 +5,7 @@ from PySide6 import QtCore
 from PySide6.QtGui import QIcon, QCursor
 from PySide6.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve, Property
 from PySide6.QtWidgets import (QApplication, QTextEdit, QScrollArea, QVBoxLayout, QLabel, QListWidget,
-                               QHBoxLayout, QWidget, QSizePolicy, QPushButton, QFileDialog)
+                               QHBoxLayout, QWidget, QSizePolicy, QPushButton, QFileDialog, QGridLayout)
 
 from apps.chat.fields import WrapLabel
 from apps.chat.style import send_btn_style, MAIN_BOX_COLOR
@@ -34,42 +34,57 @@ class MiniProfile(QWidget):
         self.widget = QWidget()
         self.widget.setStyleSheet(f'''QWidget {{background-color: {MAIN_BOX_COLOR}}}; border: none;''')
 
-        self.main_layout = QHBoxLayout()
-        self.main_layout.setContentsMargins(15,7,7,7)
+        self.main_layout = QVBoxLayout()
+        # self.main_layout.setContentsMargins(15,7,7,7)
 
         self.avatar = QPushButton()
         self.avatar.setContentsMargins(0,0,0,0)
         self.avatar.setFixedSize(50, 50)
-        self.avatar.setStyleSheet('''QPushButton {border: none; background-color: rgba(0, 0, 0, 0); border-radius: 20px;}''')
+        self.avatar.setStyleSheet('''QPushButton {background-color: rgba(0, 0, 0, 0); border-radius: 20px;}''')
         self.avatar.setCursor(QCursor(Qt.PointingHandCursor))
-        self.avatar.setIcon(QIcon('static/image/ava.png'))  # Установите путь к вашему изображению
+        self.avatar.setIcon(QIcon('static/image/ava.png'))
         self.avatar.setIconSize(QSize(40, 40))
         self.avatar.clicked.connect(self.open_file_dialog)
 
-        profile_info = QWidget()
-        profile_info.setStyleSheet('''QWidget {background-color: rgba(0, 0, 0, 0); color: white; padding-left: 5px;}''')
         profile_info_layout = QVBoxLayout()
         profile_info_layout.setSpacing(5)
-        profile_info_layout.setContentsMargins(0,0,0,0)
-        profile_info.setLayout(profile_info_layout)
+        profile_info_layout.setContentsMargins(10,0,0,0)
 
-        username = QLabel('Nicname')
-        username.setFixedHeight(20)
-        username.setStyleSheet('''QLabel {background-color: rgba(0, 0, 0, 0); font-weight: bold; font-size: 13px;}''')
+        username = QTextEdit('Nicname')
+        username.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        username.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        username.setFixedHeight(30)
+        username.setStyleSheet('''QTextEdit {background-color: rgba(0, 0, 0, 0); color: rgba(255, 255, 255, 1); font-weight: bold; font-size: 13px;}''')
         profile_info_layout.addWidget(username)
 
-        user_id = QLabel('@kyrlk')
-        user_id.setFixedHeight(20)
-        user_id.setStyleSheet('''QLabel {background-color: rgba(0, 0, 0, 0); color: rgba(255, 255, 255, 0.35); font-size: 12px; font-weight: bold;}''')
+        user_id = QTextEdit('@kyrlk')
+        user_id.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        user_id.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        user_id.setFixedHeight(30)
+        user_id.setStyleSheet('''QTextEdit {background-color: rgba(0, 0, 0, 0); color: rgba(255, 255, 255, 0.35); font-size: 12px; font-weight: bold;}''')
         profile_info_layout.addWidget(user_id)
+
+        self.reg_data = QLabel('Дата регистрации: \n19 августа 2024 года')
+        self.reg_data.setFixedHeight(40)
+        self.reg_data.setStyleSheet('''QLabel {background-color: rgba(0, 0, 0, 0); color: rgba(255, 255, 255, 0.35); font-size: 12px; font-weight: bold;}''')
+        profile_info_layout.addWidget(self.reg_data)
+        self.reg_data.setVisible(False)
 
         settings = QPushButton()
         settings.setFixedSize(40, 40)
-        settings.setStyleSheet('''QPushButton {background-color: rgba(0, 0, 0, 0); border-radius: 20px} QPushButton:hover {background-color: #575757;}''')
+        settings.setStyleSheet('''QPushButton {background-color: rgba(0, 0, 0, 0); border-radius: 20px;} QPushButton:hover {background-color: #575757;}''')
         settings.setCursor(QCursor(Qt.PointingHandCursor))
         settings.setIcon(QIcon('static/image/settings.png'))  # Установите путь к вашему изображению
         settings.setIconSize(QSize(30, 30))
         settings.clicked.connect(self.open_settings)
+
+        self.data_layout = QHBoxLayout()
+        self.data_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.data_layout.setContentsMargins(0,0,0,0)
+
+        self.data_layout.addWidget(self.avatar)
+        self.data_layout.addLayout(profile_info_layout)
+        self.data_layout.addWidget(settings)
         
         self.send_change_profile = QPushButton('Отправить')
         self.send_change_profile.setCursor(QCursor(Qt.PointingHandCursor))
@@ -77,15 +92,17 @@ class MiniProfile(QWidget):
         self.send_change_profile.setStyleSheet('''QPushButton {border-radius: 10px; background-color: rgba(255,255,255, 0.1); color:white;} 
                                                   QPushButton:hover {background-color: #575757;}''')
         self.send_change_profile.setVisible(False)
-        profile_info_layout.addStretch()
-        profile_info_layout.addWidget(self.send_change_profile)
-        
- 
-        self.main_layout.addWidget(self.avatar)
-        self.main_layout.addWidget(profile_info)
+
+        send_layout = QHBoxLayout()
+        send_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
+        send_layout.addWidget(self.send_change_profile)
+
+        self.main_layout.addLayout(self.data_layout)
         self.main_layout.addStretch()
-        self.main_layout.addWidget(settings)
+        self.main_layout.addLayout(send_layout)
+
         self.widget.setLayout(self.main_layout)
+        self.widget.setLayout(send_layout)
 
         layout.addWidget(self.widget)
         self.setLayout(layout)
@@ -112,12 +129,14 @@ class MiniProfile(QWidget):
 
     def open_settings(self):
         if self.height() == 60:
-            self.avatar.setStyleSheet('''QPushButton {border-radius: 10px}''')
+            self.avatar.setStyleSheet('''QPushButton {background-color: rgba(0, 0, 0, 0); border-radius: 10px}''')
             self.send_change_profile.setVisible(True)
+            self.reg_data.setVisible(True)
             self.animate(200, QSize(80, 80))
         else:
-            self.avatar.setStyleSheet('''QPushButton {border-radius: 20px}''')
+            self.avatar.setStyleSheet('''QPushButton {background-color: rgba(0, 0, 0, 0); border-radius: 20px}''')
             self.send_change_profile.setVisible(False)
+            self.reg_data.setVisible(False)
             self.animate(60, QSize(40, 40))
 
     def animate(self, end_height, end_avatar_size): 

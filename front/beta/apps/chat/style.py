@@ -1,11 +1,20 @@
 from PySide6.QtWidgets import QGraphicsBlurEffect
 
+from PySide6.QtGui import QColor
+from PySide6.QtWidgets import (QGraphicsDropShadowEffect)
+
 BG_COLOR = 'rgba(30, 27, 19, 1) '
 MAIN_BOX_COLOR = 'rgba(255,255,255, 0.1)'
 
  # Создаем эффект размытия
 blur_effect = QGraphicsBlurEffect()
 blur_effect.setBlurRadius(5)
+
+# Создание эффекта свечения с использованием QGraphicsDropShadowEffect
+glow = QGraphicsDropShadowEffect()
+glow.setBlurRadius(20)  # радиус размытия
+glow.setColor(QColor(123, 97, 255))  # цвет свечения
+glow.setOffset(0, 0)  # смещение тени
 
 scroll_style = '''QScrollBar:vertical {
     background: rgb(45, 45, 68);
