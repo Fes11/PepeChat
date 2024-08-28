@@ -15,62 +15,68 @@ from window import Window
 class LoginWindow(Window):
     def __init__(self) -> None:
         super(LoginWindow, self).__init__()
-
-        left_layout = QVBoxLayout()
-        left_layout.setContentsMargins(0,0,30,0)
-        left_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        # logo = QLabel(self)
-        # pixmap = QPixmap('static/image/logo.png')
-        # pixmap.scaled(300, 300)
-        # logo.setPixmap(pixmap)
-        # logo.setGraphicsEffect(glow)
-
-        self.logo = QPushButton()
-        self.logo.setIcon(QIcon('static/image/big_logo.png'))  # Установите путь к вашему изображению
-        self.logo.setIconSize(QSize(250, 250))
-        self.logo.setGraphicsEffect(glow)
-
-        left_layout.addWidget(self.logo)
+        
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.widget = QWidget()
-        self.widget.setMaximumWidth(400)
+        self.widget.setMaximumSize(920, 532)
+        self.widget.setContentsMargins(0,0,0,0)
         self.widget.setStyleSheet(f'''QWidget {{background-color: {MAIN_BOX_COLOR}; border-radius: 10px;}}
                                       QLabel, QTextEdit {{color: rgba(255,255,255, 1); }}
-                                      QLabel {{background-color: rgba(0,0,0,0); font-size: 13px; font-weight: bold;}}''')
+                                      QLabel {{background-color: rgba(0,0,0,0); font-size: 13px; font-weight: bold;}}
+                                      QTextEdit {{padding-top: 10px; padding-left: 8px; font-weight: bold; font-size: 13px; border: 1px solid rgba(255,255,255, 0.1)}}''')
+
+        central_layout = QHBoxLayout()
+        central_layout.setSpacing(0)
+        central_layout.setContentsMargins(0,0,0,0)
+        
+        self.image = QPushButton()
+        self.image.setIcon(QIcon('static/image/login.png'))  # Установите путь к вашему изображению
+        self.image.setStyleSheet('''QWidget {background-color: rgba(0,0,0,0); border-radius: 20px;}''')
+        self.image.setIconSize(QSize(450, 520))
+        self.image.setGraphicsEffect(glow)
 
         self.form_layout = QVBoxLayout()
-        self.form_layout.setSpacing(0)
-        self.form_layout.setContentsMargins(0,0,0,0)
+        self.form_layout.setSpacing(15)
+        self.form_layout.setContentsMargins(50,50,50,50)
         self.form_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.login_lable = QLabel('Введите логин или мыло:')
-        self.login_lable.setFixedSize(320, 40)
-        self.form_layout.addWidget(self.login_lable)
         
-        self.input_login = QTextEdit()
-        self.input_login.setFixedSize(320, 40)
+        self.input_login = QTextEdit() 
+        self.input_login.setFixedHeight(48)
+        self.input_login.setPlaceholderText("Введите логин или мыло: ")
         self.form_layout.addWidget(self.input_login)
 
-        self.password_label = QLabel('Введите пароль:')
-        self.password_label.setFixedSize(320, 40)
-        self.form_layout.addWidget(self.password_label)
-
         self.input_password = QTextEdit()
-        self.input_password.setFixedSize(320, 40)
+        self.input_password.setFixedHeight(48)
+        self.input_password.setPlaceholderText("Введите пароль: ")
         self.form_layout.addWidget(self.input_password)
+        
+        self.new_password = QLabel('Forgot your password?')
+        self.new_password.setFixedHeight(15)
+        self.form_layout.addWidget(self.new_password)
+        
+        self.continue_btn = QPushButton('Continue')
+        self.continue_btn.setStyleSheet('''QPushButton {color: rgba(255,255,255,0.65); background-color: rgba(255,255,255,0.25);
+                                           border-radius: 10px; font-size: 16px; font-weight: bold;}''')
+        self.continue_btn.setFixedHeight(48)
+        self.form_layout.addWidget(self.continue_btn)
 
-        self.reg_lable = QPushButton('Нужна учетка? Нажми сюда')
-        self.reg_lable.setObjectName('reg_lable')
-        self.reg_lable.setCursor(QCursor(Qt.PointingHandCursor))
-        self.reg_lable.setStyleSheet('''QPushButton {background-color: rgba(0,0,0,0); color: rgba(123, 97, 255, 0.8); font-size: 12px;}
-                                        QPushButton:hover {color: rgba(123, 97, 255, 1);}''')
-        self.reg_lable.setFixedSize(320, 40)
+        self.reg_lable = QLabel('Нужна учетка? Нажми сюда')
+        self.reg_lable.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.reg_lable.setFixedHeight(15)
         self.form_layout.addWidget(self.reg_lable)
+        
+        self.sign_in_btn = QPushButton('Sign up')
+        self.sign_in_btn.setStyleSheet('''QPushButton {color: #FFFFFF; background-color: #7B61FF;
+                                           border-radius: 10px; font-size: 16px; font-weight: bold;}''')
+        self.sign_in_btn.setFixedHeight(48)
+        self.form_layout.addWidget(self.sign_in_btn)
 
-        self.widget.setLayout(self.form_layout)
-
-        self.main_layout.setContentsMargins(30,30,30,30)
-        self.main_layout.addLayout(left_layout)
-        self.main_layout.addWidget(self.widget)
+        central_layout.addWidget(self.image)
+        central_layout.addLayout(self.form_layout)
+        self.widget.setLayout(central_layout)
+        
+        layout.addWidget(self.widget)
+        self.main_layout.addLayout(layout)
 
