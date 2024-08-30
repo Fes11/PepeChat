@@ -16,7 +16,7 @@ class MessagesList(QWidget):
         super(MessagesList, self).__init__()
 
         self.setContentsMargins(0,0,0,0)
-        self.setMinimumWidth(600)
+        self.setMinimumWidth(550)
         self.setStyleSheet('''QWidget {background-color: rgba(0,0,0,0); border: none;}''')
 
         # Для добавления файлов

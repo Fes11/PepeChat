@@ -64,12 +64,6 @@ class MiniProfile(QWidget):
         user_id.setStyleSheet('''QTextEdit {background-color: rgba(0, 0, 0, 0); color: rgba(255, 255, 255, 0.35); font-size: 12px; font-weight: bold;}''')
         profile_info_layout.addWidget(user_id)
 
-        self.reg_data = QLabel('Дата регистрации: \n19 августа 2024 года')
-        self.reg_data.setFixedHeight(40)
-        self.reg_data.setStyleSheet('''QLabel {background-color: rgba(0, 0, 0, 0); color: rgba(255, 255, 255, 0.35); font-size: 12px; font-weight: bold;}''')
-        profile_info_layout.addWidget(self.reg_data)
-        self.reg_data.setVisible(False)
-
         settings = QPushButton()
         settings.setFixedSize(40, 40)
         settings.setStyleSheet('''QPushButton {background-color: rgba(0, 0, 0, 0); border-radius: 20px;} QPushButton:hover {background-color: #575757;}''')
@@ -85,16 +79,26 @@ class MiniProfile(QWidget):
         self.data_layout.addWidget(self.avatar)
         self.data_layout.addLayout(profile_info_layout)
         self.data_layout.addWidget(settings)
+
+        send_layout = QHBoxLayout()
+
+        self.logout_btn = QPushButton()
+        self.logout_btn.setFixedSize(40, 40)
+        self.logout_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        self.logout_btn.setStyleSheet('''QPushButton {background-color: rgba(0, 0, 0, 0); border: none; border-radius: 20px}''')
+        self.logout_btn.setIcon(QIcon('static/image/logout.png'))  # Установите путь к вашему изображению
+        self.logout_btn.setIconSize(QSize(25, 25))
+        self.logout_btn.setVisible(False)
+        self.logout_btn.clicked.connect(self.logout)
+        send_layout.addWidget(self.logout_btn)
         
-        self.send_change_profile = QPushButton('Отправить')
+        self.send_change_profile = QPushButton('Редактировать')
         self.send_change_profile.setCursor(QCursor(Qt.PointingHandCursor))
-        self.send_change_profile.setFixedSize(70, 40)
+        self.send_change_profile.setFixedSize(90, 40)
         self.send_change_profile.setStyleSheet('''QPushButton {border-radius: 10px; background-color: rgba(255,255,255, 0.1); color:white;} 
                                                   QPushButton:hover {background-color: #575757;}''')
         self.send_change_profile.setVisible(False)
-
-        send_layout = QHBoxLayout()
-        send_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
+        send_layout.addStretch()
         send_layout.addWidget(self.send_change_profile)
 
         self.main_layout.addLayout(self.data_layout)
@@ -106,7 +110,12 @@ class MiniProfile(QWidget):
 
         layout.addWidget(self.widget)
         self.setLayout(layout)
-        
+
+    def logout(self):
+        from apps.authorization.login import LoginWindow
+        window = LoginWindow()
+        window.show()
+        self.window().close()
         
     @Property(int)
     def animatedHeight(self):
@@ -131,12 +140,12 @@ class MiniProfile(QWidget):
         if self.height() == 60:
             self.avatar.setStyleSheet('''QPushButton {background-color: rgba(0, 0, 0, 0); border-radius: 10px}''')
             self.send_change_profile.setVisible(True)
-            self.reg_data.setVisible(True)
+            self.logout_btn.setVisible(True)
             self.animate(200, QSize(80, 80))
         else:
             self.avatar.setStyleSheet('''QPushButton {background-color: rgba(0, 0, 0, 0); border-radius: 20px}''')
             self.send_change_profile.setVisible(False)
-            self.reg_data.setVisible(False)
+            self.logout_btn.setVisible(False)
             self.animate(60, QSize(40, 40))
 
     def animate(self, end_height, end_avatar_size): 

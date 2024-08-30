@@ -4,8 +4,8 @@ from window import Window
 from datetime import datetime
 from PySide6.QtGui import QIcon, QCursor, QPixmap, QColor
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtWidgets import (QTextEdit, QScrollArea, QVBoxLayout, QLabel, QFrame, QSizeGrip, QGraphicsDropShadowEffect,
-                               QHBoxLayout, QWidget, QSizePolicy, QPushButton, QStackedWidget)
+from PySide6.QtWidgets import (QTextEdit, QScrollArea, QVBoxLayout, QLabel, QListWidget, QLineEdit, QGraphicsDropShadowEffect,
+                               QHBoxLayout, QWidget, QSizePolicy, QPushButton, QStackedWidget, QDialog, QGraphicsBlurEffect)
 from apps.profile.profile import MiniProfile
 
 class MainWindow(Window):
@@ -69,7 +69,7 @@ class ChatWidget(QWidget):
 
         chat_avatar = QPushButton()
         chat_avatar.setFixedSize(40, 40)
-        chat_avatar.setStyleSheet('''QPushButton {background-color: rgba(0, 0, 0, 0); border: none; background-color: white; border-radius: 20px}''')
+        chat_avatar.setStyleSheet('''QPushButton {border: none; background-color: white; border-radius: 20px}''')
         chat_avatar.setIcon(QIcon('static/image/person.png'))  # Установите путь к вашему изображению
         chat_avatar.setIconSize(QSize(25, 25))
 
@@ -198,6 +198,7 @@ class Sidebar(QWidget):
         self.new_chat_btn.setIcon(QIcon('static/image/add.png'))  # Установите путь к вашему изображению
         self.new_chat_btn.setIconSize(QSize(16, 16))
         self.new_chat_btn.clicked.connect(self.add_chat)
+        self.new_chat_btn.clicked.connect(self.open_add_chat)
         self.new_chat_btn.clicked.connect(lambda: self.main_window.switch_chat(self.num - 1))
         self.new_chat_btn.setStyleSheet('''QPushButton {background-color: rgba(255, 255, 255, 0.1); color:rgba(255, 255, 255, 0.6); 
                                                         font-weight: bold; border:none; font-size: 11px; border-radius: 10px;}
@@ -233,3 +234,56 @@ class Sidebar(QWidget):
 
         # Добавляем виджет чата в список
         self.main_window.chat_widgets.append(self.chat_widget)
+
+    def open_add_chat(self):
+        # Размытие основного окна
+        blur_effect = QGraphicsBlurEffect()
+        blur_effect.setBlurRadius(10)
+        # self.window().setGraphicsEffect(blur_effect)
+    
+        dialog = AddChatDialog()
+        dialog.exec()
+
+        # self.window().setGraphicsEffect(None)
+
+
+class AddChatDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Создание чата")
+        self.setFixedSize(350, 500)  # Установить фиксированный размер
+
+        layout = QVBoxLayout()
+
+        self.close_button = QPushButton("X", self)
+        self.close_button.setCursor(QCursor(Qt.PointingHandCursor))
+        self.close_button.setFixedSize(20, 20)
+        self.close_button.setStyleSheet(f"background: red; color: white; font-size: 11px; border-radius: 10px;")
+        self.close_button.clicked.connect(self.close)
+        layout.addWidget(self.close_button)
+
+        self.name_input = QLineEdit(self)
+        self.name_input.setFixedHeight(30)
+        self.name_input.setStyleSheet(f"background: {MAIN_BOX_COLOR}; color: white; font-size: 11px; border-radius: 10px;")
+        self.name_input.setPlaceholderText("Название чата...")
+        layout.addWidget(self.name_input)
+
+        search_people = QLineEdit(self)
+        search_people.setFixedHeight(30)
+        search_people.setStyleSheet(f"background: {MAIN_BOX_COLOR}; color: white; font-size: 11px; border-radius: 10px;")
+        search_people.setPlaceholderText("Поиск...")
+        layout.addWidget(search_people)
+
+        self.add_people_list = QListWidget(self)
+        layout.addWidget(self.add_people_list)
+
+        self.save_button = QPushButton("Создать", self)
+        layout.addWidget(self.save_button)
+
+        self.setLayout(layout)
+
+        # Установить параметры диалогового окна
+        self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.FramelessWindowHint)
+        self.setModal(True)
+        self.setStyleSheet(f"background: {MAIN_BOX_COLOR}; color: white; border: none; border-radius: 10px;")
+        

@@ -17,12 +17,12 @@ class Window(QMainWindow):
         # BG_COLOR = 'rgba(0,0,0,0.6)'
         # GlobalBlur(self.winId(), Acrylic=True, QWidget=self) # Сильный блюр
 
-        BG_COLOR = 'rgba(0,0,0,0.8)'
-        GlobalBlur(self.winId(), QWidget=self) # Обычный блюр
+        # BG_COLOR = 'rgba(0,0,0,0.7)'
+        # GlobalBlur(self.winId(), QWidget=self) # Обычный блюр
 
         # Базовые настройки MainWindow
         self.setWindowTitle("PepeChat")
-        self.setMinimumSize(840, 640)
+        self.setMinimumSize(840, 570)
         self.resize_margin = 10
         self.setStyleSheet(scroll_style + '''QWidget {background-color: rgba(0,0,0,0);}''')
 
