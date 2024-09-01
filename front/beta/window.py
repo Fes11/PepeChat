@@ -62,7 +62,6 @@ class Window(QMainWindow):
 
 
 class TopPanel(QWidget):
-
     def __init__(self, parent):
         super().__init__()
         height = 30

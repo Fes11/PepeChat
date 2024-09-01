@@ -17,6 +17,8 @@ class LoginWindow(Window):
     def __init__(self) -> None:
         super(LoginWindow, self).__init__()
         
+        self.setGeometry(350,170, 1100, 750)
+        
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 

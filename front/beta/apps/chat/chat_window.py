@@ -5,7 +5,7 @@ from datetime import datetime
 from PySide6.QtGui import QIcon, QCursor, QPixmap, QColor
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (QTextEdit, QScrollArea, QVBoxLayout, QLabel, QListWidget, QLineEdit, QGraphicsDropShadowEffect,
-                               QHBoxLayout, QWidget, QSizePolicy, QPushButton, QStackedWidget, QDialog, QGraphicsBlurEffect)
+                               QHBoxLayout, QWidget, QSizePolicy, QPushButton, QStackedWidget, QGraphicsBlurEffect)
 from apps.profile.profile import MiniProfile
 
 class MainWindow(Window):
@@ -22,6 +22,16 @@ class MainWindow(Window):
 
         self.stack = QStackedWidget(self)
         self.main_layout.addWidget(self.stack)
+        
+        self.box = AddChatDialog(self)
+    
+    def open_add_chat(self):
+        self.box.setVisible(True)
+        self.box.raise_()
+        
+    def resizeEvent(self, event):
+        self.box.setGeometry(0, 30, self.width(), self.height()-30)
+        super().resizeEvent(event)
 
     def switch_chat(self, index):
         # Сброс цвета фона предыдущего активного чата
@@ -198,7 +208,7 @@ class Sidebar(QWidget):
         self.new_chat_btn.setIcon(QIcon('static/image/add.png'))  # Установите путь к вашему изображению
         self.new_chat_btn.setIconSize(QSize(16, 16))
         self.new_chat_btn.clicked.connect(self.add_chat)
-        self.new_chat_btn.clicked.connect(self.open_add_chat)
+        self.new_chat_btn.clicked.connect(self.main_window.open_add_chat)
         self.new_chat_btn.clicked.connect(lambda: self.main_window.switch_chat(self.num - 1))
         self.new_chat_btn.setStyleSheet('''QPushButton {background-color: rgba(255, 255, 255, 0.1); color:rgba(255, 255, 255, 0.6); 
                                                         font-weight: bold; border:none; font-size: 11px; border-radius: 10px;}
@@ -235,55 +245,76 @@ class Sidebar(QWidget):
         # Добавляем виджет чата в список
         self.main_window.chat_widgets.append(self.chat_widget)
 
-    def open_add_chat(self):
-        # Размытие основного окна
-        blur_effect = QGraphicsBlurEffect()
-        blur_effect.setBlurRadius(10)
-        # self.window().setGraphicsEffect(blur_effect)
-    
-        dialog = AddChatDialog()
-        dialog.exec()
 
-        # self.window().setGraphicsEffect(None)
-
-
-class AddChatDialog(QDialog):
+class AddChatDialog(QPushButton):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Создание чата")
-        self.setFixedSize(350, 500)  # Установить фиксированный размер
-
+        self.setVisible(False)
+        
+        main_layout = QVBoxLayout()
+        main_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        self.background = QPushButton()
+        self.background.clicked.connect(self.close_add_chat)
+        self.background.setStyleSheet('background: rgba(0, 0, 0, 0.5); border: none;')
+        
+        main_widget = QWidget()
+        main_widget.setFixedSize(400, 500)
+        main_widget.setStyleSheet(f'''QWidget {{background: #333333; color: white; border-radius: 10px; font-size: 13px;}}
+                                    QTextEdit {{background: {MAIN_BOX_COLOR}; padding-top: 7px; padding-left: 8px;}}
+                                    QPushButton {{background: {MAIN_BOX_COLOR};}}
+                                    QPushButton:hover {{background: rgba(255,255,255, 0.3);}}''')
+        main_layout.addWidget(main_widget)
+        
         layout = QVBoxLayout()
-
-        self.close_button = QPushButton("X", self)
-        self.close_button.setCursor(QCursor(Qt.PointingHandCursor))
-        self.close_button.setFixedSize(20, 20)
-        self.close_button.setStyleSheet(f"background: red; color: white; font-size: 11px; border-radius: 10px;")
-        self.close_button.clicked.connect(self.close)
-        layout.addWidget(self.close_button)
-
-        self.name_input = QLineEdit(self)
-        self.name_input.setFixedHeight(30)
-        self.name_input.setStyleSheet(f"background: {MAIN_BOX_COLOR}; color: white; font-size: 11px; border-radius: 10px;")
-        self.name_input.setPlaceholderText("Название чата...")
-        layout.addWidget(self.name_input)
-
-        search_people = QLineEdit(self)
-        search_people.setFixedHeight(30)
-        search_people.setStyleSheet(f"background: {MAIN_BOX_COLOR}; color: white; font-size: 11px; border-radius: 10px;")
-        search_people.setPlaceholderText("Поиск...")
-        layout.addWidget(search_people)
-
-        self.add_people_list = QListWidget(self)
-        layout.addWidget(self.add_people_list)
-
-        self.save_button = QPushButton("Создать", self)
-        layout.addWidget(self.save_button)
-
+        layout.addWidget(self.background)
+        
+        form_layout = QVBoxLayout()
+        form_layout.setContentsMargins(20,20,20,20)
+        
+        close_btn = QPushButton()
+        close_btn.setIcon(QIcon('static/image/close_hover.png'))  # Установите путь к вашему изображению
+        close_btn.setIconSize(QSize(25, 25))
+        close_btn.setFixedSize(30, 30)
+        close_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        close_btn.clicked.connect(self.close_add_chat)
+        form_layout.addWidget(close_btn)
+        
+        iamge = QPushButton()
+        iamge.setIcon(QIcon('static/image/ava3.jpg'))  # Установите путь к вашему изображению
+        iamge.setIconSize(QSize(140, 140))
+        iamge.setFixedSize(150, 150)
+        iamge.setCursor(QCursor(Qt.PointingHandCursor))
+        form_layout.addWidget(iamge)
+        
+        name_chat = QTextEdit()
+        name_chat.setFixedHeight(40)
+        name_chat.setPlaceholderText("Введите название чата...")
+        form_layout.addWidget(name_chat)
+        
+        searc_people = QTextEdit()
+        searc_people.setFixedHeight(40)
+        searc_people.setPlaceholderText("Добавте участников...")
+        form_layout.addWidget(searc_people)
+        
+        user_list = QStackedWidget()
+        user_list.setStyleSheet(f'background: {MAIN_BOX_COLOR}; border: 1px solid rgba(0,0,0, 0.3)')
+        form_layout.addWidget(user_list)
+        
+        create_btn = QPushButton('Создать')
+        create_btn.setFixedHeight(50)
+        create_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        form_layout.addWidget(create_btn)
+        
+        main_widget.setLayout(form_layout)
+        
+        layout.addLayout(main_layout)
         self.setLayout(layout)
-
-        # Установить параметры диалогового окна
-        self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.FramelessWindowHint)
-        self.setModal(True)
-        self.setStyleSheet(f"background: {MAIN_BOX_COLOR}; color: white; border: none; border-radius: 10px;")
+    
+    def close_add_chat(self):
+        self.setVisible(False)
+    
+    def resizeEvent(self, event):
+        self.background.setGeometry(0, 0, self.width(), self.height())
+        super().resizeEvent(event)
         

@@ -1,30 +1,35 @@
 import sys
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QApplication, QWidget, QSizeGrip, QVBoxLayout, QLabel
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton
+from PySide6.QtCore import Qt
 
-class ResizableWidget(QWidget):
+class ClickableWidget(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Custom Resizable Widget")
+        self.setStyleSheet("background-color: lightblue;")
         self.setGeometry(100, 100, 300, 200)
 
-        # Layout for the widget
-        layout = QVBoxLayout(self)
+        layout = QVBoxLayout()
 
-        # A label to show some content
-        label = QLabel("This is a resizable widget", self)
-        layout.addWidget(label)
+        # Вложенный виджет
+        self.inner_widget = QLabel("I am inside", self)
+        self.inner_widget.setStyleSheet("background-color: lightgray; padding: 20px;")
+        self.inner_widget.move(50, 50)
 
-        # QSizeGrip for resizing
-        size_grip = QSizeGrip(self)
-        layout.addWidget(size_grip, 0, alignment=Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignRight)
+        # Делаем вложенный виджет невосприимчивым к событиям мыши
+        self.inner_widget.setAttribute(Qt.WA_TransparentForMouseEvents)
 
-        # Set the layout to the widget
         self.setLayout(layout)
+
+    def mousePressEvent(self, event):
+        print("Parent widget clicked!")
+        super().mousePressEvent(event)
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    resizable_widget = ResizableWidget()
-    resizable_widget.show()
+
+    widget = ClickableWidget()
+    widget.show()
+
     sys.exit(app.exec())
