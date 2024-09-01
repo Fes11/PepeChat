@@ -146,7 +146,7 @@ class Sidebar(QWidget):
     def __init__(self, main_window, parent=None):
         super().__init__(parent)
         self.main_window = main_window
-        self.setMinimumSize(200, 600)
+        self.setMinimumWidth(200)
         self.setMaximumWidth(300)
 
         self.num = 0
