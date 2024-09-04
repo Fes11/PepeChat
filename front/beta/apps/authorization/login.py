@@ -6,7 +6,7 @@ from PySide6 import QtCore
 from PySide6.QtGui import QPixmap, QCursor, QIcon, QColor
 from PySide6.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve, Property
 from PySide6.QtWidgets import (QApplication, QTextEdit, QScrollArea, QVBoxLayout, QLabel, QGraphicsDropShadowEffect,
-                               QHBoxLayout, QWidget, QSizePolicy, QPushButton, QFileDialog, QGridLayout, QLineEdit)
+                               QHBoxLayout, QWidget, QSizePolicy, QPushButton, QFileDialog, QLineEdit)
 
 from apps.chat.chat_window import MainWindow
 from apps.chat.style import MAIN_BOX_COLOR, glow
@@ -90,6 +90,12 @@ class LoginWindow(Window):
         self.new_password.setCursor(QCursor(Qt.PointingHandCursor))
         self.new_password.setFixedHeight(17)
         self.form_layout.addWidget(self.new_password)
+
+        self.error_login = QLabel('Неверный логин')
+        self.error_login.setStyleSheet('color: red;')
+
+        self.error_password = QLabel('Неверный пароль')
+        self.error_password.setStyleSheet('color: red;')
         
         self.continue_btn = QPushButton('Login')
         self.continue_btn.setStyleSheet('''QPushButton {color: rgba(255,255,255,0.65); background-color: rgba(255,255,255,0.25);
@@ -135,9 +141,13 @@ class LoginWindow(Window):
         login_text = self.input_login.toPlainText()
         password_text = self.input_password.text()
 
-        if login_text == '123' and password_text == '123':
+        if login_text != '123':
+            self.input_login.setStyleSheet('border: 0.5px solid darkred;')
+            self.form_layout.addWidget(self.error_login)
+        elif password_text != '123':
+            self.input_password.setStyleSheet('border: 0.5px solid darkred;')
+            self.form_layout.addWidget(self.error_password)
+        else:
             window = MainWindow()
             window.show()
             self.close()
-        else:
-            print(f"Login: {login_text}, Password: {password_text}")

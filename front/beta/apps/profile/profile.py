@@ -66,7 +66,7 @@ class MiniProfile(QWidget):
 
         settings = QPushButton()
         settings.setFixedSize(40, 40)
-        settings.setStyleSheet('''QPushButton {background-color: rgba(0, 0, 0, 0); border-radius: 20px;} QPushButton:hover {background-color: #575757;}''')
+        settings.setStyleSheet('''QPushButton {background-color: rgba(255,255,255,0.1); border-radius: 10px;} QPushButton:hover {background-color: rgba(255,255,255,0.2);}''')
         settings.setCursor(QCursor(Qt.PointingHandCursor))
         settings.setIcon(QIcon('static/image/settings.png'))  # Установите путь к вашему изображению
         settings.setIconSize(QSize(30, 30))

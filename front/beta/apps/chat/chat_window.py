@@ -240,7 +240,9 @@ class Sidebar(QWidget):
         self.num += 1
         self.chat_widget = ChatWidget(self.main_window, self.num)
         self.chat_list_layout.addWidget(self.chat_widget)
-        self.main_window.stack.addWidget(MessagesList())
+        messages_list = MessagesList()
+        messages_list.top_chat_name.setText(self.chat_widget.chat_name.text())
+        self.main_window.stack.addWidget(messages_list)
 
         # Добавляем виджет чата в список
         self.main_window.chat_widgets.append(self.chat_widget)
@@ -252,7 +254,8 @@ class AddChatDialog(QPushButton):
         self.setVisible(False)
         
         main_layout = QVBoxLayout()
-        main_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        main_layout.setContentsMargins(0,0,0,100)
+        main_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         
         self.background = QPushButton()
         self.background.clicked.connect(self.close_add_chat)
@@ -267,6 +270,7 @@ class AddChatDialog(QPushButton):
         main_layout.addWidget(main_widget)
         
         layout = QVBoxLayout()
+        layout.setContentsMargins(0,0,0,0)
         layout.addWidget(self.background)
         
         form_layout = QVBoxLayout()

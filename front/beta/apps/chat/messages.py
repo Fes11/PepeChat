@@ -24,12 +24,47 @@ class MessagesList(QWidget):
 
         layout = QVBoxLayout()
         layout.setContentsMargins(0,0,0,0)
+
+        top_layout = QVBoxLayout()
+        top_layout.setSpacing(0)
+        top_layout.setContentsMargins(0,0,0,0)
+
+        # Название чата
+        top_chat_panel = QWidget()
+        top_chat_panel.setMinimumHeight(60)
+        top_chat_panel.setStyleSheet(f'''background-color: {MAIN_BOX_COLOR}; border-bottom: 1px solid rgba(255,255,255, 0.1);
+                                         border-top-left-radius: 10px;
+                                         border-top-right-radius: 10px;
+                                         border-bottom-left-radius: 0px;
+                                         border-bottom-right-radius: 0px;''')
+
+        top_chat_panel_layout = QHBoxLayout()
+        top_chat_panel_layout.setSpacing(10)
+        top_chat_panel_layout.setContentsMargins(10,0,0,0)
+
+        iamge_chat = QPushButton()
+        iamge_chat.setIcon(QIcon('static/image/person.png'))  # Установите путь к вашему изображению
+        iamge_chat.setIconSize(QSize(40, 40))
+        iamge_chat.setFixedSize(40,40)
+        iamge_chat.setStyleSheet('''background: white; border: none; border-radius: 10px;''')
+        top_chat_panel_layout.addWidget(iamge_chat)
+
+        self.top_chat_name = QLabel('Name chat')
+        self.top_chat_name.setStyleSheet('''background-color: rgba(0,0,0,0); font-size: 13px; font-weight: bold; color: white; border: none;''')
+        top_chat_panel_layout.addWidget(self.top_chat_name)
+
+        top_chat_panel.setLayout(top_chat_panel_layout)
+        top_layout.addWidget(top_chat_panel)
     
         # Поле на котором выводятся сообщения
         self.scroll_area = QScrollArea(self)
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.scroll_area.setStyleSheet(f'''QWidget {{background-color: {MAIN_BOX_COLOR}; border:none; border-radius: 10px;}}''')
+        self.scroll_area.setStyleSheet(f'''QWidget {{background-color: {MAIN_BOX_COLOR}; border:none; 
+                                                     border-top-left-radius: 0px;
+                                                     border-top-right-radius: 0px;
+                                                     border-bottom-left-radius: 10px;
+                                                     border-bottom-right-radius: 10px;}}''')
 
         self.text = QWidget(self)
         self.text.setStyleSheet('''QWidget {background-color: rgba(0,0,0,0);}''')
@@ -89,7 +124,8 @@ class MessagesList(QWidget):
         self.input_panel.setLayout(self.input_layout)
 
         # Добавляем в основной layout
-        layout.addWidget(self.scroll_area)
+        top_layout.addWidget(self.scroll_area)
+        layout.addLayout(top_layout)
         layout.addWidget(self.input_panel)
         self.setLayout(layout)
     
@@ -142,12 +178,12 @@ class MessagesList(QWidget):
         if i % 2:
             message_bubble.setStyleSheet('''
                     QWidget {
-                        border-top-left-radius: 8px;
-                        border-top-right-radius: 8px;
-                        border-bottom-left-radius: 8px;
+                        border-top-left-radius: 12px;
+                        border-top-right-radius: 12px;
+                        border-bottom-left-radius: 12px;
                         border-bottom-right-radius: 0px;
                         background: rgba(123, 97, 255, 1);
-                        padding: 10px;
+                        padding: 8px;
                     }
                 ''')
             self.message_layout.addStretch()
@@ -158,12 +194,12 @@ class MessagesList(QWidget):
         else:
             message_bubble.setStyleSheet('''
                     QWidget {
-                        border-top-left-radius: 8px;
-                        border-top-right-radius: 8px;
+                        border-top-left-radius: 12px;
+                        border-top-right-radius: 12px;
                         border-bottom-left-radius: 0px;
-                        border-bottom-right-radius: 8px;
+                        border-bottom-right-radius: 12px;
                         background: rgba(255, 255, 255, 0.1);
-                        padding: 10px;
+                        padding: 8px;
                     }
                 ''')
             avatar_layout.addWidget(mes_avatar)
