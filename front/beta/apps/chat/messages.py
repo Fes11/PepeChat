@@ -7,7 +7,7 @@ from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (QApplication, QTextEdit, QScrollArea, QVBoxLayout, QLabel, QListWidget,
                                QHBoxLayout, QWidget, QSizePolicy, QPushButton, QFileDialog)
 
-from apps.chat.fields import WrapLabel
+from apps.chat.fields import WrapLabel, PlainTextEdit
 from apps.chat.style import send_btn_style, MAIN_BOX_COLOR
 from BlurWindow.blurWindow import blur
 
@@ -16,7 +16,7 @@ class MessagesList(QWidget):
         super(MessagesList, self).__init__()
 
         self.setContentsMargins(0,0,0,0)
-        self.setMinimumWidth(550)
+        self.setMinimumWidth(600)
         self.setStyleSheet('''QWidget {background-color: rgba(0,0,0,0); border: none;}''')
 
         # Для добавления файлов
@@ -81,10 +81,11 @@ class MessagesList(QWidget):
         self.text.setLayout(self.text_layout) 
         
         # Поле ввода сообщения
-        self.message_input = QTextEdit()
+        self.message_input = PlainTextEdit()
         self.message_input.setContentsMargins(0,0,0,0)
         self.message_input.installEventFilter(self)
         self.message_input.setPlaceholderText("Напишите сообщение...")
+        self.message_input.textChanged.connect(self.adjustHeight)
         self.message_input.setMinimumWidth(400)
         self.message_input.setFixedHeight(42)
         self.message_input.setStyleSheet('''QTextEdit {color: white; 
@@ -113,6 +114,7 @@ class MessagesList(QWidget):
 
         # Слой панели для ввода
         self.input_layout = QHBoxLayout()
+        self.input_layout.setAlignment(Qt.AlignmentFlag.AlignBottom)
         self.input_layout.addWidget(self.send_file)
         self.input_layout.addWidget(self.message_input)
         self.input_layout.addWidget(self.send_message_btn)
@@ -149,8 +151,12 @@ class MessagesList(QWidget):
         avatar_layout = QVBoxLayout()
         avatar_layout.setAlignment(Qt.AlignmentFlag.AlignBottom)
 
-        message = WrapLabel(text)
-        message.setStyleSheet('''WrapLabel {font-size: 14px; background: rgba(0, 0, 0, 0); color: white;}''')
+        message = QLabel(text)
+        message.setWordWrap(True)
+        message.adjustSize()
+        message.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        message.setMaximumWidth(400)
+        message.setStyleSheet('''font-size: 14px; background: rgba(0, 0, 0, 0); color: white;''')
 
         message_bubble = QWidget()
         message_bubble.setStyleSheet('''QWidget {background: rgba(0, 0, 0, 0);}''')
@@ -163,7 +169,7 @@ class MessagesList(QWidget):
 
         # Метка времени
         mes_time = QLabel(datetime.now().strftime('%H:%M'))
-        mes_time.setStyleSheet('QLabel {color: rgba(255, 255, 255, 0.65); background: rgba(0, 0, 0, 0); font-weight: bold;}')
+        mes_time.setStyleSheet('QLabel {color: rgba(255, 255, 255, 0.65); background: rgba(0, 0, 0, 0);}')
 
         mes_time_layout = QVBoxLayout()
         mes_time_layout.setAlignment(Qt.AlignmentFlag.AlignBottom)
@@ -224,6 +230,22 @@ class MessagesList(QWidget):
             if event.key() == QtCore.Qt.Key_Return and self.message_input.hasFocus():
                 self.send_message()
         return super().eventFilter(obj, event)
+    
+    def adjustHeight(self):
+        # Подсчёт количества строк текста
+        doc = self.message_input.document().clone()
+        doc.setTextWidth(self.message_input.viewport().width())
+        height = doc.size().height()
+        height += self.message_input.frameWidth() * 2
+
+        # Устанавливаем минимальную и максимальную высоту
+        min_height = 42  # Минимальная высота (можно изменить)
+        max_height = 150  # Максимальная высота (чтобы ограничить рост)
+        
+        # Ограничиваем высоту, если текст занимает слишком много места
+        new_height = max(min_height, min(int(height), max_height))
+        self.message_input.setFixedHeight(new_height)
+        self.input_panel.setFixedHeight(new_height + 17)
     
     def open_file_dialog(self):
         dialog = QFileDialog(self)

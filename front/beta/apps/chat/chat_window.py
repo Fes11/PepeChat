@@ -13,6 +13,8 @@ class MainWindow(Window):
     def __init__(self) -> None:
         super(MainWindow, self).__init__()
 
+        self.setMinimumWidth(680)
+
         self.current_chat_index = None  # Хранит индекс текущего чата
         self.chat_widgets = []  # Список виджетов чатов
 
@@ -72,14 +74,15 @@ class ChatWidget(QWidget):
         self.chat_name.setStyleSheet('''QLabel {background-color: rgba(0, 0, 0, 0); font-weight: bold; font-size: 13px;}''')
         self.chat_info_layout.addWidget(self.chat_name)
 
-        last_message = QLabel('Сообщение...')
-        last_message.setMaximumHeight(50)
-        last_message.setStyleSheet('''QLabel {color: #b5b5b5;}''')
-        self.chat_info_layout.addWidget(last_message)
+        self.last_message = QLabel('Сообщение...')
+        self.last_message.setMaximumHeight(50)
+        self.last_message.setStyleSheet('''QLabel {color: #b5b5b5;}''')
+        self.chat_info_layout.addWidget(self.last_message)
 
-        chat_avatar = QPushButton()
+        chat_avatar = QPushButton(self)
         chat_avatar.setFixedSize(40, 40)
         chat_avatar.setStyleSheet('''QPushButton {border: none; background-color: white; border-radius: 20px}''')
+        chat_avatar.clicked.connect(lambda: self.main_window.switch_chat(self.num - 1))
         chat_avatar.setIcon(QIcon('static/image/person.png'))  # Установите путь к вашему изображению
         chat_avatar.setIconSize(QSize(25, 25))
 
@@ -88,8 +91,8 @@ class ChatWidget(QWidget):
         self.chat_time_layout.setSpacing(8)
         self.chat_time_layout.setContentsMargins(0,0,0,0)
 
-        chat_time = QLabel(datetime.now().strftime('%H:%M'))
-        chat_time.setStyleSheet('QLabel {color: rgba(169, 171, 173, 1); background: rgba(0, 0, 0, 0);}')
+        self.chat_time = QLabel(datetime.now().strftime('%H:%M'))
+        self.chat_time.setStyleSheet('QLabel {color: rgba(169, 171, 173, 1); background: rgba(0, 0, 0, 0);}')
 
         # Создание эффекта свечения с использованием QGraphicsDropShadowEffect
         glow = QGraphicsDropShadowEffect(self)
@@ -97,20 +100,20 @@ class ChatWidget(QWidget):
         glow.setColor(QColor(123, 97, 255))  # цвет свечения
         glow.setOffset(0, 0)  # смещение тени
         
-        new_mess = QLabel('1')
-        new_mess.setContentsMargins(0,0,0,0)
-        new_mess.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        new_mess.setFixedSize(16,16)
-        new_mess.setStyleSheet('''QLabel {background-color:rgba(123, 97, 255, 1); color: white; border-radius: 8px;
+        self.new_mess = QLabel('1')
+        self.new_mess.setContentsMargins(0,0,0,0)
+        self.new_mess.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.new_mess.setFixedSize(16,16)
+        self.new_mess.setStyleSheet('''QLabel {background-color:rgba(123, 97, 255, 1); color: white; border-radius: 8px;
                                          font-weight: bold; font-size: 10px;}''')
         # Применение эффекта к new_mess
-        new_mess.setGraphicsEffect(glow)
+        self.new_mess.setGraphicsEffect(glow)
         
         new_mess_layout = QHBoxLayout()
         new_mess_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
-        new_mess_layout.addWidget(new_mess)
+        new_mess_layout.addWidget(self.new_mess)
 
-        self.chat_time_layout.addWidget(chat_time)
+        self.chat_time_layout.addWidget(self.chat_time)
         self.chat_time_layout.addLayout(new_mess_layout)
 
         self.chat_layout = QHBoxLayout()
@@ -119,7 +122,7 @@ class ChatWidget(QWidget):
         self.chat_layout.addStretch()
         self.chat_layout.addLayout(self.chat_time_layout)
 
-        self.chat_widget = QPushButton()
+        self.chat_widget = QPushButton(self)
         self.chat_widget.setContentsMargins(5, 0, 0, 0)
         self.chat_widget.setObjectName("chat_widget")
         self.chat_widget.setFixedHeight(60)
@@ -133,11 +136,18 @@ class ChatWidget(QWidget):
         layout.addWidget(self.chat_widget)
         self.setLayout(layout)
 
-        # if self.size().width() < 650:
-        #     self.chat_name.hide()
-        #     chat_time.hide()
-        #     new_mess.hide()
-        #     last_message.hide()
+    def resizeEvent(self, event):
+        if self.size().width() < 200:
+            self.chat_name.setVisible(False)
+            self.chat_time.setVisible(False)
+            self.new_mess.setVisible(False)
+            self.last_message.setVisible(False)
+        else:
+            self.chat_name.setVisible(True)
+            self.chat_time.setVisible(True)
+            self.new_mess.setVisible(True)
+            self.last_message.setVisible(True)
+        super().resizeEvent(event)
 
 
 class Sidebar(QWidget):
@@ -146,7 +156,7 @@ class Sidebar(QWidget):
     def __init__(self, main_window, parent=None):
         super().__init__(parent)
         self.main_window = main_window
-        self.setMinimumWidth(200)
+        self.setMinimumWidth(65)
         self.setMaximumWidth(300)
 
         self.num = 0
@@ -187,6 +197,8 @@ class Sidebar(QWidget):
         self.serch.setStyleSheet('''QTextEdit {background-color: rgba(255, 255, 255, 0.1); color: white; border-radius: 16px; padding: 8px 0 5px 10px;}''')
 
         serch_layout = QHBoxLayout()
+        serch_layout.setSpacing(10)
+        serch_layout.setContentsMargins(0,0,0,0)
 
         logo = QLabel(self)
         pixmap = QPixmap('static/image/logo.png')
@@ -203,7 +215,7 @@ class Sidebar(QWidget):
         serch_layout.addWidget(logo)
         serch_layout.addWidget(self.serch)
 
-        self.new_chat_btn = QPushButton('  Создать чат')
+        self.new_chat_btn = QPushButton()
         self.new_chat_btn.setFixedHeight(35)
         self.new_chat_btn.setIcon(QIcon('static/image/add.png'))  # Установите путь к вашему изображению
         self.new_chat_btn.setIconSize(QSize(16, 16))
@@ -220,7 +232,7 @@ class Sidebar(QWidget):
         chat_list_lable.setStyleSheet('''QLabel {color: rgba(255, 255, 255, 0.35); font-size: 12px; font-weight: bold; padding-left: 2px;}''')
 
         top_sidebar = QVBoxLayout()
-        top_sidebar.setContentsMargins(12, 12, 12, 0)
+        top_sidebar.setContentsMargins(10, 10, 10, 0)
 
         # Добавляем виджеты
         top_sidebar.addLayout(serch_layout)
@@ -231,10 +243,29 @@ class Sidebar(QWidget):
 
         widget.setLayout(self.sidebar_layout)
 
+        self.mini_profile = MiniProfile()
+
         layout.addWidget(widget)
-        layout.addWidget(MiniProfile())
+        layout.addWidget(self.mini_profile)
         self.setLayout(layout)
-            
+
+    def resizeEvent(self, event):
+        if self.size().width() < 200:
+            # self.resize(60, self.size().height())
+            self.new_chat_btn.setText('')
+            self.serch.setVisible(False)
+            self.mini_profile.username.setVisible(False)
+            self.mini_profile.user_id.setVisible(False)
+            self.mini_profile.avatar.setVisible(False)
+            self.mini_profile.send_change_profile.setVisible(False)
+            self.mini_profile.data_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        else:
+            self.new_chat_btn.setText('  Создать чат')
+            self.serch.setVisible(True)
+            self.mini_profile.username.setVisible(True)
+            self.mini_profile.user_id.setVisible(True)
+            self.mini_profile.avatar.setVisible(True)
+        super().resizeEvent(event)
 
     def add_chat(self):
         self.num += 1
