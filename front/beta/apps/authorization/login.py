@@ -9,15 +9,13 @@ from PySide6.QtWidgets import (QApplication, QTextEdit, QScrollArea, QVBoxLayout
                                QHBoxLayout, QWidget, QSizePolicy, QPushButton, QFileDialog, QLineEdit)
 
 from apps.chat.chat_window import MainWindow
-from apps.chat.style import MAIN_BOX_COLOR, glow
+from apps.chat.style import MAIN_BOX_COLOR
 from window import Window
 
 
-class LoginWindow(Window):
-    def __init__(self) -> None:
-        super(LoginWindow, self).__init__()
-        
-        self.setGeometry(350,170, 1100, 750)
+class LoginWindow(QWidget):
+    def __init__(self, parent=None):
+        super(LoginWindow, self).__init__(parent)
         
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -40,11 +38,11 @@ class LoginWindow(Window):
         image.setIcon(QIcon('static/image/login.png'))  # Установите путь к вашему изображению
         image.setStyleSheet('''QWidget {background-color: rgba(0,0,0,0); border-radius: 20px;}''')
         image.setIconSize(QSize(450, 520))
-        image_glow = QGraphicsDropShadowEffect(self)
-        image_glow.setBlurRadius(80)  # радиус размытия
-        image_glow.setColor(QColor(123, 97, 255))  # цвет свечения
-        image_glow.setOffset(0, 0)  # смещение тени
-        image.setGraphicsEffect(image_glow)
+        self.image_glow = QGraphicsDropShadowEffect(self)
+        self.image_glow.setBlurRadius(80)  # радиус размытия
+        self.image_glow.setColor(QColor(123, 97, 255))  # цвет свечения
+        self.image_glow.setOffset(0, 0)  # смещение тени
+        image.setGraphicsEffect(self.image_glow)
 
         self.form_layout = QVBoxLayout()
         self.form_layout.setSpacing(15)
@@ -60,7 +58,11 @@ class LoginWindow(Window):
         pixmap = QPixmap('static/image/logo.png')
         pixmap.scaled(30, 30)
         logo.setPixmap(pixmap)
-        logo.setGraphicsEffect(glow)
+        self.glow = QGraphicsDropShadowEffect(self)
+        self.glow.setBlurRadius(20)  # радиус размытия
+        self.glow.setColor(QColor(123, 97, 255))  # цвет свечения
+        self.glow.setOffset(0, 0)  # смещение тени
+        logo.setGraphicsEffect(self.glow)
         welcome_layout.addWidget(logo)
 
         welcome_lable = QLabel('Welcome!')
@@ -135,7 +137,7 @@ class LoginWindow(Window):
         self.widget.setLayout(central_layout)
         
         layout.addWidget(self.widget)
-        self.main_layout.addLayout(layout)
+        self.setLayout(layout)
 
     def login(self):
         login_text = self.input_login.toPlainText()
@@ -148,6 +150,5 @@ class LoginWindow(Window):
             self.input_password.setStyleSheet('border: 0.5px solid darkred;')
             self.form_layout.addWidget(self.error_password)
         else:
-            window = MainWindow()
-            window.show()
-            self.close()
+            parent_window = self.window()  # Получаем главное окно
+            parent_window.replace_widget(MainWindow())  # Заменяем виджет на окно чата

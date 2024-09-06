@@ -8,10 +8,8 @@ from BlurWindow.blurWindow import blur
 if __name__ == '__main__':
     app = QApplication(sys.argv)
 
-    window = MainWindow()
+    window = Window()
+    window.main_layout.addWidget(LoginWindow())
     window.show()
-
-    # window2 = Window()
-    # window2.show()
 
     app.exec()

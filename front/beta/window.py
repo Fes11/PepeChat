@@ -13,6 +13,7 @@ class Window(QMainWindow):
     """Класс для создания окон. """
     def __init__(self) -> None:
         super(Window, self).__init__()
+        self.setGeometry(350,170, 1100, 750)
 
         # BG_COLOR = 'rgba(0,0,0,0.6)'
         # GlobalBlur(self.winId(), Acrylic=True, QWidget=self) # Сильный блюр
@@ -59,6 +60,17 @@ class Window(QMainWindow):
 
         self.sizegrip = QSizeGrip(self.main)
         self.sizegrip.setStyleSheet("width: 5px; height: 5px; margin 0px; padding: 0px;")
+
+    def replace_widget(self, new_widget):
+        # Удаляем старый виджет (LoginWindow)
+        if self.main_layout.count() > 0:
+            old_widget = self.main_layout.itemAt(0).widget()
+            if old_widget is not None:
+                old_widget.setParent(None)
+                old_widget.deleteLater()
+        
+        # Добавляем новый виджет (MainWindow)
+        self.main_layout.addWidget(new_widget)
 
 
 class TopPanel(QWidget):

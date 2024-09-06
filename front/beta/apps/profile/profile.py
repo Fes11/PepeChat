@@ -25,7 +25,7 @@ class MiniProfile(QWidget):
         layout.setContentsMargins(0,0,0,0)
 
         self.setStyleSheet('''QWidget {background-color: rgba(0, 0, 0, 0); border: none; border-radius: 10px;}''')
-        self.setMinimumWidth(60)
+        self.setMinimumWidth(65)
         self.setMaximumWidth(300)
         
         self.ava_file_list = QListWidget(self)
@@ -113,9 +113,7 @@ class MiniProfile(QWidget):
 
     def logout(self):
         from apps.authorization.login import LoginWindow
-        window = LoginWindow()
-        window.show()
-        self.window().close()
+        self.window().replace_widget(LoginWindow())
         
     @Property(int)
     def animatedHeight(self):
