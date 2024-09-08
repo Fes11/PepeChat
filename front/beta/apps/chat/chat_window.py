@@ -254,7 +254,7 @@ class Sidebar(QWidget):
         self.setLayout(layout)
 
     def resizeEvent(self, event):
-        if self.size().width() < 200:
+        if self.size().width() < 250:
             self.setMaximumWidth(65)
             self.new_chat_btn.setText('')
             self.serch.setVisible(False)
@@ -266,7 +266,6 @@ class Sidebar(QWidget):
         else:
             self.new_chat_btn.setText('  Создать чат')
             self.serch.setVisible(True)
-            self.setMaximumWidth(300)
             self.mini_profile.username.setVisible(True)
             self.mini_profile.user_id.setVisible(True)
             self.mini_profile.avatar.setVisible(True)
@@ -299,9 +298,10 @@ class AddChatDialog(QPushButton):
         
         main_widget = QWidget()
         main_widget.setFixedSize(400, 500)
-        main_widget.setStyleSheet(f'''QWidget {{background: #333333; color: white; border-radius: 10px; font-size: 13px;}}
-                                    QTextEdit {{background: {MAIN_BOX_COLOR}; padding-top: 7px; padding-left: 8px;}}
-                                    QPushButton {{background: {MAIN_BOX_COLOR};}}
+        main_widget.setStyleSheet(f'''QWidget {{background: rgba(0,0,0,40); color: white; border-radius: 10px; font-size: 13px;}}
+                                    QTextEdit {{background: {MAIN_BOX_COLOR}; padding-top: 7px; padding-left: 8px; font-weight: bold;}}
+                                    QLabel {{background: rgba(0,0,0,0); font-weight: bold; font-size: 13px;}}
+                                    QPushButton {{background: {MAIN_BOX_COLOR}; font-weight: bold;}}
                                     QPushButton:hover {{background: rgba(255,255,255, 0.3);}}''')
         main_layout.addWidget(main_widget)
         
@@ -309,39 +309,67 @@ class AddChatDialog(QPushButton):
         layout.setContentsMargins(0,0,0,0)
         layout.addWidget(self.background)
         
+        
         form_layout = QVBoxLayout()
-        form_layout.setContentsMargins(20,20,20,20)
+        form_layout.setSpacing(10)
+        form_layout.setContentsMargins(20,10,20,20)
+        
+        top_label_and_close_layout = QHBoxLayout()
+        
+        main_label = QLabel('Chat create')
+        main_label.setStyleSheet('font-size: 15px;')
+        top_label_and_close_layout.addWidget(main_label)
         
         close_btn = QPushButton()
+        close_btn.setObjectName('close_btn')
         close_btn.setIcon(QIcon('static/image/close_hover.png'))  # Установите путь к вашему изображению
+        close_btn.setStyleSheet('''#close_btn {background: rgba(0,0,0,0);}
+                                   #close_btn:hover {background: rgba(255,255,255,0.2);}''')
         close_btn.setIconSize(QSize(25, 25))
         close_btn.setFixedSize(30, 30)
         close_btn.setCursor(QCursor(Qt.PointingHandCursor))
         close_btn.clicked.connect(self.close_add_chat)
-        form_layout.addWidget(close_btn)
+        top_label_and_close_layout.addWidget(close_btn)
+        
+        form_layout.addLayout(top_label_and_close_layout)
+        
+        top_layout = QHBoxLayout()
         
         iamge = QPushButton()
         iamge.setIcon(QIcon('static/image/ava3.jpg'))  # Установите путь к вашему изображению
-        iamge.setIconSize(QSize(140, 140))
-        iamge.setFixedSize(150, 150)
+        iamge.setIconSize(QSize(90, 90))
+        iamge.setFixedSize(100, 100)
         iamge.setCursor(QCursor(Qt.PointingHandCursor))
-        form_layout.addWidget(iamge)
+        top_layout.addWidget(iamge)
+        
+        name_and_people_layout = QVBoxLayout()
         
         name_chat = QTextEdit()
         name_chat.setFixedHeight(40)
         name_chat.setPlaceholderText("Введите название чата...")
-        form_layout.addWidget(name_chat)
+        name_and_people_layout.addWidget(name_chat)
         
-        searc_people = QTextEdit()
+        searc_people = QPushButton(" Добавить участников")
         searc_people.setFixedHeight(40)
-        searc_people.setPlaceholderText("Добавте участников...")
-        form_layout.addWidget(searc_people)
+        searc_people.setCursor(QCursor(Qt.PointingHandCursor))
+        searc_people.setIcon(QIcon('static/image/add.png'))  # Установите путь к вашему изображению
+        searc_people.setIconSize(QSize(16, 16))
+        name_and_people_layout.addWidget(searc_people)
+        
+        top_layout.addLayout(name_and_people_layout)
+        form_layout.addLayout(top_layout)
+        
+        people_label = QLabel('Участники: ')
+        form_layout.addWidget(people_label)
         
         user_list = QStackedWidget()
         user_list.setStyleSheet(f'background: {MAIN_BOX_COLOR}; border: 1px solid rgba(0,0,0, 0.3)')
         form_layout.addWidget(user_list)
         
         create_btn = QPushButton('Создать')
+        create_btn.setObjectName('create_btn')
+        create_btn.setStyleSheet('''#create_btn {background-color: #7B61FF;}
+                                    #create_btn:hover {background: #9783FF;}''')
         create_btn.setFixedHeight(50)
         create_btn.setCursor(QCursor(Qt.PointingHandCursor))
         form_layout.addWidget(create_btn)

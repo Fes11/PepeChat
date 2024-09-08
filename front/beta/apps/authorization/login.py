@@ -79,12 +79,14 @@ class LoginWindow(QWidget):
         self.input_login = QTextEdit() 
         self.input_login.setFixedHeight(48)
         self.input_login.setPlaceholderText("Введите логин или мыло: ")
+        self.input_login.textChanged.connect(self.active_login_btn)
         self.form_layout.addWidget(self.input_login)
 
         self.input_password = QLineEdit()
         self.input_password.setEchoMode(QLineEdit.Password)
         self.input_password.setFixedHeight(48)
         self.input_password.setPlaceholderText("Введите пароль: ")
+        self.input_password.textChanged.connect(self.active_login_btn)
         self.form_layout.addWidget(self.input_password)
         
         self.new_password = QLabel('Forgot your password?')
@@ -93,17 +95,15 @@ class LoginWindow(QWidget):
         self.new_password.setFixedHeight(17)
         self.form_layout.addWidget(self.new_password)
 
-        self.error_login = QLabel('Неверный логин')
-        self.error_login.setStyleSheet('color: red;')
-
-        self.error_password = QLabel('Неверный пароль')
-        self.error_password.setStyleSheet('color: red;')
+        self.error_login = QLabel()
+        self.error_login.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.error_login.setStyleSheet('color: #7B61FF;')
         
         self.continue_btn = QPushButton('Login')
-        self.continue_btn.setStyleSheet('''QPushButton {color: rgba(255,255,255,0.65); background-color: rgba(255,255,255,0.25);
-                                                        border-radius: 10px; font-size: 16px; font-weight: bold;}
-                                           QPushButton:hover {background-color: rgba(255,255,255,0.4)}''')
+        self.continue_btn.setStyleSheet('''QPushButton {color: rgba(255,255,255,0.65); background-color: rgba(255,255,255,0.10);
+                                                        border-radius: 10px; font-size: 16px; font-weight: bold;}''')
         self.continue_btn.setFixedHeight(48)
+        self.continue_btn.setEnabled(False)
         self.continue_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.continue_btn.clicked.connect(self.login)
         self.form_layout.addWidget(self.continue_btn)
@@ -138,17 +138,30 @@ class LoginWindow(QWidget):
         
         layout.addWidget(self.widget)
         self.setLayout(layout)
+    
+    def active_login_btn(self):
+        if self.input_login.toPlainText() and self.input_password.text():
+            self.continue_btn.setEnabled(True)
+            self.continue_btn.setStyleSheet('''QPushButton {color: rgba(255,255,255,0.65); background-color: rgba(255,255,255,0.25);
+                                                        border-radius: 10px; font-size: 16px; font-weight: bold;}
+                                                QPushButton:hover {background-color: rgba(255,255,255,0.4)}''')
+        else:
+            self.continue_btn.setEnabled(False)
+            self.continue_btn.setStyleSheet('''QPushButton {color: rgba(255,255,255,0.65); background-color: rgba(255,255,255,0.1);
+                                                        border-radius: 10px; font-size: 16px; font-weight: bold;}''')
 
     def login(self):
         login_text = self.input_login.toPlainText()
         password_text = self.input_password.text()
 
         if login_text != '123':
-            self.input_login.setStyleSheet('border: 0.5px solid darkred;')
+            self.input_login.setStyleSheet('border: 0.5px solid #7B61FF;')
             self.form_layout.addWidget(self.error_login)
+            self.error_login.setText('Неверный логин')
         elif password_text != '123':
-            self.input_password.setStyleSheet('border: 0.5px solid darkred;')
-            self.form_layout.addWidget(self.error_password)
+            self.input_password.setStyleSheet('border: 0.5px solid #7B61FF;')
+            self.form_layout.addWidget(self.error_login)
+            self.error_login.setText('Неверный пароль')
         else:
             parent_window = self.window()  # Получаем главное окно
             parent_window.replace_widget(MainWindow())  # Заменяем виджет на окно чата
