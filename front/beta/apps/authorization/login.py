@@ -89,15 +89,18 @@ class LoginWindow(QWidget):
         self.input_password.textChanged.connect(self.active_login_btn)
         self.form_layout.addWidget(self.input_password)
         
+        self.error_login = QLabel()
+        self.error_login.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.error_login.setStyleSheet('color: #7B61FF;')
+        self.error_login.setVisible(False)
+        self.form_layout.addWidget(self.error_login)
+        
         self.new_password = QLabel('Forgot your password?')
         self.new_password.setStyleSheet('''QLabel:hover {color: rgba(255,255,255,0.65);}''')
         self.new_password.setCursor(QCursor(Qt.PointingHandCursor))
         self.new_password.setFixedHeight(17)
         self.form_layout.addWidget(self.new_password)
 
-        self.error_login = QLabel()
-        self.error_login.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.error_login.setStyleSheet('color: #7B61FF;')
         
         self.continue_btn = QPushButton('Login')
         self.continue_btn.setStyleSheet('''QPushButton {color: rgba(255,255,255,0.65); background-color: rgba(255,255,255,0.10);
@@ -156,12 +159,13 @@ class LoginWindow(QWidget):
 
         if login_text != '123':
             self.input_login.setStyleSheet('border: 0.5px solid #7B61FF;')
-            self.form_layout.addWidget(self.error_login)
+            self.error_login.setVisible(True)
             self.error_login.setText('Неверный логин')
         elif password_text != '123':
             self.input_password.setStyleSheet('border: 0.5px solid #7B61FF;')
-            self.form_layout.addWidget(self.error_login)
+            self.error_login.setVisible(True)
             self.error_login.setText('Неверный пароль')
         else:
             parent_window = self.window()  # Получаем главное окно
+            self.error_login.setVisible(False)
             parent_window.replace_widget(MainWindow())  # Заменяем виджет на окно чата

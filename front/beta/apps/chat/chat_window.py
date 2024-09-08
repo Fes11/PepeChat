@@ -338,8 +338,14 @@ class AddChatDialog(QPushButton):
         iamge = QPushButton()
         iamge.setIcon(QIcon('static/image/ava3.jpg'))  # Установите путь к вашему изображению
         iamge.setIconSize(QSize(90, 90))
-        iamge.setFixedSize(100, 100)
+        iamge.setFixedSize(90, 90)
         iamge.setCursor(QCursor(Qt.PointingHandCursor))
+        
+        self.glow = QGraphicsDropShadowEffect(self)
+        self.glow.setBlurRadius(10)  # радиус размытия
+        self.glow.setColor(QColor(255, 255, 255))  # цвет свечения
+        self.glow.setOffset(0, 0)  # смещение тени
+        iamge.setGraphicsEffect(self.glow)
         top_layout.addWidget(iamge)
         
         name_and_people_layout = QVBoxLayout()
