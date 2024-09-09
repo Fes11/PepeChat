@@ -1,8 +1,9 @@
 from apps.chat.messages import MessagesList
 from apps.chat.style import MAIN_BOX_COLOR, BG_COLOR
+from dialog import DialogWindow
 from window import Window
 from datetime import datetime
-from PySide6.QtGui import QIcon, QCursor, QPixmap, QColor
+from PySide6.QtGui import QIcon, QCursor, QPixmap, QColor, QTransform
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (QTextEdit, QScrollArea, QVBoxLayout, QLabel, QListWidget, QLineEdit, QGraphicsDropShadowEffect,
                                QHBoxLayout, QWidget, QSizePolicy, QPushButton, QStackedWidget, QGraphicsBlurEffect)
@@ -27,7 +28,7 @@ class MainWindow(QWidget):
         self.stack = QStackedWidget(self)
         layout.addWidget(self.stack)
         
-        self.box = AddChatDialog(self)
+        self.box = CreateChatDialog(self)
         self.setLayout(layout)
     
     def open_add_chat(self):
@@ -281,34 +282,15 @@ class Sidebar(QWidget):
 
         # Добавляем виджет чата в список
         self.main_window.chat_widgets.append(self.chat_widget)
-
-
-class AddChatDialog(QPushButton):
+        
+class CreateChatDialog(DialogWindow):
+    '''Модальное окно создания чата. 
+    
+       Наследуеться от QPushButton чтобы при нажатии на 
+       пустое, затемненное пространство закрывать модальное окно. '''
+    
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setVisible(False)
-        
-        main_layout = QVBoxLayout()
-        main_layout.setContentsMargins(0,0,0,0)
-        main_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
-        self.background = QPushButton()
-        self.background.clicked.connect(self.close_add_chat)
-        self.background.setStyleSheet('background: rgba(0, 0, 0, 0.5); border: none; border-radius:10px;')
-        
-        main_widget = QWidget()
-        main_widget.setFixedSize(400, 500)
-        main_widget.setStyleSheet(f'''QWidget {{background: rgba(0,0,0,40); color: white; border-radius: 10px; font-size: 13px;}}
-                                    QTextEdit {{background: {MAIN_BOX_COLOR}; padding-top: 7px; padding-left: 8px; font-weight: bold;}}
-                                    QLabel {{background: rgba(0,0,0,0); font-weight: bold; font-size: 13px;}}
-                                    QPushButton {{background: {MAIN_BOX_COLOR}; font-weight: bold;}}
-                                    QPushButton:hover {{background: rgba(255,255,255, 0.3);}}''')
-        main_layout.addWidget(main_widget)
-        
-        layout = QVBoxLayout()
-        layout.setContentsMargins(0,0,0,0)
-        layout.addWidget(self.background)
-        
         
         form_layout = QVBoxLayout()
         form_layout.setSpacing(10)
@@ -328,7 +310,7 @@ class AddChatDialog(QPushButton):
         close_btn.setIconSize(QSize(25, 25))
         close_btn.setFixedSize(30, 30)
         close_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        close_btn.clicked.connect(self.close_add_chat)
+        close_btn.clicked.connect(self.close)
         top_label_and_close_layout.addWidget(close_btn)
         
         form_layout.addLayout(top_label_and_close_layout)
@@ -361,9 +343,25 @@ class AddChatDialog(QPushButton):
         searc_people.setIcon(QIcon('static/image/add.png'))  # Установите путь к вашему изображению
         searc_people.setIconSize(QSize(16, 16))
         name_and_people_layout.addWidget(searc_people)
-        
         top_layout.addLayout(name_and_people_layout)
         form_layout.addLayout(top_layout)
+
+        rules_layout = QHBoxLayout()
+
+        rules_label = QLabel('Роли')
+        rules_layout.addWidget(rules_label)
+
+        rules_btn = QPushButton()
+        rules_btn.setObjectName('rules_btn')
+        rules_btn.setIcon(QIcon('static/image/close_hover.png'))  # Установите путь к вашему изображению
+        rules_btn.setStyleSheet('''#rules_btn {background: rgba(255,255,255,0.1); border-radius: 5px;}
+                                   #rules_btn:hover {background: rgba(255,255,255,0.2);}''')
+        rules_btn.setIconSize(QSize(22, 22))
+        self.rotate_icon(rules_btn, 45)
+        rules_btn.setFixedSize(25, 25)
+        rules_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        rules_layout.addWidget(rules_btn)
+        form_layout.addLayout(rules_layout)
         
         people_label = QLabel('Участники: ')
         form_layout.addWidget(people_label)
@@ -380,15 +378,15 @@ class AddChatDialog(QPushButton):
         create_btn.setCursor(QCursor(Qt.PointingHandCursor))
         form_layout.addWidget(create_btn)
         
-        main_widget.setLayout(form_layout)
-        
-        layout.addLayout(main_layout)
-        self.setLayout(layout)
+        self.main_widget.setLayout(form_layout)
     
-    def close_add_chat(self):
-        self.setVisible(False)
-    
-    def resizeEvent(self, event):
-        self.background.setGeometry(0, 0, self.width(), self.height())
-        super().resizeEvent(event)
-        
+    def rotate_icon(self, widget, angle):
+        # Извлекаем изображение из иконки
+        pixmap = widget.icon().pixmap(widget.iconSize())
+        # Создаем трансформацию для вращения
+        transform = QTransform().rotate(angle)
+        # Применяем трансформацию к изображению
+        rotated_pixmap = pixmap.transformed(transform)
+        # Обновляем иконку на кнопке
+        rotated_icon = QIcon(rotated_pixmap)
+        widget.setIcon(rotated_icon)

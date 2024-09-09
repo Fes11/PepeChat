@@ -7,7 +7,7 @@ from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (QApplication, QTextEdit, QScrollArea, QVBoxLayout, QLabel, QListWidget,
                                QHBoxLayout, QWidget, QSizePolicy, QPushButton, QFileDialog)
 
-from apps.chat.fields import WrapLabel, PlainTextEdit
+from apps.chat.fields import MessageBubble, PlainTextEdit
 from apps.chat.style import send_btn_style, MAIN_BOX_COLOR
 from BlurWindow.blurWindow import blur
 
@@ -161,11 +161,11 @@ class MessagesList(QWidget):
         message.setWordWrap(True)
         message.adjustSize()
         message.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        message.setMaximumWidth(400)
+        message.setMaximumWidth(500)
         message.setStyleSheet('''font-size: 14px; background: rgba(0, 0, 0, 0); color: white;''')
 
         message_bubble = QWidget()
-        message_bubble.setStyleSheet('''QWidget {background: rgba(0, 0, 0, 0);}''')
+        message_bubble.setStyleSheet('''background: rgba(0, 0, 0, 0);''')
         message_bubble.setContentsMargins(0,0,0,0)
 
         message_buble_layout = QHBoxLayout()
@@ -189,35 +189,30 @@ class MessagesList(QWidget):
 
         if i % 2:
             message_bubble.setStyleSheet('''
-                    QWidget {
                         border-top-left-radius: 12px;
                         border-top-right-radius: 12px;
                         border-bottom-left-radius: 12px;
                         border-bottom-right-radius: 0px;
                         background: rgba(123, 97, 255, 1);
-                        padding: 8px;
-                    }
-                ''')
-            self.message_layout.addStretch()
+                        padding: 8px;''')
+            self.message_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
             self.message_layout.addWidget(message_bubble)
 
             avatar_layout.addWidget(me_avatar)
             self.message_layout.addLayout(avatar_layout)
         else:
             message_bubble.setStyleSheet('''
-                    QWidget {
                         border-top-left-radius: 12px;
                         border-top-right-radius: 12px;
                         border-bottom-left-radius: 0px;
                         border-bottom-right-radius: 12px;
                         background: rgba(255, 255, 255, 0.1);
-                        padding: 8px;
-                    }
-                ''')
+                        padding: 8px;''')
             avatar_layout.addWidget(mes_avatar)
             self.message_layout.addLayout(avatar_layout)
             self.message_layout.addWidget(message_bubble)
-            self.message_layout.addStretch()
+            self.message_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+            # self.message_layout.addStretch()
         
         QtCore.QTimer.singleShot(0, self.scrollToBottom)
 
@@ -234,7 +229,11 @@ class MessagesList(QWidget):
     def eventFilter(self, obj, event):
         if event.type() == QtCore.QEvent.KeyPress and obj is self.message_input:
             if event.key() == QtCore.Qt.Key_Return and self.message_input.hasFocus():
-                self.send_message()
+                if event.modifiers() == QtCore.Qt.ControlModifier:
+                    self.message_input.insertPlainText("\n")
+                else:
+                    self.send_message()
+                    return True
         return super().eventFilter(obj, event)
     
     def adjustHeight(self):
