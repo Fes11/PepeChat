@@ -7,7 +7,7 @@ from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (QApplication, QTextEdit, QScrollArea, QVBoxLayout, QLabel, QListWidget,
                                QHBoxLayout, QWidget, QSizePolicy, QPushButton, QFileDialog)
 
-from apps.chat.fields import MessageBubble, PlainTextEdit
+from apps.chat.fields import PlainTextEdit
 from apps.chat.style import send_btn_style, MAIN_BOX_COLOR
 from BlurWindow.blurWindow import blur
 
@@ -71,10 +71,15 @@ class MessagesList(QWidget):
 
         self.scroll_area.setWidget(self.text)
 
-        self.text.setLayout(self.text_layout) 
+        self.text.setLayout(self.text_layout)
+
+        self.message_input_layout = QHBoxLayout()
+        self.message_input_layout.setContentsMargins(0,0,0,0)
+        self.message_input_layout.setSpacing(0)
         
         # Поле ввода сообщения
         self.message_input = PlainTextEdit()
+        self.message_input.setFixedHeight(45)
         self.message_input.setAlignment(Qt.AlignmentFlag.AlignVCenter)
         self.message_input.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.message_input.setContentsMargins(0,0,0,0)
@@ -82,12 +87,33 @@ class MessagesList(QWidget):
         self.message_input.setPlaceholderText("Напишите сообщение...")
         self.message_input.textChanged.connect(self.adjustHeight)
         self.message_input.setMinimumWidth(400)
-        self.message_input.setFixedHeight(45)
-        self.message_input.setStyleSheet('''QTextEdit {color: white; 
+        self.message_input.setStyleSheet('''background-color: rgba(255, 255, 255, 0); padding: 10px 0px 10px 15px;''')
+
+        self.message_input_widget = QWidget()
+        self.message_input_widget.setFixedHeight(self.message_input.size().height())
+        self.message_input_widget.setStyleSheet('''color: white; border: none;
                                             border-radius: 10px; 
-                                            padding: 10px 0px 5px 10px; 
                                             background-color: rgba(255, 255, 255, 0.1); 
-                                            font-weight: bold;}''')
+                                            font-weight: bold;''')
+
+        self.send_file_layout = QVBoxLayout()
+        self.send_file_layout.setAlignment(Qt.AlignmentFlag.AlignBottom)
+
+        # Кнопка для отправки файлов
+        self.send_file = QPushButton()
+        self.send_file.setFixedSize(45, 42)
+        self.send_file.setCursor(QCursor(Qt.PointingHandCursor))
+        self.send_file.setStyleSheet('''QPushButton {background-color: rgba(255, 255, 255, 0);}
+                                        QPushButton:hover {background-color: rgba(255, 255, 255, 0.1);}''')
+        self.send_file.setIcon(QIcon('static/image/paper-clip.png'))
+        self.send_file.setIconSize(QSize(24, 24))
+        self.send_file.clicked.connect(self.open_file_dialog)
+
+        self.send_file_layout.addWidget(self.send_file)
+
+        self.message_input_layout.addWidget(self.message_input)
+        self.message_input_layout.addLayout(self.send_file_layout)
+        self.message_input_widget.setLayout(self.message_input_layout)
         
         
         # Кнопка для отправки сообщения
@@ -104,21 +130,12 @@ class MessagesList(QWidget):
         self.send_message_btn.clicked.connect(self.send_message)
         send_message_layout.addWidget(self.send_message_btn)
 
-        # Кнопка для отправки файлов
-        self.send_file = QPushButton()
-        self.send_file.setFixedSize(45, 42)
-        self.send_file.setCursor(QCursor(Qt.PointingHandCursor))
-        self.send_file.setStyleSheet(send_btn_style)
-        self.send_file.setIcon(QIcon('static/image/paper-clip.png'))
-        self.send_file.setIconSize(QSize(24, 24))
-        self.send_file.clicked.connect(self.open_file_dialog)
-
         # Слой панели для ввода
         self.input_layout = QHBoxLayout()
         self.input_layout.setContentsMargins(10,0,10,10)
         self.input_layout.setSpacing(10)
         self.input_layout.setAlignment(Qt.AlignmentFlag.AlignBottom)
-        self.input_layout.addWidget(self.message_input)
+        self.input_layout.addWidget(self.message_input_widget)
         # self.input_layout.addWidget(self.send_file)
         self.input_layout.addLayout(send_message_layout)
 
@@ -162,7 +179,7 @@ class MessagesList(QWidget):
         message.adjustSize()
         message.setTextInteractionFlags(Qt.TextSelectableByMouse)
         message.setMaximumWidth(500)
-        message.setStyleSheet('''font-size: 14px; background: rgba(0, 0, 0, 0); color: white;''')
+        message.setStyleSheet('''font-size: 14px; background: rgba(0, 0, 0, 0); color: white; font-weight: medium;''')
 
         message_bubble = QWidget()
         message_bubble.setStyleSheet('''background: rgba(0, 0, 0, 0);''')
@@ -212,7 +229,6 @@ class MessagesList(QWidget):
             self.message_layout.addLayout(avatar_layout)
             self.message_layout.addWidget(message_bubble)
             self.message_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-            # self.message_layout.addStretch()
         
         QtCore.QTimer.singleShot(0, self.scrollToBottom)
 
@@ -231,6 +247,8 @@ class MessagesList(QWidget):
             if event.key() == QtCore.Qt.Key_Return and self.message_input.hasFocus():
                 if event.modifiers() == QtCore.Qt.ControlModifier:
                     self.message_input.insertPlainText("\n")
+                    scroll_bar = self.message_input.verticalScrollBar()
+                    scroll_bar.setValue(scroll_bar.maximum())
                 else:
                     self.send_message()
                     return True
@@ -250,7 +268,8 @@ class MessagesList(QWidget):
         # Ограничиваем высоту, если текст занимает слишком много места
         new_height = max(min_height, min(int(height), max_height))
         self.message_input.setFixedHeight(new_height)
-        self.input_panel.setFixedHeight(new_height + 19)
+        self.input_panel.setFixedHeight(new_height + 11)
+        self.message_input_widget.setFixedHeight(self.message_input.size().height() - 10)
     
     def open_file_dialog(self):
         dialog = QFileDialog(self)

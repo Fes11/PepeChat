@@ -1,65 +1,58 @@
-from window import Window
-from PySide6.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout
-from PySide6.QtCore import QRect, Qt, QPropertyAnimation
-from PySide6.QtGui import QBrush, QColor
+from PySide6.QtWidgets import QPushButton, QApplication
+from PySide6.QtGui import QPixmap, QPainter, QIcon, QColor
+from PySide6.QtCore import QSize, QRect, Qt
 import sys
 
-from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QMessageBox
-from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
-from PySide6.QtMultimediaWidgets import QVideoWidget
-from PySide6.QtCore import QUrl, QTimer
-import sys
-import os
-
-class LoadingWindow(QWidget):
+class DarkenButton(QPushButton):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Загрузка")
-        self.setGeometry(100, 100, 640, 480)
-
-        # Создаем видео-виджет для воспроизведения видео
-        self.video_widget = QVideoWidget(self)
-        self.player = QMediaPlayer(self)
-        self.audio_output = QAudioOutput(self)
-        self.player.setAudioOutput(self.audio_output)
-        self.player.setVideoOutput(self.video_widget)
-
-        # Проверяем наличие видеофайла
-        video_path = "static/loading.mp4"
-        if not os.path.exists(video_path):
-            QMessageBox.critical(self, "Ошибка", f"Видеофайл не найден: {video_path}")
-            sys.exit(1)
-
-        # Загружаем видео
-        video_url = QUrl.fromLocalFile(os.path.abspath(video_path))
-        self.player.setSource(video_url)
-
-        # Настраиваем макет
-        layout = QVBoxLayout(self)
-        layout.addWidget(self.video_widget)
-
-        # Подключаем сигналы
-        self.player.errorOccurred.connect(self.handle_error)
-        self.player.mediaStatusChanged.connect(self.handle_media_status)
-
-        # Запуск воспроизведения видео
-        self.player.play()
-
-    def handle_error(self, error):
-        QMessageBox.critical(self, "Ошибка воспроизведения", self.player.errorString())
-        sys.exit(1)
-
-    def handle_media_status(self, status):
-        if status == QMediaPlayer.MediaStatus.EndOfMedia:
-            self.close()
-            self.show_main_window()
-
-
-
-if __name__ == "__main__":
-    app = QApplication([])
+        self.original_pixmap = QPixmap('static/image/ava3.jpg')
+        self.overlay_pixmap = QPixmap('static/image/camera.png')  # Второе изображение для наложения
+        
+        self.setStyleSheet('background-color: rgba(255,255,255, 0);')
+        self.border_icon = self.get_rounded_pixmap(self.original_pixmap)
+        self.setIconSize(QSize(90, 90))
+        self.setIcon(QIcon(self.border_icon))
     
-    window = Window()
-    window.main_layout.addWidget(LoadingWindow())
-    window.show()
-    app.exec()
+    def enterEvent(self, event):
+        darkened_pixmap = self.border_icon.copy()
+        painter = QPainter(darkened_pixmap)
+        # Добавляем затемнение
+        painter.fillRect(darkened_pixmap.rect(), QColor(0, 0, 0, 100))  
+        
+        # Накладываем второе изображение поверх
+        overlay_size = self.overlay_pixmap.size()
+        painter.drawPixmap(
+            (darkened_pixmap.width() - overlay_size.width()) // 2,  # По центру
+            (darkened_pixmap.height() - overlay_size.height()) // 2,
+            self.overlay_pixmap
+        )
+        
+        painter.end()
+        self.setIcon(QIcon(darkened_pixmap))  # Устанавливаем иконку с наложением
+        super().enterEvent(event)
+    
+    def leaveEvent(self, event):
+        self.setIcon(QIcon(self.border_icon))  # Возвращаем оригинальную иконку
+        super().leaveEvent(event)
+    
+    def get_rounded_pixmap(self, pixmap):
+        size = pixmap.size()
+        rounded_pixmap = QPixmap(size)
+        rounded_pixmap.fill(Qt.transparent)  # Прозрачный фон
+
+        painter = QPainter(rounded_pixmap)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setBrush(QPixmap(pixmap))  # Исходное изображение
+        painter.setPen(Qt.NoPen)
+        
+        # Рисуем закругленные углы
+        painter.drawRoundedRect(QRect(0, 0, size.width(), size.height()), 30, 30)
+        painter.end()
+
+        return rounded_pixmap
+
+app = QApplication(sys.argv)
+button = DarkenButton()
+button.show()
+sys.exit(app.exec())

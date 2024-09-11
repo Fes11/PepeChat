@@ -7,7 +7,7 @@ from PySide6.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve, Property
 from PySide6.QtWidgets import (QApplication, QTextEdit, QScrollArea, QVBoxLayout, QLabel, QListWidget,
                                QHBoxLayout, QWidget, QSizePolicy, QPushButton, QFileDialog, QGridLayout)
 
-from apps.chat.fields import WrapLabel
+from apps.chat.fields import UserWidget
 from apps.chat.style import send_btn_style, MAIN_BOX_COLOR
 
 
@@ -35,34 +35,9 @@ class MiniProfile(QWidget):
         self.widget.setStyleSheet(f'''QWidget {{background-color: {MAIN_BOX_COLOR}}}; border: none;''')
 
         self.main_layout = QVBoxLayout()
-        self.main_layout.setContentsMargins(13,10,15,10)
+        self.main_layout.setContentsMargins(13,10,10,10)
 
-        self.avatar = QPushButton()
-        self.avatar.setContentsMargins(0,0,0,0)
-        self.avatar.setFixedSize(50, 50)
-        self.avatar.setStyleSheet('''QPushButton {background-color: rgba(0, 0, 0, 0); border-radius: 20px;}''')
-        self.avatar.setCursor(QCursor(Qt.PointingHandCursor))
-        self.avatar.setIcon(QIcon('static/image/ava.png'))
-        self.avatar.setIconSize(QSize(40, 40))
-        self.avatar.clicked.connect(self.open_file_dialog)
-
-        profile_info_layout = QVBoxLayout()
-        profile_info_layout.setSpacing(5)
-        profile_info_layout.setContentsMargins(0,0,0,0)
-
-        self.username = QTextEdit('Nicname')
-        self.username.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.username.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.username.setFixedHeight(30)
-        self.username.setStyleSheet('''QTextEdit {background-color: rgba(0, 0, 0, 0); color: rgba(255, 255, 255, 1); font-weight: bold; font-size: 13px;}''')
-        profile_info_layout.addWidget(self.username)
-
-        self.user_id = QTextEdit('@kyrlk')
-        self.user_id.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.user_id.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.user_id.setFixedHeight(30)
-        self.user_id.setStyleSheet('''QTextEdit {background-color: rgba(0, 0, 0, 0); color: rgba(255, 255, 255, 0.35); font-size: 12px; font-weight: bold;}''')
-        profile_info_layout.addWidget(self.user_id)
+        self.user_widget = UserWidget(self)
 
         self.settings = QPushButton()
         self.settings.setFixedSize(40, 40)
@@ -72,13 +47,7 @@ class MiniProfile(QWidget):
         self.settings.setIconSize(QSize(30, 30))
         self.settings.clicked.connect(self.open_settings)
 
-        self.data_layout = QHBoxLayout()
-        self.data_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self.data_layout.setContentsMargins(0,0,0,0)
-
-        self.data_layout.addWidget(self.avatar)
-        self.data_layout.addLayout(profile_info_layout)
-        self.data_layout.addWidget(self.settings)
+        self.user_widget.data_layout.addWidget(self.settings)
 
         send_layout = QHBoxLayout()
 
@@ -101,7 +70,7 @@ class MiniProfile(QWidget):
         send_layout.addStretch()
         send_layout.addWidget(self.send_change_profile)
 
-        self.main_layout.addLayout(self.data_layout)
+        self.main_layout.addWidget(self.user_widget)
         self.main_layout.addStretch()
         self.main_layout.addLayout(send_layout)
 
@@ -131,18 +100,18 @@ class MiniProfile(QWidget):
     @avatarSize.setter
     def avatarSize(self, value):
         self._avatar_size = value
-        self.avatar.setFixedSize(value)
-        self.avatar.setIconSize(value)
+        self.user_widget.avatar.setFixedSize(value)
+        self.user_widget.avatar.setIconSize(value)
 
     def open_settings(self):
         if self.height() == 60:
-            self.avatar.setStyleSheet('''QPushButton {background-color: rgba(0, 0, 0, 0); border-radius: 10px}''')
+            self.user_widget.avatar.setStyleSheet('''QPushButton {background-color: rgba(0, 0, 0, 0); border-radius: 10px}''')
             if self.size().width() > 200:
                 self.send_change_profile.setVisible(True)
             self.logout_btn.setVisible(True)
             self.animate(200, QSize(80, 80))
         else:
-            self.avatar.setStyleSheet('''QPushButton {background-color: rgba(0, 0, 0, 0); border-radius: 20px}''')
+            self.user_widget.avatar.setStyleSheet('''QPushButton {background-color: rgba(0, 0, 0, 0); border-radius: 20px}''')
             self.send_change_profile.setVisible(False)
             self.logout_btn.setVisible(False)
             self.animate(60, QSize(40, 40))

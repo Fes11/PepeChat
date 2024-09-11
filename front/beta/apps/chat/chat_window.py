@@ -1,12 +1,13 @@
 from apps.chat.messages import MessagesList
 from apps.chat.style import MAIN_BOX_COLOR, BG_COLOR
 from dialog import DialogWindow
+from apps.chat.fields import DarkenButton, UserWidget
 from window import Window
 from datetime import datetime
 from PySide6.QtGui import QIcon, QCursor, QPixmap, QColor, QTransform
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (QTextEdit, QScrollArea, QVBoxLayout, QLabel, QListWidget, QLineEdit, QGraphicsDropShadowEffect,
-                               QHBoxLayout, QWidget, QSizePolicy, QPushButton, QStackedWidget, QGraphicsBlurEffect)
+                               QHBoxLayout, QWidget, QSizePolicy, QPushButton, QStackedWidget, QListWidgetItem)
 from apps.profile.profile import MiniProfile
 
 class MainWindow(QWidget):
@@ -24,6 +25,16 @@ class MainWindow(QWidget):
         # Добавляем виджеты в окно
         self.sidebar = Sidebar(self)
         layout.addWidget(self.sidebar)
+
+        # self.first_chat_btn = QPushButton('+ Начать чат')
+        # self.first_chat_btn.setFixedSize(200, 40)
+        # self.first_chat_btn.move(200, 40)
+        # self.first_chat_btn.setStyleSheet('''QPushButton {background-color: rgba(255, 255, 255, 0.1); color:rgba(255, 255, 255, 0.6); 
+        #                                                 font-weight: bold; border:none; font-size: 11px; border-radius: 10px;}
+        #                                    QPushButton:hover{background-color: rgba(255, 255, 255, 0.2);}''')
+        # self.first_chat_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        # self.stack.addWidget(self.first_chat_btn)
+        # self.stack.setCurrentIndex(1)
 
         self.stack = QStackedWidget(self)
         layout.addWidget(self.stack)
@@ -196,14 +207,33 @@ class Sidebar(QWidget):
         self.chat_scroll.setWidget(self.sidebar)
 
         # Поиск
-        self.serch = QTextEdit()
-        self.serch.setMaximumHeight(40)
-        self.serch.setPlaceholderText("Поиск...")
-        self.serch.setStyleSheet('''QTextEdit {background-color: rgba(255, 255, 255, 0.1); color: white; border-radius: 16px; padding: 8px 0 5px 10px;}''')
+        self.search_layout = QHBoxLayout()
+        self.search_layout.setSpacing(0)
+        self.search_layout.setContentsMargins(0,0,0,0)
 
-        serch_layout = QHBoxLayout()
-        serch_layout.setSpacing(10)
-        serch_layout.setContentsMargins(0,0,0,0)
+        self.search_widget = QWidget()
+        self.search_widget.setMaximumHeight(40)
+        self.search_widget.setStyleSheet('''background-color: rgba(255, 255, 255, 0.1); color: white; 
+                                            border-radius: 16px;''')
+
+        self.seatch_image = QPushButton()
+        self.seatch_image.setFixedSize(30, 40)
+        self.seatch_image.setStyleSheet('''background-color: rgba(255, 255, 255, 0); padding-left: 10px;''')
+        self.seatch_image.setIcon(QIcon('static/image/search_icon.png'))  # Установите путь к вашему изображению
+        self.seatch_image.setIconSize(QSize(24, 24))
+
+        self.serch = QTextEdit()
+        self.serch.setStyleSheet('''background-color: rgba(255, 255, 255, 0); padding-top: 8px; padding-left: 5px;
+                                    font-weight: bold;''')
+        self.serch.setPlaceholderText("Search...")
+
+        self.search_layout.addWidget(self.seatch_image)
+        self.search_layout.addWidget(self.serch)
+        self.search_widget.setLayout(self.search_layout)
+
+        top_layout = QHBoxLayout()
+        top_layout.setSpacing(10)
+        top_layout.setContentsMargins(0,0,0,0)
 
         logo = QLabel(self)
         pixmap = QPixmap('static/image/logo.png')
@@ -217,8 +247,8 @@ class Sidebar(QWidget):
         self.glow.setOffset(0, 0)  # смещение тени
         logo.setGraphicsEffect(self.glow)
 
-        serch_layout.addWidget(logo)
-        serch_layout.addWidget(self.serch)
+        top_layout.addWidget(logo)
+        top_layout.addWidget(self.search_widget)
 
         self.new_chat_btn = QPushButton()
         self.new_chat_btn.setFixedHeight(35)
@@ -240,7 +270,7 @@ class Sidebar(QWidget):
         top_sidebar.setContentsMargins(10, 10, 10, 0)
 
         # Добавляем виджеты
-        top_sidebar.addLayout(serch_layout)
+        top_sidebar.addLayout(top_layout)
         top_sidebar.addWidget(self.new_chat_btn)
         top_sidebar.addWidget(chat_list_lable)
         self.sidebar_layout.addLayout(top_sidebar)
@@ -258,18 +288,18 @@ class Sidebar(QWidget):
         if self.size().width() < 250:
             self.setMaximumWidth(65)
             self.new_chat_btn.setText('')
-            self.serch.setVisible(False)
-            self.mini_profile.username.setVisible(False)
-            self.mini_profile.user_id.setVisible(False)
-            self.mini_profile.avatar.setVisible(False)
+            self.search_widget.setVisible(False)
+            self.mini_profile.user_widget.username.setVisible(False)
+            self.mini_profile.user_widget.user_id.setVisible(False)
+            self.mini_profile.user_widget.avatar.setVisible(False)
             self.mini_profile.send_change_profile.setVisible(False)
-            self.mini_profile.data_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+            self.mini_profile.user_widget.data_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         else:
             self.new_chat_btn.setText('  Создать чат')
-            self.serch.setVisible(True)
-            self.mini_profile.username.setVisible(True)
-            self.mini_profile.user_id.setVisible(True)
-            self.mini_profile.avatar.setVisible(True)
+            self.search_widget.setVisible(True)
+            self.mini_profile.user_widget.username.setVisible(True)
+            self.mini_profile.user_widget.user_id.setVisible(True)
+            self.mini_profile.user_widget.avatar.setVisible(True)
         super().resizeEvent(event)
 
     def add_chat(self):
@@ -316,21 +346,14 @@ class CreateChatDialog(DialogWindow):
         form_layout.addLayout(top_label_and_close_layout)
         
         top_layout = QHBoxLayout()
+        top_layout.setSpacing(15)
         
-        iamge = QPushButton()
-        iamge.setIcon(QIcon('static/image/ava3.jpg'))  # Установите путь к вашему изображению
-        iamge.setIconSize(QSize(90, 90))
-        iamge.setFixedSize(90, 90)
+        iamge = DarkenButton()
         iamge.setCursor(QCursor(Qt.PointingHandCursor))
-        
-        self.glow = QGraphicsDropShadowEffect(self)
-        self.glow.setBlurRadius(10)  # радиус размытия
-        self.glow.setColor(QColor(255, 255, 255))  # цвет свечения
-        self.glow.setOffset(0, 0)  # смещение тени
-        iamge.setGraphicsEffect(self.glow)
         top_layout.addWidget(iamge)
         
         name_and_people_layout = QVBoxLayout()
+        name_and_people_layout.setSpacing(10)
         
         name_chat = QTextEdit()
         name_chat.setFixedHeight(40)
@@ -342,6 +365,7 @@ class CreateChatDialog(DialogWindow):
         searc_people.setCursor(QCursor(Qt.PointingHandCursor))
         searc_people.setIcon(QIcon('static/image/add.png'))  # Установите путь к вашему изображению
         searc_people.setIconSize(QSize(16, 16))
+        searc_people.clicked.connect(self.add_user)
         name_and_people_layout.addWidget(searc_people)
         top_layout.addLayout(name_and_people_layout)
         form_layout.addLayout(top_layout)
@@ -366,19 +390,88 @@ class CreateChatDialog(DialogWindow):
         people_label = QLabel('Участники: ')
         form_layout.addWidget(people_label)
         
-        user_list = QStackedWidget()
-        user_list.setStyleSheet(f'background: {MAIN_BOX_COLOR}; border: 1px solid rgba(0,0,0, 0.3)')
-        form_layout.addWidget(user_list)
+        self.user_list = QListWidget()
+        self.user_list.setStyleSheet('background-color: rgba(255,255,255, 0);')
+        self.user_list.setSpacing(0)
+        self.user_list.setContentsMargins(0,0,0,0)
+        form_layout.addWidget(self.user_list)
+
+        # self.user_list.addItem(self.user_widget)
         
         create_btn = QPushButton('Создать')
         create_btn.setObjectName('create_btn')
         create_btn.setStyleSheet('''#create_btn {background-color: #7B61FF;}
                                     #create_btn:hover {background: #9783FF;}''')
-        create_btn.setFixedHeight(50)
+        create_btn.setFixedHeight(41)
         create_btn.setCursor(QCursor(Qt.PointingHandCursor))
         form_layout.addWidget(create_btn)
         
         self.main_widget.setLayout(form_layout)
+    
+    def add_user(self):
+        self.avatar = QPushButton()
+        self.avatar.setContentsMargins(0,0,0,0)
+        self.avatar.setFixedSize(40, 40)
+        self.avatar.setStyleSheet('''QPushButton {background-color: rgba(0, 0, 0, 0); border-radius: 20px;}''')
+        self.avatar.setCursor(QCursor(Qt.PointingHandCursor))
+        self.avatar.setIcon(QIcon('static/image/ava.png'))
+        self.avatar.setIconSize(QSize(40, 40))
+
+        self.profile_info_layout = QVBoxLayout()
+        self.profile_info_layout.setSpacing(0)
+        self.profile_info_layout.setContentsMargins(0,0,0,0)
+
+        self.username = QLabel('NicnameVchate')
+        self.username.setFixedHeight(15)
+        self.username.setStyleSheet('''QLabel {background-color: rgba(0, 0, 0, 0); color: rgba(255, 255, 255, 1); font-weight: bold; font-size: 13px;}''')
+        self.profile_info_layout.addWidget(self.username)
+
+        self.user_id = QLabel('Nicname')
+        self.user_id.setFixedHeight(15)
+        self.user_id.setStyleSheet('''QLabel {background-color: rgba(0, 0, 0, 0); color: rgba(255, 255, 255, 0.35); font-size: 12px; font-weight: bold;}''')
+        self.profile_info_layout.addWidget(self.user_id)
+
+        self.delit_user_btn = QPushButton()
+        self.delit_user_btn.setContentsMargins(0,0,0,0)
+        self.delit_user_btn.setFixedSize(30, 30)
+        self.delit_user_btn.setStyleSheet('''QPushButton {background-color: rgba(0, 0, 0, 0); border-radius: 10px;}
+                                             QPushButton:hover {background-color: rgba(255, 255, 255, 0.1); border-radius: 10px;}''')
+        self.delit_user_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        self.delit_user_btn.setIcon(QIcon('static/image/close_hover.png'))
+        self.delit_user_btn.setIconSize(QSize(25, 25))
+        self.delit_user_btn.clicked.connect(self.del_user)
+
+        self.user_widget = QWidget()
+        self.user_widget.setContentsMargins(0,5,0,5)
+        self.user_widget.setStyleSheet('background-color: rgba(0, 0, 0, 0); border: none;')
+
+        self.data_layout = QHBoxLayout()
+        self.data_layout.setSpacing(10)
+        self.data_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.data_layout.setContentsMargins(0,0,0,0)
+
+        self.data_layout.addWidget(self.avatar)
+        self.data_layout.addLayout(self.profile_info_layout)
+        self.data_layout.addWidget(self.delit_user_btn)
+        self.user_widget.setLayout(self.data_layout)
+
+        # Создаем пользовательский виджет
+        # Создаем пустой элемент QListWidgetItem
+        item = QListWidgetItem(self.user_list)
+        # Устанавливаем размер элемента на основе размера виджета
+        item.setSizeHint(self.user_widget.sizeHint())
+        # Привязываем пользовательский виджет к элементу списка
+        self.user_list.setItemWidget(item, self.user_widget)
+
+
+    def del_user(self):
+        # Получаем текущий выбранный элемент
+        selected_item = self.user_list.currentItem()
+        if selected_item:
+            # Получаем индекс текущего элемента
+            row = self.user_list.row(selected_item)
+            # Удаляем элемент по индексу
+            self.user_list.takeItem(row)
     
     def rotate_icon(self, widget, angle):
         # Извлекаем изображение из иконки

@@ -17,23 +17,23 @@ glow.setColor(QColor(123, 97, 255))  # цвет свечения
 glow.setOffset(0, 0)  # смещение тени
 
 scroll_style = '''QScrollBar:vertical {
-    background: rgba(45, 45, 68, 0.3);
-    width: 5px;
+    background-color: rgba(0, 0, 0, 1);
+    width: 3px;
     border-radius: 3px;
 }
 
 QScrollBar::handle:vertical {
-    background-color: rgba(80, 80, 122, 1);
+    background-color: rgba(255, 255, 255, 0.3);
     min-height: 30px;
     border-radius: 3px; /* Закругление краёв */
 }
 
 QScrollBar::handle:vertical:hover {
-    background-color: #935c9d;
+    background-color: rgba(255, 255, 255, 0.2);
 }
 
 QScrollBar::handle:vertical:pressed {
-    background-color: #9f63ab;
+    background-color: rgba(255, 255, 255, 0.2);
 }
 
 QScrollBar::sub-line:vertical,
