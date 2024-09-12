@@ -1,7 +1,8 @@
+from pathlib import Path
 from PySide6.QtGui import QIcon, QCursor, QPixmap, QPainter, QColor, QBitmap
 from PySide6.QtCore import Qt, QSize, QRect
-from PySide6.QtWidgets import (QTextEdit, QVBoxLayout, QLabel, QListWidget,
-                               QHBoxLayout, QWidget, QPushButton)
+from PySide6.QtWidgets import (QTextEdit, QVBoxLayout, QLabel, QFileDialog,
+                               QHBoxLayout, QWidget, QPushButton, QListWidget)
 
 class PlainTextEdit(QTextEdit):
     def __init__(self, parent=None):
@@ -11,6 +12,18 @@ class PlainTextEdit(QTextEdit):
         # Вставляем только обычный текст, игнорируя форматирование
         plain_text = source.text()
         self.insertPlainText(plain_text)
+
+
+class FirstNewChatButton(QPushButton):
+        def __init__(self, parent=None):
+            super().__init__(parent)
+            self.setFixedSize(200, 40)
+            self.move(200, 40)
+            self.setStyleSheet('''QPushButton {background-color: rgba(255, 255, 255, 0.1); color:rgba(255, 255, 255, 0.6); 
+                                                            font-weight: bold; border:none; font-size: 11px; border-radius: 10px;}
+                                            QPushButton:hover{background-color: rgba(255, 255, 255, 0.2);}''')
+            self.setCursor(QCursor(Qt.PointingHandCursor))
+
 
 class UserWidget(QWidget):
     '''Базовая информация о пользователе. '''
@@ -60,6 +73,8 @@ class UserWidget(QWidget):
 class DarkenButton(QPushButton):
     def __init__(self):
         super().__init__()
+        self.clicked.connect(self.open_file_dialog)
+        self.file_list = QListWidget()
         self.original_pixmap = QPixmap('static/image/ava3.jpg')
         self.overlay_pixmap = QPixmap('static/image/camera.png')  # Второе изображение для наложения
         
@@ -75,7 +90,6 @@ class DarkenButton(QPushButton):
         painter.fillRect(darkened_pixmap.rect(), QColor(0, 0, 0, 100))
         
         # Накладываем второе изображение поверх
-        # Задаём размер наложенного изображения
         overlay_size = QSize(400, 400)  # Определяем размер второго изображения
         scaled_overlay = self.overlay_pixmap.scaled(overlay_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)  # Изменяем размер наложенного изображения
         painter.drawPixmap(
@@ -93,6 +107,27 @@ class DarkenButton(QPushButton):
     def leaveEvent(self, event):
         self.setIcon(QIcon(self.border_icon))  # Возвращаем оригинальную иконку
         super().leaveEvent(event)
+    
+    def open_file_dialog(self):
+        dialog = QFileDialog(self)
+        dialog.setFileMode(QFileDialog.FileMode.ExistingFiles)
+        dialog.setNameFilter("Images (*.png *.jpg)")
+        dialog.setViewMode(QFileDialog.ViewMode.List)
+        if dialog.exec():
+            filenames = dialog.selectedFiles()
+            if filenames:
+                self.file_list.addItems([str(Path(filename)) for filename in filenames])
+                
+                last_item_index = self.file_list.count() - 1
+                if last_item_index >= 0:
+                    last_item = self.file_list.item(last_item_index)
+                    self.switch_image(last_item.text())
+    
+    def switch_image(self, path):
+        # Загружаем новое изображение и обновляем иконку
+        self.original_pixmap = QPixmap(path)
+        self.border_icon = self.get_rounded_pixmap(self.original_pixmap)
+        self.setIcon(QIcon(self.border_icon))  # Устанавливаем новое изображение как иконку
     
     def get_rounded_pixmap(self, pixmap):
         size = pixmap.size()

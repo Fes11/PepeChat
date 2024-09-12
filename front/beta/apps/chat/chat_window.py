@@ -1,14 +1,14 @@
 from apps.chat.messages import MessagesList
 from apps.chat.style import MAIN_BOX_COLOR, BG_COLOR
 from dialog import DialogWindow
-from apps.chat.fields import DarkenButton, UserWidget
+from apps.chat.fields import DarkenButton, FirstNewChatButton, UserWidget
 from window import Window
 from datetime import datetime
 from PySide6.QtGui import QIcon, QCursor, QPixmap, QColor, QTransform
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (QTextEdit, QScrollArea, QVBoxLayout, QLabel, QListWidget, QLineEdit, QGraphicsDropShadowEffect,
                                QHBoxLayout, QWidget, QSizePolicy, QPushButton, QStackedWidget, QListWidgetItem)
-from apps.profile.profile import MiniProfile
+from apps.profile.profile import Profile
 
 class MainWindow(QWidget):
     '''Основное окно чата.'''
@@ -26,18 +26,16 @@ class MainWindow(QWidget):
         self.sidebar = Sidebar(self)
         layout.addWidget(self.sidebar)
 
-        # self.first_chat_btn = QPushButton('+ Начать чат')
-        # self.first_chat_btn.setFixedSize(200, 40)
-        # self.first_chat_btn.move(200, 40)
-        # self.first_chat_btn.setStyleSheet('''QPushButton {background-color: rgba(255, 255, 255, 0.1); color:rgba(255, 255, 255, 0.6); 
-        #                                                 font-weight: bold; border:none; font-size: 11px; border-radius: 10px;}
-        #                                    QPushButton:hover{background-color: rgba(255, 255, 255, 0.2);}''')
-        # self.first_chat_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        # self.stack.addWidget(self.first_chat_btn)
-        # self.stack.setCurrentIndex(1)
-
         self.stack = QStackedWidget(self)
         layout.addWidget(self.stack)
+
+        self.first_chat_btn = FirstNewChatButton('+ Начать чат')
+        self.first_chat_layout = QVBoxLayout()
+        self.first_chat_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.first_chat_layout.addWidget(self.first_chat_btn)
+        self.first_chat = QWidget()
+        self.first_chat.setLayout(self.first_chat_layout)
+        self.stack.addWidget(self.first_chat)
         
         self.box = CreateChatDialog(self)
         self.setLayout(layout)
@@ -64,7 +62,7 @@ class MainWindow(QWidget):
             '''QPushButton {border-left: 5px solid rgba(123, 97, 255, 1); border-radius: 0px; background-color: rgba(255, 255, 255, 0.1);}
                QPushButton:hover {background-color: rgba(0,0,0, 0.2); border-radius: 0px;}''')
 
-        self.stack.setCurrentIndex(index)
+        self.stack.setCurrentIndex(index + 1)
         self.current_chat_index = index
 
 
@@ -278,7 +276,7 @@ class Sidebar(QWidget):
 
         widget.setLayout(self.sidebar_layout)
 
-        self.mini_profile = MiniProfile()
+        self.mini_profile = Profile()
 
         layout.addWidget(widget)
         layout.addWidget(self.mini_profile)

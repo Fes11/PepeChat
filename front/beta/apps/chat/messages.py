@@ -20,7 +20,7 @@ class MessagesList(QWidget):
         self.setStyleSheet('''QWidget {background-color: rgba(0,0,0,0); border: none;}''')
 
         # Для добавления файлов
-        self.file_list = QListWidget(self)
+        self.file_list = QListWidget()
 
         layout = QVBoxLayout()
         layout.setSpacing(0)
@@ -237,6 +237,17 @@ class MessagesList(QWidget):
         if text:
             self.add_message(text , randrange(0, 2))
             self.message_input.clear()
+    
+    def send_image(self, path):
+        if self.open_lable.isVisible():
+                self.open_lable.setVisible(False)
+        image = QPushButton()
+        image.setIcon(QIcon(path))  # Установите путь к вашему изображению
+        image.setIconSize(QSize(200, 200))
+
+        self.text_layout.addWidget(image)
+        
+        QtCore.QTimer.singleShot(0, self.scrollToBottom)
 
     def scrollToBottom(self):
         QApplication.processEvents()
@@ -280,3 +291,7 @@ class MessagesList(QWidget):
             filenames = dialog.selectedFiles()
             if filenames:
                 self.file_list.addItems([str(Path(filename)) for filename in filenames])
+                last_item_index = self.file_list.count() - 1
+                if last_item_index >= 0:
+                    last_item = self.file_list.item(last_item_index)
+                    self.send_image(last_item.text())

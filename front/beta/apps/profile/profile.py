@@ -11,9 +11,9 @@ from apps.chat.fields import UserWidget
 from apps.chat.style import send_btn_style, MAIN_BOX_COLOR
 
 
-class MiniProfile(QWidget):
+class Profile(QWidget):
     def __init__(self):
-        super(MiniProfile, self).__init__()
+        super(Profile, self).__init__()
         self.setContentsMargins(0,0,0,0)
         
         
@@ -148,3 +148,6 @@ class MiniProfile(QWidget):
 class FullProfile():
     ...
 
+
+class MiniProfile():
+    ...

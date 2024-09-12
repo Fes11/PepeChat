@@ -6,7 +6,7 @@ from PySide6.QtGui import QIcon, QCursor, QPixmap, QColor, QTransform
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (QTextEdit, QScrollArea, QVBoxLayout, QLabel, QListWidget, QLineEdit, QGraphicsDropShadowEffect,
                                QHBoxLayout, QWidget, QSizePolicy, QPushButton, QStackedWidget, QGraphicsBlurEffect)
-from apps.profile.profile import MiniProfile
+from apps.profile.profile import Profile
 
 
 class DialogWindow(QPushButton):

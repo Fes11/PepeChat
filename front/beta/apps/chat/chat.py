@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (QTextEdit, QScrollArea, QVBoxLayout, QLabel,
                                QHBoxLayout, QWidget, QSizePolicy, QPushButton, QStackedWidget)
 
 from apps.chat.style import MAIN_BOX_COLOR
-from apps.profile.profile import MiniProfile
+from apps.profile.profile import Profile
 from apps.chat.messages import MessagesList
 from apps.chat.chat_window import MainWindow
 from window import Window
@@ -136,7 +136,7 @@ class Sidebar(QWidget):
         widget.setLayout(self.sidebar_layout)
 
         layout.addWidget(widget)
-        layout.addWidget(MiniProfile())
+        layout.addWidget(Profile())
         self.setLayout(layout)
         
     def add_chat(self):
