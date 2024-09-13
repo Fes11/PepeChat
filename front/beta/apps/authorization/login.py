@@ -8,7 +8,7 @@ from PySide6.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve, Property
 from PySide6.QtWidgets import (QApplication, QTextEdit, QScrollArea, QVBoxLayout, QLabel, QGraphicsDropShadowEffect,
                                QHBoxLayout, QWidget, QSizePolicy, QPushButton, QFileDialog, QLineEdit)
 
-from apps.chat.chat_window import MainWindow
+from apps.chat.window import ChatWindow
 from apps.chat.style import MAIN_BOX_COLOR
 from window import Window
 
@@ -168,4 +168,4 @@ class LoginWindow(QWidget):
         else:
             parent_window = self.window()  # Получаем главное окно
             self.error_login.setVisible(False)
-            parent_window.replace_widget(MainWindow())  # Заменяем виджет на окно чата
+            parent_window.replace_widget(ChatWindow())  # Заменяем виджет на окно чата

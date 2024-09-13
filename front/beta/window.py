@@ -21,7 +21,7 @@ class Window(QMainWindow):
         # BG_COLOR = 'rgba(0,0,0,0.7)'
         # GlobalBlur(self.winId(), QWidget=self) # Обычный блюр
 
-        # Базовые настройки MainWindow
+        # Базовые настройки ChatWindow
         self.setWindowTitle("PepeChat")
         self.setMinimumSize(840, 570)
         self.resize_margin = 10
@@ -69,7 +69,7 @@ class Window(QMainWindow):
                 old_widget.setParent(None)
                 old_widget.deleteLater()
         
-        # Добавляем новый виджет (MainWindow)
+        # Добавляем новый виджет (ChatWindow)
         self.main_layout.addWidget(new_widget)
 
 

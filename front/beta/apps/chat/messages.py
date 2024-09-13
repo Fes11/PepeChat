@@ -242,10 +242,37 @@ class MessagesList(QWidget):
         if self.open_lable.isVisible():
                 self.open_lable.setVisible(False)
         image = QPushButton()
+        image.setStyleSheet('''background: rgba(123, 97, 255, 1); 
+                               padding: 5px 0px 15px 0;
+                               border-top-left-radius: 10px;
+                               border-top-right-radius: 10px;
+                               border-bottom-left-radius: 10px;
+                               border-bottom-right-radius: 0px;''')
         image.setIcon(QIcon(path))  # Установите путь к вашему изображению
-        image.setIconSize(QSize(200, 200))
+        image.setIconSize(QSize(300, 300))
 
-        self.text_layout.addWidget(image)
+        me_avatar = QPushButton()
+        me_avatar.setFixedSize(30, 30)
+        me_avatar.setStyleSheet('''QPushButton {border-radius: 15px}''')
+        me_avatar.setCursor(QCursor(Qt.PointingHandCursor))
+        me_avatar.setIcon(QIcon('static/image/ava.png'))
+        me_avatar.setIconSize(QSize(30, 30))
+
+        avatar_layout = QVBoxLayout()
+        avatar_layout.setAlignment(Qt.AlignmentFlag.AlignBottom)
+
+        avatar_layout.addWidget(me_avatar)
+
+        image_layout = QHBoxLayout()
+        image_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
+        image_layout.addWidget(image)
+
+        message_layout = QHBoxLayout()
+
+        message_layout.addLayout(image_layout)
+        message_layout.addLayout(avatar_layout)
+        
+        self.text_layout.addLayout(message_layout)
         
         QtCore.QTimer.singleShot(0, self.scrollToBottom)
 
