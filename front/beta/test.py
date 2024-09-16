@@ -1,58 +1,40 @@
-from PySide6.QtWidgets import QPushButton, QApplication
-from PySide6.QtGui import QPixmap, QPainter, QIcon, QColor
-from PySide6.QtCore import QSize, QRect, Qt
+from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget
+from PySide6.QtGui import QPixmap
+from PySide6.QtCore import Qt, QMimeData
 import sys
+import os
 
-class DarkenButton(QPushButton):
+# Drag and drop
+class ImageDropWidget(QWidget):
     def __init__(self):
         super().__init__()
-        self.original_pixmap = QPixmap('static/image/ava3.jpg')
-        self.overlay_pixmap = QPixmap('static/image/camera.png')  # Второе изображение для наложения
-        
-        self.setStyleSheet('background-color: rgba(255,255,255, 0);')
-        self.border_icon = self.get_rounded_pixmap(self.original_pixmap)
-        self.setIconSize(QSize(90, 90))
-        self.setIcon(QIcon(self.border_icon))
-    
-    def enterEvent(self, event):
-        darkened_pixmap = self.border_icon.copy()
-        painter = QPainter(darkened_pixmap)
-        # Добавляем затемнение
-        painter.fillRect(darkened_pixmap.rect(), QColor(0, 0, 0, 100))  
-        
-        # Накладываем второе изображение поверх
-        overlay_size = self.overlay_pixmap.size()
-        painter.drawPixmap(
-            (darkened_pixmap.width() - overlay_size.width()) // 2,  # По центру
-            (darkened_pixmap.height() - overlay_size.height()) // 2,
-            self.overlay_pixmap
-        )
-        
-        painter.end()
-        self.setIcon(QIcon(darkened_pixmap))  # Устанавливаем иконку с наложением
-        super().enterEvent(event)
-    
-    def leaveEvent(self, event):
-        self.setIcon(QIcon(self.border_icon))  # Возвращаем оригинальную иконку
-        super().leaveEvent(event)
-    
-    def get_rounded_pixmap(self, pixmap):
-        size = pixmap.size()
-        rounded_pixmap = QPixmap(size)
-        rounded_pixmap.fill(Qt.transparent)  # Прозрачный фон
+        self.setWindowTitle("Drag and Drop Image")
+        self.setAcceptDrops(True)  # Включаем поддержку drop
 
-        painter = QPainter(rounded_pixmap)
-        painter.setRenderHint(QPainter.Antialiasing)
-        painter.setBrush(QPixmap(pixmap))  # Исходное изображение
-        painter.setPen(Qt.NoPen)
-        
-        # Рисуем закругленные углы
-        painter.drawRoundedRect(QRect(0, 0, size.width(), size.height()), 30, 30)
-        painter.end()
+        self.layout = QVBoxLayout()
+        self.label = QLabel("Drag an image here")
+        self.label.setAlignment(Qt.AlignCenter)
+        self.layout.addWidget(self.label)
+        self.setLayout(self.layout)
 
-        return rounded_pixmap
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():  # Проверяем, содержит ли событие перетаскивания файлы
+            event.acceptProposedAction()
 
-app = QApplication(sys.argv)
-button = DarkenButton()
-button.show()
-sys.exit(app.exec())
+    def dropEvent(self, event):
+        if event.mimeData().hasUrls():
+            for url in event.mimeData().urls():
+                file_path = url.toLocalFile()  # Получаем локальный путь к файлу
+                if os.path.splitext(file_path)[1].lower() in ['.png', '.jpg', '.jpeg', '.bmp']:  # Проверка формата изображения
+                    self.display_image(file_path)
+
+    def display_image(self, image_path):
+        pixmap = QPixmap(image_path)
+        self.label.setPixmap(pixmap.scaled(self.label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = ImageDropWidget()
+    window.resize(400, 300)
+    window.show()
+    sys.exit(app.exec())
