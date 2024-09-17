@@ -7,7 +7,7 @@ from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (QApplication, QTextEdit, QScrollArea, QVBoxLayout, QLabel, QListWidget,
                                QHBoxLayout, QWidget, QSizePolicy, QPushButton, QFileDialog)
 
-from apps.chat.fields import PlainTextEdit, FileButton
+from apps.chat.fields import PlainTextEdit,HoverButton
 from apps.chat.style import send_btn_style, MAIN_BOX_COLOR
 from BlurWindow.blurWindow import blur
 
@@ -100,7 +100,7 @@ class MessagesList(QWidget):
         self.send_file_layout.setAlignment(Qt.AlignmentFlag.AlignBottom)
 
         # Кнопка для отправки файлов
-        self.send_file = FileButton(self)
+        self.send_file = HoverButton(self, path='static/image/paper-clip')
         self.send_file.setFixedSize(45, 42)
         self.send_file.setCursor(QCursor(Qt.PointingHandCursor))
         self.send_file.setStyleSheet('''background-color: rgba(255, 255, 255, 0);''')

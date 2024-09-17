@@ -1,5 +1,5 @@
 from apps.chat.fields import FirstNewChatButton
-from apps.chat.chat_window import Sidebar
+from apps.chat.chat_list import Sidebar
 from apps.chat.dialog import CreateChatDialog
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QVBoxLayout,QHBoxLayout, QWidget, QStackedWidget)
@@ -9,7 +9,6 @@ class ChatWindow(QWidget):
     '''Основное окно чата.'''
     def __init__(self) -> None:
         super(ChatWindow, self).__init__()
-
         self.setMinimumWidth(680)
         layout = QHBoxLayout()
         layout.setContentsMargins(0,0,0,0)
@@ -34,6 +33,9 @@ class ChatWindow(QWidget):
         self.stack.addWidget(self.first_chat)
         
         self.box = CreateChatDialog(self)
+        self.box.create_btn.clicked.connect(self.sidebar.add_chat)
+        self.box.create_btn.clicked.connect(lambda: self.switch_chat(self.sidebar.num - 1))
+        self.box.create_btn.clicked.connect(self.box.close)
         self.setLayout(layout)
     
     def open_add_chat(self):

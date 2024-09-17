@@ -15,18 +15,19 @@ class PlainTextEdit(QTextEdit):
         plain_text = source.text()
         self.insertPlainText(plain_text)
 
-class FileButton(QPushButton):
-    def __init__(self, text):
+class HoverButton(QPushButton):
+    def __init__(self, text, path=None):
         super().__init__(text)
-
+        self.path = path
+        
     def enterEvent(self, event):
         # Меняем цвет кнопки при наведении курсора
-        self.setIcon(QIcon('static/image/paper-clip-hover.png'))
+        self.setIcon(QIcon(f'{self.path}_hover.png'))
         super().enterEvent(event)
 
     def leaveEvent(self, event):
         # Возвращаем цвет кнопки при уходе курсора
-        self.setIcon(QIcon('static/image/paper-clip.png'))
+        self.setIcon(QIcon(f'{self.path}'))
         super().leaveEvent(event)
 
 class FirstNewChatButton(QPushButton):

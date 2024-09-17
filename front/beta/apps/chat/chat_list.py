@@ -197,9 +197,7 @@ class Sidebar(QWidget):
         self.new_chat_btn.setFixedHeight(35)
         self.new_chat_btn.setIcon(QIcon('static/image/add.png'))  # Установите путь к вашему изображению
         self.new_chat_btn.setIconSize(QSize(16, 16))
-        self.new_chat_btn.clicked.connect(self.add_chat)
         self.new_chat_btn.clicked.connect(self.main_window.open_add_chat)
-        self.new_chat_btn.clicked.connect(lambda: self.main_window.switch_chat(self.num - 1))
         self.new_chat_btn.setStyleSheet('''QPushButton {background-color: rgba(255, 255, 255, 0.1); color:rgba(255, 255, 255, 0.6); 
                                                         font-weight: bold; border:none; font-size: 11px; border-radius: 10px;}
                                            QPushButton:hover{background-color: rgba(255, 255, 255, 0.2);}''')

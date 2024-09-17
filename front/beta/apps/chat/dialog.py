@@ -1,7 +1,7 @@
 from apps.chat.messages import MessagesList
 from apps.chat.style import MAIN_BOX_COLOR, BG_COLOR
 from dialog import DialogWindow
-from apps.chat.fields import DarkenButton, FirstNewChatButton, UserWidget
+from apps.chat.fields import HoverButton, DarkenButton, FirstNewChatButton, UserWidget
 from window import Window
 from datetime import datetime
 from PySide6.QtGui import QIcon, QCursor, QPixmap, QColor, QTransform
@@ -30,11 +30,10 @@ class CreateChatDialog(DialogWindow):
         main_label.setStyleSheet('font-size: 15px;')
         top_label_and_close_layout.addWidget(main_label)
         
-        close_btn = QPushButton()
+        close_btn = HoverButton(self, path='static/image/close')
         close_btn.setObjectName('close_btn')
-        close_btn.setIcon(QIcon('static/image/close_hover.png'))  # Установите путь к вашему изображению
-        close_btn.setStyleSheet('''#close_btn {background: rgba(0,0,0,0);}
-                                   #close_btn:hover {background: rgba(255,255,255,0.2);}''')
+        close_btn.setIcon(QIcon('static/image/close.png'))  # Установите путь к вашему изображению
+        close_btn.setStyleSheet('''#close_btn {background: rgba(0,0,0,0);}''')
         close_btn.setIconSize(QSize(25, 25))
         close_btn.setFixedSize(30, 30)
         close_btn.setCursor(QCursor(Qt.PointingHandCursor))
@@ -96,13 +95,13 @@ class CreateChatDialog(DialogWindow):
 
         # self.user_list.addItem(self.user_widget)
         
-        create_btn = QPushButton('Создать')
-        create_btn.setObjectName('create_btn')
-        create_btn.setStyleSheet('''#create_btn {background-color: #7B61FF;}
-                                    #create_btn:hover {background: #9783FF;}''')
-        create_btn.setFixedHeight(41)
-        create_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        form_layout.addWidget(create_btn)
+        self.create_btn = QPushButton('Создать')
+        self.create_btn.setObjectName('create_btn')
+        self.create_btn.setStyleSheet('''#create_btn {background-color: #7B61FF;}
+                                         #create_btn:hover {background: #9783FF;}''')
+        self.create_btn.setFixedHeight(41)
+        self.create_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        form_layout.addWidget(self.create_btn)
         
         self.main_widget.setLayout(form_layout)
     
@@ -129,13 +128,12 @@ class CreateChatDialog(DialogWindow):
         self.user_id.setStyleSheet('''QLabel {background-color: rgba(0, 0, 0, 0); color: rgba(255, 255, 255, 0.35); font-size: 12px; font-weight: bold;}''')
         self.profile_info_layout.addWidget(self.user_id)
 
-        self.delit_user_btn = QPushButton()
+        self.delit_user_btn = HoverButton(self, path='static/image/close')
         self.delit_user_btn.setContentsMargins(0,0,0,0)
         self.delit_user_btn.setFixedSize(30, 30)
-        self.delit_user_btn.setStyleSheet('''QPushButton {background-color: rgba(0, 0, 0, 0); border-radius: 10px;}
-                                             QPushButton:hover {background-color: rgba(255, 255, 255, 0.1); border-radius: 10px;}''')
+        self.delit_user_btn.setStyleSheet('''QPushButton {background-color: rgba(0, 0, 0, 0);}''')
         self.delit_user_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        self.delit_user_btn.setIcon(QIcon('static/image/close_hover.png'))
+        self.delit_user_btn.setIcon(QIcon('static/image/close.png'))
         self.delit_user_btn.setIconSize(QSize(25, 25))
         self.delit_user_btn.clicked.connect(self.del_user)
 
