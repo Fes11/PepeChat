@@ -8,6 +8,7 @@ from PySide6.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve, Property
 from PySide6.QtWidgets import (QApplication, QTextEdit, QScrollArea, QVBoxLayout, QLabel, QGraphicsDropShadowEffect,
                                QHBoxLayout, QWidget, QSizePolicy, QPushButton, QFileDialog, QLineEdit)
 
+from apps.registration.window import RegWindow
 from apps.chat.window import ChatWindow
 from apps.chat.style import MAIN_BOX_COLOR
 from window import Window
@@ -111,7 +112,6 @@ class LoginWindow(QWidget):
         self.continue_btn.clicked.connect(self.login)
         self.form_layout.addWidget(self.continue_btn)
 
-
         reg_layout = QVBoxLayout()
         reg_layout.setContentsMargins(0, 10, 0, 0)
 
@@ -125,7 +125,9 @@ class LoginWindow(QWidget):
         self.sign_in_btn.setStyleSheet('''QPushButton {color: #FFFFFF; background-color: #7B61FF;
                                                        border-radius: 10px; font-size: 16px; font-weight: bold;}
                                           QPushButton:hover {background-color: #9783FF}''')
+
         self.sign_in_btn.setFixedHeight(48)
+        self.sign_in_btn.clicked.connect(self.open_reg)
         reg_layout.addWidget(self.sign_in_btn)
 
         autro_lable = QLabel('By registering, you accept the \nUser Agreement')
@@ -152,7 +154,10 @@ class LoginWindow(QWidget):
             self.continue_btn.setEnabled(False)
             self.continue_btn.setStyleSheet('''QPushButton {color: rgba(255,255,255,0.65); background-color: rgba(255,255,255,0.1);
                                                         border-radius: 10px; font-size: 16px; font-weight: bold;}''')
-
+    def open_reg(self):
+        parent_window = self.window()  # Получаем главное окно
+        parent_window.replace_widget(RegWindow())
+        
     def login(self):
         login_text = self.input_login.toPlainText()
         password_text = self.input_password.text()
