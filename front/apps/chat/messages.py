@@ -2,7 +2,7 @@ from pathlib import Path
 from random import randrange
 from datetime import datetime
 from PySide6 import QtCore
-from PySide6.QtGui import QIcon, QCursor
+from PySide6.QtGui import QIcon, QCursor, QPixmap
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (QApplication, QTextEdit, QScrollArea, QVBoxLayout, QLabel, QListWidget,
                                QHBoxLayout, QWidget, QSizePolicy, QPushButton, QFileDialog)
@@ -10,6 +10,8 @@ from PySide6.QtWidgets import (QApplication, QTextEdit, QScrollArea, QVBoxLayout
 from apps.chat.fields import PlainTextEdit,HoverButton
 from apps.chat.style import send_btn_style, MAIN_BOX_COLOR
 from BlurWindow.blurWindow import blur
+
+from func import get_rounded_pixmap
 
 class MessagesList(QWidget):
     def __init__(self) -> None:
@@ -130,13 +132,21 @@ class MessagesList(QWidget):
         send_message_layout.addWidget(self.send_message_btn)
 
         # Слой панели для ввода
-        self.input_layout = QHBoxLayout()
-        self.input_layout.setContentsMargins(10,0,10,10)
+        self.input_layout = QVBoxLayout()
+        self.input_layout.setContentsMargins(10,10,10,10)
         self.input_layout.setSpacing(10)
         self.input_layout.setAlignment(Qt.AlignmentFlag.AlignBottom)
-        self.input_layout.addWidget(self.message_input_widget)
-        # self.input_layout.addWidget(self.send_file)
-        self.input_layout.addLayout(send_message_layout)
+
+        self.input_messages_layout = QHBoxLayout()
+        self.input_messages_layout.addWidget(self.message_input_widget)
+        self.input_messages_layout.addLayout(send_message_layout)
+
+        self.view_file_layout = QHBoxLayout()
+        self.view_file_layout.setContentsMargins(0,0,0,0)
+        self.view_file_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        
+        self.input_layout.addLayout(self.view_file_layout)
+        self.input_layout.addLayout(self.input_messages_layout)
 
         # Панель ввода
         self.input_panel = QWidget()
@@ -236,6 +246,17 @@ class MessagesList(QWidget):
         if text:
             self.add_message(text , randrange(0, 2))
             self.message_input.clear()
+        if self.file_list.count() > 0:
+            last_item_index = self.file_list.count() - 1
+            last_item = self.file_list.item(last_item_index)
+            last_item = self.file_list.item(last_item_index)
+            self.send_image(last_item.text())
+                                
+            self.view_file_layout.removeWidget(self.view_file)
+            self.view_file.setParent(None)
+            self.file_list.clear()
+
+            self.input_panel.setFixedHeight(65)
     
     def send_image(self, path):
         if self.open_lable.isVisible():
@@ -317,7 +338,35 @@ class MessagesList(QWidget):
             filenames = dialog.selectedFiles()
             if filenames:
                 self.file_list.addItems([str(Path(filename)) for filename in filenames])
+                self.input_panel.setMaximumHeight(190)
+
                 last_item_index = self.file_list.count() - 1
-                if last_item_index >= 0:
-                    last_item = self.file_list.item(last_item_index)
-                    self.send_image(last_item.text())
+                last_item = self.file_list.item(last_item_index)
+                
+                self.view_file = ViewFile(last_item.text())
+                self.view_file_layout.addWidget(self.view_file)
+
+class ViewFile(QPushButton):
+    def __init__(self, path) -> None:
+        super(ViewFile, self).__init__()
+        self.path = path
+
+        self.setFixedSize(90, 115)
+        self.setStyleSheet('''QPushButton {background-color: rgba(255,255,255, 0.1); border-radius: 10px}
+                              QPushButton:hover {background-color: rgba(255,255,255, 0.3);}''')
+        self.setCursor(QCursor(Qt.PointingHandCursor))
+        self.original_pixmap = QPixmap(path)
+        self.setIcon(QIcon(get_rounded_pixmap(self, self.original_pixmap)))
+        self.setIconSize(QSize(80, 100))
+
+        self.delete_btn = QPushButton()
+        self.delete_btn.setFixedSize(20,20)
+        self.delete_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        self.delete_btn.setIcon(QIcon('static/image/close.png'))
+        self.delete_btn.setIconSize(QSize(15, 15))
+
+        self.delete_layout = QVBoxLayout()
+        self.delete_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.delete_layout.addWidget(self.delete_btn)
+
+        self.setLayout(self.delete_layout)

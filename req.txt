@@ -7,3 +7,4 @@ PySide6_Essentials==6.7.2
 requests==2.32.3
 shiboken6==6.7.2
 urllib3==2.2.2
+BlurWindow

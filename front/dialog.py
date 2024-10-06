@@ -26,10 +26,10 @@ class DialogWindow(QPushButton):
         self.main_widget = QWidget()
         self.main_widget.setFixedSize(400, 500)
         self.main_widget.setStyleSheet(f'''QWidget {{background: rgba(0,0,0,0.9); color: white; border-radius: 10px; font-size: 13px;}}
-                                    QTextEdit {{background: {MAIN_BOX_COLOR}; padding-top: 7px; padding-left: 8px; font-weight: bold;}}
-                                    QLabel {{background: rgba(0,0,0,0); font-weight: bold; font-size: 13px;}}
-                                    QPushButton {{background: {MAIN_BOX_COLOR}; font-weight: bold;}}
-                                    QPushButton:hover {{background: rgba(255,255,255, 0.3);}}''')
+                                            QTextEdit {{background: {MAIN_BOX_COLOR}; padding-top: 7px; padding-left: 8px; font-weight: bold;}}
+                                            QLabel {{background: rgba(0,0,0,0); font-weight: bold; font-size: 13px;}}
+                                            QPushButton {{background: {MAIN_BOX_COLOR}; font-weight: bold;}}
+                                            QPushButton:hover {{background: rgba(255,255,255, 0.3);}}''')
         main_layout.addWidget(self.main_widget)
         
         layout = QVBoxLayout()
