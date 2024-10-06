@@ -78,7 +78,6 @@ class UserWidget(QWidget):
 
         self.data_layout = QHBoxLayout()
         self.data_layout.setSpacing(10)
-        self.data_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.data_layout.setContentsMargins(0,0,0,0)
 
         self.data_layout.addWidget(self.avatar)

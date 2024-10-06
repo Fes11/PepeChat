@@ -2,7 +2,7 @@ from pathlib import Path
 from random import randrange
 from datetime import datetime
 from PySide6 import QtCore
-from PySide6.QtGui import QIcon, QCursor
+from PySide6.QtGui import QIcon, QCursor, QTransform
 from PySide6.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve, Property
 from PySide6.QtWidgets import (QApplication, QTextEdit, QScrollArea, QVBoxLayout, QLabel, QListWidget,
                                QHBoxLayout, QWidget, QSizePolicy, QPushButton, QFileDialog, QGridLayout)
@@ -39,17 +39,29 @@ class Profile(QWidget):
 
         self.user_widget = UserWidget(self)
 
+        self.arrow_btn = QPushButton()
+        self.arrow_btn.setFixedSize(40, 40)
+        self.arrow_btn.setStyleSheet('''QPushButton {background-color: rgba(255,255,255,0.1); border-radius: 10px;} 
+                                        QPushButton:hover {background-color: rgba(255,255,255,0.2);}''')
+        self.arrow_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        self.arrow_btn.setIcon(QIcon('static/image/arrow.png'))
+        self.arrow_btn.setIconSize(QSize(15, 15))
+        self.arrow_btn.clicked.connect(self.open_mini_profile)
+        self.user_widget.data_layout.addWidget(self.arrow_btn)
+
         self.settings = QPushButton()
         self.settings.setFixedSize(40, 40)
-        self.settings.setStyleSheet('''QPushButton {background-color: rgba(255,255,255,0.1); border-radius: 10px;} QPushButton:hover {background-color: rgba(255,255,255,0.2);}''')
+        self.settings.setStyleSheet('''QPushButton {background-color: rgba(255,255,255,0.1); border-radius: 10px;} 
+                                       QPushButton:hover {background-color: rgba(255,255,255,0.2);}''')
         self.settings.setCursor(QCursor(Qt.PointingHandCursor))
         self.settings.setIcon(QIcon('static/image/settings.png'))  # Установите путь к вашему изображению
         self.settings.setIconSize(QSize(30, 30))
-        self.settings.clicked.connect(self.open_settings)
 
         self.user_widget.data_layout.addWidget(self.settings)
 
         send_layout = QHBoxLayout()
+        send_layout.addStretch()
+        send_layout.setAlignment(Qt.AlignmentFlag.AlignBottom)
 
         self.logout_btn = QPushButton()
         self.logout_btn.setFixedSize(40, 40)
@@ -59,7 +71,7 @@ class Profile(QWidget):
         self.logout_btn.setIconSize(QSize(25, 25))
         self.logout_btn.setVisible(False)
         self.logout_btn.clicked.connect(self.logout)
-        send_layout.addWidget(self.logout_btn)
+        # send_layout.addWidget(self.logout_btn)
         
         self.send_change_profile = QPushButton('Редактировать')
         self.send_change_profile.setCursor(QCursor(Qt.PointingHandCursor))
@@ -67,8 +79,7 @@ class Profile(QWidget):
         self.send_change_profile.setStyleSheet('''QPushButton {border-radius: 10px; background-color: rgba(255,255,255, 0.1); color:white;} 
                                                   QPushButton:hover {background-color: #575757;}''')
         self.send_change_profile.setVisible(False)
-        send_layout.addStretch()
-        send_layout.addWidget(self.send_change_profile)
+        # send_layout.addWidget(self.send_change_profile)
 
         self.main_layout.addWidget(self.user_widget)
         self.main_layout.addStretch()
@@ -103,18 +114,30 @@ class Profile(QWidget):
         self.user_widget.avatar.setFixedSize(value)
         self.user_widget.avatar.setIconSize(value)
 
-    def open_settings(self):
+    def open_mini_profile(self):
+        self.rotate_icon(self.arrow_btn, 180)
         if self.height() == 60:
             self.user_widget.avatar.setStyleSheet('''QPushButton {background-color: rgba(0, 0, 0, 0); border-radius: 10px}''')
-            if self.size().width() > 200:
-                self.send_change_profile.setVisible(True)
-            self.logout_btn.setVisible(True)
+            # if self.size().width() > 200:
+                # self.send_change_profile.setVisible(True)
+            # self.logout_btn.setVisible(True)
             self.animate(200, QSize(80, 80))
         else:
             self.user_widget.avatar.setStyleSheet('''QPushButton {background-color: rgba(0, 0, 0, 0); border-radius: 20px}''')
-            self.send_change_profile.setVisible(False)
-            self.logout_btn.setVisible(False)
+            # self.send_change_profile.setVisible(False)
+            # self.logout_btn.setVisible(False)
             self.animate(60, QSize(40, 40))
+            
+    def rotate_icon(self, widget, angle):
+        # Извлекаем изображение из иконки
+        pixmap = widget.icon().pixmap(widget.iconSize())
+        # Создаем трансформацию для вращения
+        transform = QTransform().rotate(angle)
+        # Применяем трансформацию к изображению
+        rotated_pixmap = pixmap.transformed(transform)
+        # Обновляем иконку на кнопке
+        rotated_icon = QIcon(rotated_pixmap)
+        widget.setIcon(rotated_icon)
 
     def animate(self, end_height, end_avatar_size): 
         # Анимация высоты
