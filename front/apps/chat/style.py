@@ -3,8 +3,23 @@ from PySide6.QtWidgets import QGraphicsBlurEffect
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (QGraphicsDropShadowEffect)
 
+# BG_COLOR = 'rgba(30, 27, 19, 1)'
+
+# Светлая тема
+# BG_COLOR = 'rgba(227, 229, 232, 1);'
+# MAIN_BOX_COLOR = 'rgba(255,255,255, 1)'
+# MAIN_COLOR = 'rgba(123, 97, 255, 1);'
+# NOT_USER_BUBLS = '#F3F3F3'
+# TEXT_COLOR = 'rgba(0,0,0, 0.8)'
+# HOVER_MAIN_COLOR = 'rgba(123, 97, 255, 0.7);'
+
+# Темная тема
 BG_COLOR = 'rgba(30, 27, 19, 1) '
 MAIN_BOX_COLOR = 'rgba(255,255,255, 0.1)'
+MAIN_COLOR = 'rgba(123, 97, 255, 1);'
+NOT_USER_BUBLS = 'rgba(255,255,255, 0.2)'
+TEXT_COLOR = 'white'
+HOVER_MAIN_COLOR = 'rgba(123, 97, 255, 0.7);'
 
  # Создаем эффект размытия
 blur_effect = QGraphicsBlurEffect()

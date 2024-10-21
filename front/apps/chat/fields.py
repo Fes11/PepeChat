@@ -4,7 +4,7 @@ from PySide6.QtCore import Qt, QSize, QRect
 from PySide6.QtWidgets import (QTextEdit, QVBoxLayout, QLabel, QFileDialog,
                                QHBoxLayout, QWidget, QPushButton, QListWidget)
 
-from func import get_rounded_pixmap
+from image import get_rounds_edges_image
 
 class PlainTextEdit(QTextEdit):
     def __init__(self, parent=None):
@@ -94,7 +94,7 @@ class DarkenButton(QPushButton):
         self.overlay_pixmap = QPixmap('static/image/camera.png')  # Второе изображение для наложения
         
         self.setStyleSheet('background-color: rgba(255,255,255, 0);')
-        self.border_icon = get_rounded_pixmap(self, self.original_pixmap)
+        self.border_icon = get_rounds_edges_image(self, self.original_pixmap)
         self.setIconSize(QSize(90, 90))
         self.setIcon(QIcon(self.border_icon))
     
@@ -113,7 +113,7 @@ class DarkenButton(QPushButton):
             scaled_overlay
         )
 
-        rounded_pixmap = get_rounded_pixmap(self, darkened_pixmap)
+        rounded_pixmap = get_rounds_edges_image(self, darkened_pixmap)
         
         painter.end()
         self.setIcon(QIcon(rounded_pixmap))  # Устанавливаем иконку с наложением
@@ -141,5 +141,5 @@ class DarkenButton(QPushButton):
     def switch_image(self, path):
         # Загружаем новое изображение и обновляем иконку
         self.original_pixmap = QPixmap(path)
-        self.border_icon = get_rounded_pixmap(self, self.original_pixmap)
+        self.border_icon = get_rounds_edges_image(self, self.original_pixmap)
         self.setIcon(QIcon(self.border_icon))  # Устанавливаем новое изображение как иконку

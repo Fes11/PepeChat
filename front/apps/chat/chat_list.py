@@ -1,5 +1,5 @@
-from apps.chat.messages import MessagesList
-from apps.chat.style import MAIN_BOX_COLOR, BG_COLOR
+from apps.chat.chat_area import MessagesList
+from apps.chat.style import MAIN_BOX_COLOR, MAIN_COLOR, TEXT_COLOR, HOVER_MAIN_COLOR
 from dialog import DialogWindow
 from apps.chat.fields import DarkenButton, FirstNewChatButton, UserWidget
 from window import Window
@@ -29,7 +29,7 @@ class ChatWidget(QWidget):
 
         self.chat_name = QLabel(f'Название чата {num}')
         self.chat_name.setMaximumHeight(50)
-        self.chat_name.setStyleSheet('''QLabel {background-color: rgba(0, 0, 0, 0); font-weight: bold; font-size: 13px;}''')
+        self.chat_name.setStyleSheet(f'''QLabel {{background-color: rgba(0, 0, 0, 0); color: {TEXT_COLOR}; font-weight: bold; font-size: 13px;}}''')
         self.chat_info_layout.addWidget(self.chat_name)
 
         self.last_message = QLabel('Сообщение...')
@@ -198,10 +198,15 @@ class Sidebar(QWidget):
         self.new_chat_btn.setIcon(QIcon('static/image/add.png'))  # Установите путь к вашему изображению
         self.new_chat_btn.setIconSize(QSize(16, 16))
         self.new_chat_btn.clicked.connect(self.main_window.open_add_chat)
-        self.new_chat_btn.setStyleSheet('''QPushButton {background-color: rgba(255, 255, 255, 0.1); color:rgba(255, 255, 255, 0.6); 
-                                                        font-weight: bold; border:none; font-size: 11px; border-radius: 10px;}
-                                           QPushButton:hover{background-color: rgba(255, 255, 255, 0.2);}''')
+        self.new_chat_btn.setStyleSheet(f'''QPushButton {{background-color: {MAIN_COLOR}; color: white;
+                                                          font-weight: bold; border:none; font-size: 11px; border-radius: 10px;}}
+                                           QPushButton:hover{{background-color: {HOVER_MAIN_COLOR};}}''')
         self.new_chat_btn.setCursor(QCursor(Qt.PointingHandCursor))
+
+        self.new_chat_btn_layout = QVBoxLayout()
+        self.new_chat_btn_layout.setSpacing(0)
+        self.new_chat_btn_layout.setContentsMargins(10,10,10,10)
+        self.new_chat_btn_layout.addWidget(self.new_chat_btn)
 
         chat_list_lable = QLabel('Chats')
         chat_list_lable.setFixedSize(40,10)
@@ -212,10 +217,10 @@ class Sidebar(QWidget):
 
         # Добавляем виджеты
         top_sidebar.addLayout(top_layout)
-        top_sidebar.addWidget(self.new_chat_btn)
         top_sidebar.addWidget(chat_list_lable)
         self.sidebar_layout.addLayout(top_sidebar)
         self.sidebar_layout.addWidget(self.chat_scroll)
+        self.sidebar_layout.addLayout(self.new_chat_btn_layout)
 
         widget.setLayout(self.sidebar_layout)
 

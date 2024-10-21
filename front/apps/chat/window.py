@@ -3,12 +3,13 @@ from apps.chat.chat_list import Sidebar
 from apps.chat.dialog import CreateChatDialog
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QVBoxLayout,QHBoxLayout, QWidget, QStackedWidget)
+from .style import MAIN_COLOR, HOVER_MAIN_COLOR
 
 
-class ChatWindow(QWidget):
+class ChatScreen(QWidget):
     '''Основное окно чата.'''
     def __init__(self) -> None:
-        super(ChatWindow, self).__init__()
+        super(ChatScreen, self).__init__()
         self.setMinimumWidth(680)
         layout = QHBoxLayout()
         layout.setContentsMargins(0,0,0,0)
@@ -24,7 +25,11 @@ class ChatWindow(QWidget):
         layout.addWidget(self.stack)
 
         self.first_chat_btn = FirstNewChatButton('+ Начать чат')
+        self.first_chat_btn.setStyleSheet(f'''QPushButton {{background-color: {MAIN_COLOR}; border: none; color: white; 
+                                              font-weight: bold; border-radius: 10px;}} 
+                                              QPushButton:hover{{background-color: {HOVER_MAIN_COLOR}}}''')
         self.first_chat_btn.clicked.connect(self.open_add_chat) 
+
         self.first_chat_layout = QVBoxLayout()
         self.first_chat_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.first_chat_layout.addWidget(self.first_chat_btn)

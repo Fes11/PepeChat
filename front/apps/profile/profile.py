@@ -1,14 +1,24 @@
 from pathlib import Path
-from random import randrange
-from datetime import datetime
-from PySide6 import QtCore
-from PySide6.QtGui import QIcon, QCursor, QTransform
+from PySide6.QtGui import QIcon, QCursor, QTransform, QPixmap
 from PySide6.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve, Property
-from PySide6.QtWidgets import (QApplication, QTextEdit, QScrollArea, QVBoxLayout, QLabel, QListWidget,
-                               QHBoxLayout, QWidget, QSizePolicy, QPushButton, QFileDialog, QGridLayout)
+from PySide6.QtWidgets import (QVBoxLayout, QListWidget, QHBoxLayout, QWidget, QPushButton, QFileDialog)
 
 from apps.chat.fields import UserWidget
-from apps.chat.style import send_btn_style, MAIN_BOX_COLOR
+from apps.chat.style import MAIN_BOX_COLOR
+from image import get_rounded_image
+
+
+class Avatar(QPushButton):
+    def __init__(self, path: str):
+        super(Avatar, self).__init__()
+        self.path = path
+
+        self.setFixedSize(30, 30)
+        self.setStyleSheet('''border-radius: 15px;''')
+        self.setCursor(QCursor(Qt.PointingHandCursor))
+        self.original_pixmap = QPixmap(path)
+        self.setIcon(QIcon(get_rounded_image(self, self.original_pixmap)))
+        self.setIconSize(QSize(30, 30))
 
 
 class Profile(QWidget):
@@ -92,8 +102,8 @@ class Profile(QWidget):
         self.setLayout(layout)
 
     def logout(self):
-        from apps.authorization.login import LoginWindow
-        self.window().replace_widget(LoginWindow())
+        from apps.authorization.login import LoginScreen
+        self.window().swetch_screen(LoginScreen())
         
     @Property(int)
     def animatedHeight(self):

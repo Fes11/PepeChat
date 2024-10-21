@@ -1,22 +1,16 @@
-import sys
-from pathlib import Path
-from random import randrange
-from datetime import datetime
-from PySide6 import QtCore
 from PySide6.QtGui import QPixmap, QCursor, QIcon, QColor
-from PySide6.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve, Property
-from PySide6.QtWidgets import (QApplication, QTextEdit, QScrollArea, QVBoxLayout, QLabel, QGraphicsDropShadowEffect,
-                               QHBoxLayout, QWidget, QSizePolicy, QPushButton, QFileDialog, QLineEdit)
+from PySide6.QtCore import Qt, QSize
+from PySide6.QtWidgets import ( QTextEdit, QVBoxLayout, QLabel, QGraphicsDropShadowEffect,
+                               QHBoxLayout, QWidget, QPushButton, QLineEdit)
 
-from apps.registration.window import RegWindow
-from apps.chat.window import ChatWindow
+from apps.registration.window import RegScreen
+from apps.chat.window import ChatScreen
 from apps.chat.style import MAIN_BOX_COLOR
-from window import Window
 
 
-class LoginWindow(QWidget):
+class LoginScreen(QWidget):
     def __init__(self, parent=None):
-        super(LoginWindow, self).__init__(parent)
+        super(LoginScreen, self).__init__(parent)
         
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -156,7 +150,7 @@ class LoginWindow(QWidget):
                                                         border-radius: 10px; font-size: 16px; font-weight: bold;}''')
     def open_reg(self):
         parent_window = self.window()  # Получаем главное окно
-        parent_window.replace_widget(RegWindow())
+        parent_window.swetch_screen(RegScreen())
         
     def login(self):
         login_text = self.input_login.toPlainText()
@@ -173,4 +167,4 @@ class LoginWindow(QWidget):
         else:
             parent_window = self.window()  # Получаем главное окно
             self.error_login.setVisible(False)
-            parent_window.replace_widget(ChatWindow())  # Заменяем виджет на окно чата
+            parent_window.swetch_screen(ChatScreen())  # Заменяем виджет на окно чата

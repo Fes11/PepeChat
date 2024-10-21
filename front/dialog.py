@@ -1,12 +1,6 @@
-from apps.chat.messages import MessagesList
-from apps.chat.style import MAIN_BOX_COLOR, BG_COLOR
-from window import Window
-from datetime import datetime
-from PySide6.QtGui import QIcon, QCursor, QPixmap, QColor, QTransform
-from PySide6.QtCore import Qt, QSize
-from PySide6.QtWidgets import (QTextEdit, QScrollArea, QVBoxLayout, QLabel, QListWidget, QLineEdit, QGraphicsDropShadowEffect,
-                               QHBoxLayout, QWidget, QSizePolicy, QPushButton, QStackedWidget, QGraphicsBlurEffect)
-from apps.profile.profile import Profile
+from apps.chat.style import MAIN_BOX_COLOR
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (QVBoxLayout, QWidget, QPushButton)
 
 
 class DialogWindow(QPushButton):

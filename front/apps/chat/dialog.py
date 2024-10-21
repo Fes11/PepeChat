@@ -1,14 +1,9 @@
-from apps.chat.messages import MessagesList
-from apps.chat.style import MAIN_BOX_COLOR, BG_COLOR
 from dialog import DialogWindow
-from apps.chat.fields import HoverButton, DarkenButton, FirstNewChatButton, UserWidget
-from window import Window
-from datetime import datetime
-from PySide6.QtGui import QIcon, QCursor, QPixmap, QColor, QTransform
+from apps.chat.fields import HoverButton, DarkenButton
+from PySide6.QtGui import QIcon, QCursor, QTransform
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtWidgets import (QTextEdit, QScrollArea, QVBoxLayout, QLabel, QListWidget, QLineEdit, QGraphicsDropShadowEffect,
-                               QHBoxLayout, QWidget, QSizePolicy, QPushButton, QStackedWidget, QListWidgetItem)
-from apps.profile.profile import Profile
+from PySide6.QtWidgets import (QTextEdit, QVBoxLayout, QLabel, QListWidget,
+                               QHBoxLayout, QWidget, QPushButton, QListWidgetItem)
 
 
 class CreateChatDialog(DialogWindow):

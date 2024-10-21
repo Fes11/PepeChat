@@ -15,13 +15,13 @@ class Window(QMainWindow):
         super(Window, self).__init__()
         self.setGeometry(350,170, 1100, 750)
 
-        # BG_COLOR = 'rgba(0,0,0,0.6)'
+        # BG_COLOR = 'rgba(255,255,255,0.6)'
         # GlobalBlur(self.winId(), Acrylic=True, QWidget=self) # Сильный блюр
 
         # BG_COLOR = 'rgba(0,0,0,0.7)'
         # GlobalBlur(self.winId(), QWidget=self) # Обычный блюр
 
-        # Базовые настройки ChatWindow
+        # Базовые настройки
         self.setWindowTitle("PepeChat")
         self.setMinimumSize(840, 570)
         self.resize_margin = 10
@@ -61,7 +61,9 @@ class Window(QMainWindow):
         self.sizegrip = QSizeGrip(self.main)
         self.sizegrip.setStyleSheet("width: 5px; height: 5px; margin 0px; padding: 0px;")
 
-    def replace_widget(self, new_widget):
+    def swetch_screen(self, new_widget):
+        '''Изменяет экранн (то что показывается в окне)'''
+
         # Удаляем старый виджет (LoginWindow)
         if self.main_layout.count() > 0:
             old_widget = self.main_layout.itemAt(0).widget()
@@ -145,8 +147,10 @@ class TopPanel(QWidget):
             # Запоминаем текущие размеры и положение окна
             self.parent.normal_geometry = self.parent.geometry()
             self.parent.showMaximized()
+            self.parent.main.setStyleSheet(f'''#main {{background-color: {BG_COLOR}; border-radius: 0px;}}''')
         else:
             self.parent.showNormal()
+            self.parent.main.setStyleSheet(f'''#main {{background-color: {BG_COLOR}; border-radius: 10px;}}''')
 
         # Переключаем флаг состояния окна
         self.is_fullscreen = not self.is_fullscreen
