@@ -7,15 +7,16 @@ from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (QApplication, QTextEdit, QScrollArea, QVBoxLayout, QLabel, QListWidget,
                                QHBoxLayout, QWidget, QSizePolicy, QPushButton, QFileDialog)
 
-from apps.chat.fields import PlainTextEdit,HoverButton
+from apps.chat.fields import PlainTextEdit, HoverButton
 from apps.chat.style import MAIN_COLOR, MAIN_BOX_COLOR, NOT_USER_BUBLS, TEXT_COLOR, HOVER_MAIN_COLOR
 from image import get_rounds_edges_image
 
 
 class InputPanel(QWidget):
-    def __init__(self, file_list) -> None:
+    def __init__(self, file_list, messages_list) -> None:
         super().__init__()
         self.file_list = file_list
+        self.messages_list = messages_list
 
         layout = QVBoxLayout()
         layout.setContentsMargins(10,10,10,10)
@@ -46,7 +47,7 @@ class InputPanel(QWidget):
         self.send_message_layout.addWidget(self.send_message_btn)
 
         # Поле ввода сообщения
-        self.message_input = MessageInput()
+        self.message_input = MessageInput(self, self.file_list)
         self.message_input.message_edit.textChanged.connect(self.message_input.adjustHeight)
         self.message_input.message_edit.textChanged.connect(self.adjustHeight)
         self.setFixedHeight(self.message_input.size().height() + 20)
@@ -80,16 +81,18 @@ class InputPanel(QWidget):
         if self.file_list.count() > 0:
             last_item_index = self.file_list.count() - 1
             last_item = self.file_list.item(last_item_index)
-            # self.messages_list.add_message(text, i=randrange(0, 2), path=last_item.text())
-                                
-            self.view_file_layout.removeWidget(self.view_file)
-            self.view_file.setParent(None)
+            self.messages_list.add_message(text, i=randrange(0, 2), path=last_item.text())
+
+            item = self.view_file_layout.takeAt(0)  # Извлекаем элемент из layout
+            widget = item.widget()
+            widget.deleteLater()
             self.file_list.clear()
 
             self.setFixedHeight(65)
             self.message_input.message_edit.clear()
         else: 
-            # self.messages_list.add_message(text=text, i=randrange(0, 2))
+            self.messages_list.add_message(text=text, i=randrange(0, 2))
+            print('Сообщение отправленно...')
             self.message_input.message_edit.clear()
     
     def eventFilter(self, obj, event):
@@ -106,8 +109,10 @@ class InputPanel(QWidget):
 
 
 class MessageInput(QWidget):
-    def __init__(self) -> None:
+    def __init__(self, input_panel, file_list) -> None:
         super(MessageInput, self).__init__()
+        self.input_panel = input_panel
+        self.file_list = file_list
 
         self.setFixedHeight(45)
 
@@ -137,6 +142,7 @@ class MessageInput(QWidget):
         self.send_file.setStyleSheet('''background-color: rgba(255, 255, 255, 0);''')
         self.send_file.setIcon(QIcon('static/image/paper-clip.png'))
         self.send_file.setIconSize(QSize(27, 27))
+        self.send_file.clicked.connect(self.open_file_dialog)
 
         self.send_file_layout = QVBoxLayout()
         self.send_file_layout.setAlignment(Qt.AlignmentFlag.AlignBottom)
@@ -166,7 +172,7 @@ class MessageInput(QWidget):
                 last_item = self.file_list.item(last_item_index)
                 
                 self.view_file = ViewFile(last_item.text())
-                self.view_file_layout.addWidget(self.view_file)
+                self.input_panel.view_file_layout.addWidget(self.view_file)
 
     def adjustHeight(self):
         # Подсчёт количества строк текста
