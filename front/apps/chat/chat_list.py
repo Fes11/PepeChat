@@ -237,15 +237,17 @@ class Sidebar(QWidget):
             self.search_widget.setVisible(False)
             self.mini_profile.user_widget.username.setVisible(False)
             self.mini_profile.user_widget.user_id.setVisible(False)
-            self.mini_profile.user_widget.avatar.setVisible(False)
             self.mini_profile.send_change_profile.setVisible(False)
+            self.mini_profile.arrow_btn.setVisible(False)
+            self.mini_profile.settings.setVisible(False)
             self.mini_profile.user_widget.data_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         else:
             self.new_chat_btn.setText('  Создать чат')
             self.search_widget.setVisible(True)
             self.mini_profile.user_widget.username.setVisible(True)
             self.mini_profile.user_widget.user_id.setVisible(True)
-            self.mini_profile.user_widget.avatar.setVisible(True)
+            self.mini_profile.arrow_btn.setVisible(True)
+            self.mini_profile.settings.setVisible(True)
         super().resizeEvent(event)
 
     def add_chat(self):

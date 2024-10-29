@@ -1,5 +1,6 @@
-from PySide6.QtGui import QPainterPath, QPixmap, QPainter
+from PySide6.QtGui import QPainterPath, QPixmap, QPainter, QBrush
 from PySide6.QtCore import Qt, QRect
+from PIL import Image, ImageEnhance, ImageFilter
 
 def get_rounds_edges_image(self, pixmap):
     '''Закругляет все края изоброжения.'''
@@ -74,3 +75,61 @@ def get_rounded_image(self, pixmap):
     painter.end()
 
     return rounded_pixmap
+
+from PySide6.QtGui import QPixmap, QPainter, QPainterPath
+from PySide6.QtCore import QRectF, Qt
+
+def create_rounded_pixmap(pixmap, radius):
+    # Создание пустого QPixmap для круглого изображения
+    rounded_pixmap = QPixmap(pixmap.size())
+    rounded_pixmap.fill(Qt.transparent)  # Прозрачный фон
+
+    # Настройка QPainter для рисования закругленного изображения
+    painter = QPainter(rounded_pixmap)
+    painter.setRenderHint(QPainter.Antialiasing)
+    
+    # Создание закругленной маски
+    path = QPainterPath()
+    path.addRoundedRect(QRectF(pixmap.rect()), radius, radius)
+    
+    # Применение маски и рисование изображения
+    painter.setClipPath(path)
+    painter.drawPixmap(0, 0, pixmap)
+    painter.end()  # Завершаем рисование
+
+    return rounded_pixmap
+
+def scaled_image(image_path):
+        original_pixmap = QPixmap(image_path)
+        
+        # Получаем исходные размеры изображения
+        original_size = original_pixmap.size()
+        
+        # Проверяем размеры и изменяем в два раза в зависимости от условий
+        if original_size.width() > 1024 and original_size.height() > 700:
+            # Уменьшаем изображение в два раза
+            new_size = original_size / 6
+        else:
+             new_size = original_size
+        # Масштабируем изображение до нового размера
+        scaled_pixmap = original_pixmap.scaled(
+            new_size.width(),
+            new_size.height()
+        )
+        
+        return scaled_pixmap
+
+
+def darken_image(image_path, output_path):
+    # Открываем изображение
+    image = Image.open(image_path)
+    
+    # Затемняем изображение
+    enhancer = ImageEnhance.Brightness(image)
+    darkened_image = enhancer.enhance(0.8)  # Чем меньше значение, тем сильнее затемнение (0.6 - умеренное затемнение)
+    
+    # Применяем размытие
+    # blurred_image = darkened_image.filter(ImageFilter.GaussianBlur(3))  # Значение радиуса размытия (5 - умеренное размытие)
+    
+    # Сохраняем результат
+    darkened_image.save(output_path)

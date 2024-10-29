@@ -52,8 +52,8 @@ class UserWidget(QWidget):
 
         self.avatar = QPushButton()
         self.avatar.setContentsMargins(0,0,0,0)
-        self.avatar.setFixedSize(50, 50)
-        self.avatar.setStyleSheet('''QPushButton {background-color: rgba(0, 0, 0, 0); border-radius: 20px;}''')
+        self.avatar.setFixedSize(40, 40)
+        self.avatar.setStyleSheet('''QPushButton {background-color: grey; border-radius: 20px;}''')
         self.avatar.setCursor(QCursor(Qt.PointingHandCursor))
         self.avatar.setIcon(QIcon('static/image/ava.png'))
         self.avatar.setIconSize(QSize(40, 40))

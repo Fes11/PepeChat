@@ -1,5 +1,5 @@
 from datetime import datetime
-from PySide6.QtGui import QIcon, QPixmap
+from PySide6.QtGui import QIcon, QPixmap, QMovie
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (QVBoxLayout, QLabel, QHBoxLayout, QWidget, QPushButton)
 from apps.chat.style import NOT_USER_BUBLS, TEXT_COLOR
@@ -66,12 +66,21 @@ class MessageBubble(QWidget):
         message_buble_layout.setContentsMargins(0,0,0,0)
 
         if self.path:
-            image = QPushButton()
-            image.setStyleSheet('background-color: rgba(0, 0, 0, 0)')
-            original_pixmap = QPixmap(path)
-            image.setIcon(QIcon(get_top_rounded_image(original_pixmap, radius=28)))
-            image.setIconSize(QSize(300, 300))
-            message_buble_layout.addWidget(image)
+            if self.path[-3:] == 'gif':
+                self.label = QLabel()
+                self.label.setStyleSheet('background-color: rgba(0, 0, 0, 0)')
+                self.movie = QMovie(self.path)
+                self.movie.setScaledSize(QSize(300, 300))
+                self.label.setMovie(self.movie)
+                message_buble_layout.addWidget(self.label)
+                self.movie.start()  # Начинаем проигрывать GIF
+            else:
+                image = QPushButton()
+                image.setStyleSheet('background-color: rgba(0, 0, 0, 0)')
+                original_pixmap = QPixmap(path)
+                image.setIcon(QIcon(get_top_rounded_image(original_pixmap, radius=28)))
+                image.setIconSize(QSize(300, 300))
+                message_buble_layout.addWidget(image)
 
             widget.setFixedWidth(300) # Нужно будет переделать так, что ширина ровняется ширине картинки
 

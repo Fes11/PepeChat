@@ -25,11 +25,11 @@ class InputPanel(QWidget):
 
         widget = QWidget()
         widget.setStyleSheet(f'''background-color: {MAIN_BOX_COLOR}; 
-                               border-top: 1px solid rgba(255,255,255, 0.1);
-                               border-top-left-radius: 0px;
-                               border-top-right-radius: 0px;
-                               border-bottom-left-radius: 10px;
-                               border-bottom-right-radius: 10px;''')
+                                 border-top: 1px solid rgba(255,255,255, 0.1);
+                                 border-top-left-radius: 0px;
+                                 border-top-right-radius: 0px;
+                                 border-bottom-left-radius: 10px;
+                                 border-bottom-right-radius: 10px;''')
         
         # Кнопка для отправки сообщения
         self.send_message_btn = QPushButton()
@@ -48,6 +48,7 @@ class InputPanel(QWidget):
 
         # Поле ввода сообщения
         self.message_input = MessageInput(self, self.file_list)
+        self.message_input.message_edit.installEventFilter(self)
         self.message_input.message_edit.textChanged.connect(self.message_input.adjustHeight)
         self.message_input.message_edit.textChanged.connect(self.adjustHeight)
         self.setFixedHeight(self.message_input.size().height() + 20)
@@ -72,7 +73,10 @@ class InputPanel(QWidget):
         self.setLayout(main_layout)
     
     def adjustHeight(self):
-        self.setFixedHeight(self.message_input.size().height() + 20)
+        if self.file_list.count() > 0:
+            self.setFixedHeight(self.message_input.size().height() + 140)
+        else:
+            self.setFixedHeight(self.message_input.size().height() + 20)
 
     def send_message(self):
         text = self.message_input.message_edit.toPlainText()
@@ -90,19 +94,19 @@ class InputPanel(QWidget):
 
             self.setFixedHeight(65)
             self.message_input.message_edit.clear()
-        else: 
+        elif text != '': 
             self.messages_list.add_message(text=text, i=randrange(0, 2))
-            print('Сообщение отправленно...')
             self.message_input.message_edit.clear()
     
-    def eventFilter(self, obj, event):
-        if event.type() == QtCore.QEvent.KeyPress and obj is self.message_input:
-            if event.key() == QtCore.Qt.Key_Return and self.message_input.hasFocus():
-                if event.modifiers() == QtCore.Qt.ControlModifier:
-                    self.message_input.insertPlainText("\n")
-                    scroll_bar = self.message_input.verticalScrollBar()
+    def eventFilter(self, obj, event) -> bool:
+        if event.type() == QtCore.QEvent.KeyPress and obj is self.message_input.message_edit:
+            if event.key() == Qt.Key_Return:
+                if event.modifiers() == Qt.ControlModifier:  # Если зажаты Ctrl + Enter
+                    self.message_input.message_edit.insertPlainText("\n")
+                    scroll_bar = self.message_input.message_edit.verticalScrollBar()
                     scroll_bar.setValue(scroll_bar.maximum())
-                else:
+                    return True  # Сообщаем, что событие обработано
+                else:  # Если нажат только Enter, отправляем сообщение
                     self.send_message()
                     return True
         return super().eventFilter(obj, event)
@@ -160,7 +164,7 @@ class MessageInput(QWidget):
     def open_file_dialog(self):
         dialog = QFileDialog(self)
         dialog.setFileMode(QFileDialog.FileMode.ExistingFiles)
-        dialog.setNameFilter("Images (*.png *.jpg)")
+        dialog.setNameFilter("Images (*.png *.jpg *.gif)")
         dialog.setViewMode(QFileDialog.ViewMode.List)
         if dialog.exec():
             filenames = dialog.selectedFiles()
@@ -173,6 +177,7 @@ class MessageInput(QWidget):
                 
                 self.view_file = ViewFile(last_item.text())
                 self.input_panel.view_file_layout.addWidget(self.view_file)
+                self.input_panel.setFixedHeight(self.size().height() + 140)
 
     def adjustHeight(self):
         # Подсчёт количества строк текста

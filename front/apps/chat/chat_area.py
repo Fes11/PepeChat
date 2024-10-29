@@ -87,8 +87,6 @@ class MessagesList(QWidget):
     def add_message(self, text, i, path=''):
         if self.open_lable.isVisible():
                 self.open_lable.setVisible(False)
-        
-        print(text)
 
         message = Message(text, i, path)
         self.chat_area_layout.addLayout(message)

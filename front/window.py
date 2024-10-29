@@ -15,7 +15,7 @@ class Window(QMainWindow):
         super(Window, self).__init__()
         self.setGeometry(350,170, 1100, 750)
 
-        # BG_COLOR = 'rgba(255,255,255,0.6)'
+        # BG_COLOR = 'rgba(0,0,0,0.6)'
         # GlobalBlur(self.winId(), Acrylic=True, QWidget=self) # Сильный блюр
 
         # BG_COLOR = 'rgba(0,0,0,0.7)'
