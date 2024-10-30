@@ -186,6 +186,7 @@ class MiniProfile(QWidget):
         super(MiniProfile, self).__init__()
 
         self.setStyleSheet('color: white; font-weight: bold;') # background-color: rgba(0,0,0,0);
+        self.file_list = QListWidget()
 
         layout = QVBoxLayout()
         layout.setContentsMargins(0,0,0,0)
@@ -194,40 +195,25 @@ class MiniProfile(QWidget):
         self.background_img.setFixedSize(300, 160)
         self.background_img.setStyleSheet('''border-top-left-radius: 10px;
                                              border-top-right-radius: 10px; background-color: grey;''')
-        original_pixmap = darken_image('static/image/ava2.jpg', 'static/image/dark_img.jpg')
-        original_pixmap = scaled_image('static/image/dark_img.jpg')
-        self.corner_radius = 8
-        path = QPainterPath()
-        rect = QRectF(0, 0, self.background_img.width(), self.background_img.height())
         
-        # Закругляем только верхние углы
-        path.moveTo(self.corner_radius, 0)
-        path.lineTo(rect.width() - self.corner_radius, 0)
-        path.quadTo(rect.width(), 0, rect.width(), self.corner_radius)
-        path.lineTo(rect.width(), rect.height())
-        path.lineTo(0, rect.height())
-        path.lineTo(0, self.corner_radius)
-        path.quadTo(0, 0, self.corner_radius, 0)
-        
-        # Устанавливаем маску для виджета
-        rounded_region = QRegion(path.toFillPolygon().toPolygon())
-        self.background_img.setMask(rounded_region)
-        self.background_img.setPixmap(QPixmap(original_pixmap))
-        self.background_img.setPixmap(QPixmap(original_pixmap))
+        self.background_img.setPixmap(QPixmap(self.image('static/image/ava2.jpg')))
 
-        self.change_background_img = QPushButton()
-        self.change_background_img.setIcon(QPixmap('static/image/pen.png'))
-        self.change_background_img.setIconSize(QSize(15, 15))
-        self.change_background_img.setCursor(QCursor(Qt.PointingHandCursor))
-        self.change_background_img.setFixedSize(30,30)
-        self.change_background_img.setStyleSheet('''QPushButton {background-color: rgba(0,0,0,0.8); color: white; font-size: 16px;}
+        self.change_bg_img_btn = QPushButton()
+        self.change_bg_img_btn.setIcon(QPixmap('static/image/pen.png'))
+        self.change_bg_img_btn.setIconSize(QSize(15, 15))
+        self.change_bg_img_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        self.change_bg_img_btn.setFixedSize(30,30)
+        self.change_bg_img_btn.setStyleSheet('''QPushButton {background-color: rgba(0,0,0,0.8); color: white; font-size: 16px;}
                                                     QPushButton:hover {background-color: rgba(0,0,0,0.6);}''')
-
-        self.change_background_img_layout = QVBoxLayout()
-        self.change_background_img_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self.change_background_img_layout.addWidget(self.change_background_img)
+        self.change_bg_img_btn.clicked.connect(self.open_file_dialog)
         
-        self.background_img.setLayout(self.change_background_img_layout)
+        self.change_bg_img_btn.setVisible(False)
+
+        self.change_bg_img_btn_layout = QVBoxLayout()
+        self.change_bg_img_btn_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.change_bg_img_btn_layout.addWidget(self.change_bg_img_btn)
+        
+        self.background_img.setLayout(self.change_bg_img_btn_layout)
 
         self.user_layout = QHBoxLayout()
         self.user_layout.setSpacing(15)
@@ -248,6 +234,7 @@ class MiniProfile(QWidget):
         self.chang_btn.setFixedSize(130, 25)
         self.chang_btn.setStyleSheet(f'''QPushButton {{background-color: {MAIN_COLOR}; color: white; border-radius: 10px; font-size: 12px;}}
                                         QPushButton:hover {{background-color: rgb(134, 110, 255)}}''')
+        self.chang_btn.clicked.connect(self.start_change_profile)
         self.user_layout.addWidget(self.chang_btn)
 
         self.form_layout = QVBoxLayout()
@@ -278,3 +265,56 @@ class MiniProfile(QWidget):
         layout.addLayout(self.descripton_layout)
 
         self.setLayout(layout)
+
+    def start_change_profile(self):
+        self.chang_btn.setText(' Сохранить')
+        self.chang_btn.clicked.connect(self.save_change_profile)
+
+        self.change_bg_img_btn.setVisible(True)
+    
+    def save_change_profile(self):
+        self.chang_btn.setText(' Редактировать')
+        self.chang_btn.clicked.connect(self.start_change_profile)
+
+        self.change_bg_img_btn.setVisible(False)
+
+    def open_file_dialog(self):
+        dialog = QFileDialog(self)
+        dialog.setFileMode(QFileDialog.FileMode.ExistingFiles)
+        dialog.setNameFilter("Images (*.png *.jpg)")
+        dialog.setViewMode(QFileDialog.ViewMode.List)
+        if dialog.exec():
+            filenames = dialog.selectedFiles()
+            if filenames:
+                self.file_list.addItems([str(Path(filename)) for filename in filenames])
+                
+                last_item_index = self.file_list.count() - 1
+                if last_item_index >= 0:
+                    last_item = self.file_list.item(last_item_index)
+                    self.switch_image(last_item.text())
+
+    def switch_image(self, path):
+        self.background_img.setPixmap(QPixmap(self.image(path)))
+
+    def image(self, path):
+        'Затемняет и подстраивает изображение под профиль. '
+        original_pixmap = darken_image(path, 'static/image/dark_img.jpg')
+        original_pixmap = scaled_image('static/image/dark_img.jpg')
+        self.corner_radius = 8
+        path = QPainterPath()
+        rect = QRectF(0, 0, self.background_img.width(), self.background_img.height())
+        
+        # Закругляем только верхние углы
+        path.moveTo(self.corner_radius, 0)
+        path.lineTo(rect.width() - self.corner_radius, 0)
+        path.quadTo(rect.width(), 0, rect.width(), self.corner_radius)
+        path.lineTo(rect.width(), rect.height())
+        path.lineTo(0, rect.height())
+        path.lineTo(0, self.corner_radius)
+        path.quadTo(0, 0, self.corner_radius, 0)
+        
+        # Устанавливаем маску для виджета
+        rounded_region = QRegion(path.toFillPolygon().toPolygon())
+        self.background_img.setMask(rounded_region)
+
+        return original_pixmap
