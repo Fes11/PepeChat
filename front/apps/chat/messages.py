@@ -1,9 +1,10 @@
 from datetime import datetime
-from PySide6.QtGui import QIcon, QPixmap, QMovie
+from PySide6.QtGui import QIcon, QPixmap, QMovie, QCursor
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (QVBoxLayout, QLabel, QHBoxLayout, QWidget, QPushButton)
 from apps.chat.style import NOT_USER_BUBLS, TEXT_COLOR
 from apps.profile.profile import Avatar
+from utils.media_view import MediaView
 from image import get_top_rounded_image
 
 
@@ -76,10 +77,12 @@ class MessageBubble(QWidget):
                 self.movie.start()  # Начинаем проигрывать GIF
             else:
                 image = QPushButton()
+                image.setCursor(QCursor(Qt.PointingHandCursor))
                 image.setStyleSheet('background-color: rgba(0, 0, 0, 0)')
                 original_pixmap = QPixmap(path)
                 image.setIcon(QIcon(get_top_rounded_image(original_pixmap, radius=28)))
                 image.setIconSize(QSize(300, 300))
+                image.clicked.connect(self.open_media_view)
                 message_buble_layout.addWidget(image)
 
             widget.setFixedWidth(300) # Нужно будет переделать так, что ширина ровняется ширине картинки
@@ -121,3 +124,7 @@ class MessageBubble(QWidget):
 
         layout.addWidget(widget)
         self.setLayout(layout)
+
+    def open_media_view(self):
+        window = MediaView(self.path)
+        window.show()

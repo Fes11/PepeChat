@@ -42,6 +42,7 @@ class Window(QMainWindow):
         self.main.setObjectName('main')
         self.main.setGeometry(0, 0, self.width(), self.height())
         self.main.setStyleSheet(f'''#main {{background-color: {BG_COLOR}; border-radius: 10px;}}''')
+
         # Основной слой в который добавляються виджеты
         self.main_layout = QHBoxLayout()
         self.main_layout.setContentsMargins(7, 0, 7, 7)
@@ -52,8 +53,11 @@ class Window(QMainWindow):
         self.window_layout.setContentsMargins(0,0,0,0)
         self.window_layout.setSpacing(0)
         self.main.setLayout(self.window_layout)
-        
-        self.window_layout.addWidget(TopPanel(self))
+
+        self.top_panel = TopPanel(self)
+        self.top_panel.setStyleSheet(f"background-color: grey;")
+
+        self.window_layout.addWidget(self.top_panel)
         self.window_layout.addLayout(self.main_layout)
 
         self.setCentralWidget(self.main)
@@ -147,10 +151,10 @@ class TopPanel(QWidget):
             # Запоминаем текущие размеры и положение окна
             self.parent.normal_geometry = self.parent.geometry()
             self.parent.showMaximized()
-            self.parent.main.setStyleSheet(f'''#main {{background-color: {BG_COLOR}; border-radius: 0px;}}''')
+            # self.parent.main.setStyleSheet(f'''#main {{background-color: {BG_COLOR}; border-radius: 0px;}}''')
         else:
             self.parent.showNormal()
-            self.parent.main.setStyleSheet(f'''#main {{background-color: {BG_COLOR}; border-radius: 10px;}}''')
+            # self.parent.main.setStyleSheet(f'''#main {{background-color: {BG_COLOR}; border-radius: 10px;}}''')
 
         # Переключаем флаг состояния окна
         self.is_fullscreen = not self.is_fullscreen
