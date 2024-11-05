@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (QGraphicsDropShadowEffect)
 # HOVER_MAIN_COLOR = 'rgba(123, 97, 255, 0.7);'
 
 # Темная тема
-BG_COLOR = 'rgba(30, 27, 19, 1)'
+BG_COLOR = 'rgba(23, 24, 27, 1)'
 MAIN_BOX_COLOR = 'rgba(255,255,255, 0.1)'
 MAIN_COLOR = 'rgba(123, 97, 255, 1);'
 NOT_USER_BUBLS = 'rgba(255,255,255, 0.2)'

@@ -137,12 +137,16 @@ class TopPanel(QWidget):
         self.parent.oldPos = event.globalPosition().toPoint()
         self.parent.showNormal()
         self.is_fullscreen = False
+        style = self.parent.main.styleSheet()
+        self.parent.main.setStyleSheet(style + '''#main {border-radius: 10px;}''')
 
     def topPanelMouseMoveEvent(self, event):
         try:
             delta = event.globalPosition().toPoint() - self.parent.oldPos
             self.parent.move(self.parent.x() + delta.x(), self.parent.y() + delta.y())
             self.parent.oldPos = event.globalPosition().toPoint()
+            style = self.parent.main.styleSheet()
+            self.parent.main.setStyleSheet(style + '''#main {border-radius: 10px;}''')
         except AttributeError:
             pass
     
@@ -151,10 +155,12 @@ class TopPanel(QWidget):
             # Запоминаем текущие размеры и положение окна
             self.parent.normal_geometry = self.parent.geometry()
             self.parent.showMaximized()
-            # self.parent.main.setStyleSheet(f'''#main {{background-color: {BG_COLOR}; border-radius: 0px;}}''')
+            style = self.parent.main.styleSheet()
+            self.parent.main.setStyleSheet(style + '''#main {border-radius: 0px;}''')
         else:
             self.parent.showNormal()
-            # self.parent.main.setStyleSheet(f'''#main {{background-color: {BG_COLOR}; border-radius: 10px;}}''')
+            style = self.parent.main.styleSheet()
+            self.parent.main.setStyleSheet(style + '''#main {border-radius: 10px;}''')
 
         # Переключаем флаг состояния окна
         self.is_fullscreen = not self.is_fullscreen
