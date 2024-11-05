@@ -1,105 +1,50 @@
-from PySide6.QtWidgets import QApplication, QMainWindow, QDialog, QLabel, QPushButton, QVBoxLayout, QWidget
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QIcon, QColor, QPalette
 import sys
+import ctypes
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget
+from PySide6.QtCore import QTimer, Qt
 
-# Базовый класс кастомного окна
-class CustomWindow(QMainWindow):
-    def __init__(self, title="Custom Window", parent=None):
-        super().__init__(parent)
-        
-        # Настройка окна
-        self.setWindowTitle(title)
-        self.setGeometry(100, 100, 600, 400)
-        
-        # Убираем стандартную рамку окна
-        self.setWindowFlag(Qt.FramelessWindowHint)
-        
-        # Устанавливаем цвет фона и стили
-        self.setStyleSheet("""
-            QMainWindow {
-                background-color: #2c3e50;
-                color: white;
-                border: 2px solid #3498db;
-                border-radius: 10px;
-            }
-            QPushButton {
-                background-color: #3498db;
-                border: none;
-                padding: 8px;
-                color: white;
-                font-size: 16px;
-                border-radius: 5px;
-            }
-            QPushButton:hover {
-                background-color: #2980b9;
-            }
-        """)
-        
-        # Кнопка закрытия окна
-        close_button = QPushButton("X", self)
-        close_button.setFixedSize(30, 30)
-        close_button.move(570, 10)
-        close_button.clicked.connect(self.close)
-        
-    def add_content(self, widget):
-        layout = QVBoxLayout()
-        layout.addWidget(widget)
-        central_widget = self.centralWidget()
-        if not central_widget:
-            central_widget = QWidget()
-            self.setCentralWidget(central_widget)
-        central_widget.setLayout(layout)
+user32 = ctypes.windll.user32
 
-# Основное окно
-class MainWindow(CustomWindow):
+class MainWindow(QMainWindow):
     def __init__(self):
-        super().__init__("Main Window")
-        
-        # Текстовый элемент и кнопка для открытия диалогового окна
-        label = QLabel("Это основное окно", self)
-        label.setAlignment(Qt.AlignCenter)
-        
-        open_dialog_button = QPushButton("Открыть диалог", self)
-        open_dialog_button.clicked.connect(self.open_dialog)
-        
-        # Добавляем элементы на окно
-        self.add_content(label)
-        self.add_content(open_dialog_button)
-        
-    def open_dialog(self):
-        dialog = CustomDialog(self)
-        dialog.exec()
+        super().__init__()
+        self.setWindowTitle("Отслеживание клика на иконку панели задач")
+        self.resize(300, 200)
 
-# Диалоговое окно
-class CustomDialog(QDialog, CustomWindow):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        
-        # Настройка диалогового окна
-        self.setWindowTitle("Диалоговое окно")
-        self.setFixedSize(300, 200)
-        
-        # Добавляем текстовый элемент и кнопку закрытия
-        label = QLabel("Это диалоговое окно", self)
-        label.setAlignment(Qt.AlignCenter)
-        
-        close_button = QPushButton("Закрыть", self)
-        close_button.clicked.connect(self.close)
-        
-        # Размещение элементов в диалоговом окне
-        layout = QVBoxLayout()
-        layout.addWidget(label)
-        layout.addWidget(close_button)
-        self.setLayout(layout)
+        widget = QWidget()
+        widget.setFixedSize(300,300)
+        widget.setStyleSheet('background-color: red;')
 
-# Инициализация приложения
+        self.setAutoFillBackground(False)
+        self.setWindowFlags(Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+
+        # Флаг для отслеживания состояния окна
+        self.is_hidden = False
+
+        # Таймер для периодического отслеживания состояния окна
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.check_window_state)
+        self.timer.start(1)  # Проверка каждые 100 мс
+
+        self.setCentralWidget(widget)
+
+    def check_window_state(self):
+        # Проверяем, является ли текущее окно активным
+        active_window = user32.GetForegroundWindow()
+        if active_window == self.winId().__int__():
+            if self.is_hidden:
+                self.showNormal()
+                self.is_hidden = False
+        else:
+            if not self.is_hidden:
+                self.showMinimized()
+                self.is_hidden = True
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    
-    # Создаем основное окно
-    main_window = MainWindow()
-    main_window.show()
-    
-    # Запуск приложения
+
+    window = MainWindow()
+    window.show()
+
     sys.exit(app.exec())

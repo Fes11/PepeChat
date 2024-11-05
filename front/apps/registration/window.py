@@ -1,7 +1,7 @@
 from PySide6.QtGui import QPixmap, QCursor, QIcon, QColor
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import ( QTextEdit, QVBoxLayout, QLabel, QGraphicsDropShadowEffect,
-                               QHBoxLayout, QWidget, QPushButton, QLineEdit)
+                               QHBoxLayout, QWidget, QPushButton, QLineEdit, QFormLayout)
 from apps.chat.window import ChatScreen
 from apps.chat.style import MAIN_BOX_COLOR
 
@@ -59,8 +59,9 @@ class RegForm(QWidget):
         super(RegForm, self).__init__()
         self.reg_screen = reg_screen
 
-        self.form_layout = QVBoxLayout()
-        self.form_layout.setSpacing(15)
+        self.form_layout = QFormLayout()
+        self.form_layout.setVerticalSpacing(15)
+        self.form_layout.setHorizontalSpacing(0) 
         self.form_layout.setContentsMargins(50,20,50,20)
         self.form_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -85,33 +86,16 @@ class RegForm(QWidget):
         welcome_lable.setAlignment(Qt.AlignmentFlag.AlignCenter)
         welcome_lable.setStyleSheet('QLabel {font-size: 40px;}')
         welcome_layout.addWidget(welcome_lable)
-
-        self.form_layout.addLayout(welcome_layout)
+        self.form_layout.addRow(welcome_layout)
 
         welcome_description = QLabel('Sign up')
         welcome_description.setFixedHeight(20)
         welcome_description.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.form_layout.addWidget(welcome_description)
 
-        self.input_login = QTextEdit() 
-        self.input_login.setFixedHeight(48)
-        self.input_login.setPlaceholderText("Введите логин или мыло: ")
-        self.input_login.textChanged.connect(self.active_continue_btn)
-        self.form_layout.addWidget(self.input_login)
-
-        self.input_password = QLineEdit()
-        self.input_password.setEchoMode(QLineEdit.Password)
-        self.input_password.setFixedHeight(48)
-        self.input_password.setPlaceholderText("Введите пароль: ")
-        self.input_password.textChanged.connect(self.active_continue_btn)
-        self.form_layout.addWidget(self.input_password)
-
-        self.input_repeat_password = QLineEdit()
-        self.input_repeat_password.setEchoMode(QLineEdit.Password)
-        self.input_repeat_password.setFixedHeight(48)
-        self.input_repeat_password.setPlaceholderText("Подтвердите пароль: ")
-        self.input_repeat_password.textChanged.connect(self.active_continue_btn)
-        self.form_layout.addWidget(self.input_repeat_password)
+        self.input_email = self.create_input_row("Введите электронную почту: ")
+        self.input_password = self.create_input_row("Введите пароль: ", QLineEdit.Password)
+        self.input_repeat_password = self.create_input_row("Подтвердите пароль: ", QLineEdit.Password)
 
         self.error_login = QLabel()
         self.error_login.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -128,6 +112,7 @@ class RegForm(QWidget):
         self.form_layout.addWidget(self.continue_btn)
 
         reg_layout = QVBoxLayout()
+        reg_layout.setSpacing(15)
         reg_layout.setContentsMargins(0, 10, 0, 0)
 
         self.reg_lable = QLabel('Есть акк? Нажми сюда')
@@ -150,12 +135,25 @@ class RegForm(QWidget):
         autro_lable.setStyleSheet('QLabel {color: rgba(255,255,255, 0.45)}')
         reg_layout.addWidget(autro_lable)
 
-        self.form_layout.addLayout(reg_layout)
+        self.form_layout.addRow('', reg_layout)
 
         self.setLayout(self.form_layout)
     
+    def create_input_row(self, placeholder, echo_mode=QLineEdit.Normal):
+        dots_label = QLabel("*")
+        dots_label.setStyleSheet('color: white; font-size: 30px; padding-top: 7px;')
+        
+        input_field = QLineEdit()
+        input_field.textChanged.connect(self.active_continue_btn)
+        input_field.setFixedHeight(48)
+        input_field.setPlaceholderText(placeholder)
+        input_field.setEchoMode(echo_mode)
+        
+        self.form_layout.addRow(dots_label, input_field)
+        return input_field
+    
     def active_continue_btn(self):
-        if self.input_login.toPlainText() and self.input_password.text() and self.input_repeat_password.text():
+        if self.input_email.text() and self.input_password.text() and self.input_repeat_password.text():
             self.continue_btn.setEnabled(True)
             self.continue_btn.setStyleSheet('''QPushButton {color: rgba(255,255,255,0.65); background-color: rgba(255,255,255,0.25);
                                                         border-radius: 10px; font-size: 16px; font-weight: bold;}

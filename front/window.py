@@ -1,9 +1,9 @@
 import sys
 import ctypes
-from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QFontMetrics, QIcon, QCursor, QPixmap
-from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QLabel, QSizeGrip
-
+from PySide6.QtCore import Qt, QSize, QEvent
+from PySide6.QtGui import QIcon, QCursor, QIcon, QAction, QCursor
+from PySide6.QtWidgets import (QMainWindow, QApplication, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, 
+                               QLabel, QSizeGrip, QApplication, QMainWindow, QSystemTrayIcon, QMenu)
 
 from BlurWindow.blurWindow import GlobalBlur
 
@@ -52,7 +52,6 @@ class Window(QMainWindow):
         self.window_layout = QVBoxLayout()
         self.window_layout.setContentsMargins(0,0,0,0)
         self.window_layout.setSpacing(0)
-        self.main.setLayout(self.window_layout)
 
         self.top_panel = TopPanel(self)
         self.top_panel.setStyleSheet(f"background-color: grey;")
@@ -60,10 +59,67 @@ class Window(QMainWindow):
         self.window_layout.addWidget(self.top_panel)
         self.window_layout.addLayout(self.main_layout)
 
+        self.main.setLayout(self.window_layout)
+
         self.setCentralWidget(self.main)
 
         self.sizegrip = QSizeGrip(self.main)
         self.sizegrip.setStyleSheet("width: 5px; height: 5px; margin 0px; padding: 0px;")
+    
+        # Создаем иконку для системного трея
+        self.tray_icon = QSystemTrayIcon(QIcon("static/image/logo.png"), self)
+        
+        # Добавляем контекстное меню для иконки в трее
+        self.tray_menu = QMenu()
+
+        # Действие для отображения/скрытия окна
+        show_action = QAction("Показать/Скрыть окно", self)
+        show_action.triggered.connect(self.toggle_visibility)
+        self.tray_menu.addAction(show_action)
+
+        # Действие для выхода из приложения
+        exit_action = QAction("Выход", self)
+        exit_action.triggered.connect(self.exit_application)
+        self.tray_menu.addAction(exit_action)
+        
+        # Устанавливаем меню для иконки
+        self.tray_icon.setContextMenu(self.tray_menu)
+
+        # Подключаем событие нажатия на иконку
+        self.tray_icon.activated.connect(self.on_tray_icon_click)
+        
+        # Показываем иконку в трее
+        self.tray_icon.show()
+
+    def closeEvent(self, event):
+        # Скрываем окно и показываем уведомление при закрытии
+        event.ignore()
+        self.hide()
+        # self.tray_icon.showMessage(
+        #     "Приложение свернуто",
+        #     "Приложение было свернуто в трей. Для отображения нажмите на иконку.",
+        #     QSystemTrayIcon.Information,
+        #     2000
+        # )
+
+    def on_tray_icon_click(self, reason):
+        # Проверяем, какой кнопкой нажали на иконку в трее
+        if reason == QSystemTrayIcon.ActivationReason.Trigger:
+            self.toggle_visibility()
+        elif reason == QSystemTrayIcon.ActivationReason.Context:
+            # Открываем контекстное меню
+            self.tray_menu.exec(QCursor.pos())
+
+    def toggle_visibility(self):
+        # Показываем или скрываем окно при нажатии на иконку
+        if self.isVisible():
+            self.hide()
+        else:
+            self.showNormal()  # Для отображения в обычном режиме
+
+    def exit_application(self):
+        # Полностью закрывает приложение
+        QApplication.instance().quit()
 
     def swetch_screen(self, new_widget):
         '''Изменяет экранн (то что показывается в окне)'''
@@ -97,13 +153,14 @@ class TopPanel(QWidget):
         self.window_title = QLabel('PepeChat')
         self.window_title.setStyleSheet('''QLabel {background-color: rgba(0,0,0,0); color: grey; margin-left: 14px; font-weight: bold;}''')
         self.top_panel_layout.addWidget(self.window_title)
+        self.top_panel_layout.addStretch()
         
         self.close_btn = QPushButton()
         self.close_btn.setFixedSize(width, height)
         self.close_btn.setIcon(QIcon('static/image/close_hover.png'))
         self.close_btn.setIconSize(QSize(icon_size, icon_size))
         self.close_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        self.close_btn.setStyleSheet('''QPushButton {background-color: rgba(0,0,0,0);} QPushButton:hover {background-color: #fd5858;}''')
+        self.close_btn.setStyleSheet('''QPushButton {background-color: rgba(0,0,0,0); border: none;} QPushButton:hover {background-color: #fd5858;}''')
         self.close_btn.clicked.connect(self.parent.close)
         
         self.hide_btn = QPushButton()
@@ -158,12 +215,3 @@ class TopPanel(QWidget):
 
         # Переключаем флаг состояния окна
         self.is_fullscreen = not self.is_fullscreen
-
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-
-    window = Window()
-    window.show()
-
-    app.exec()

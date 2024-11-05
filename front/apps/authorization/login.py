@@ -71,7 +71,7 @@ class LoginScreen(QWidget):
         welcome_description.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.form_layout.addWidget(welcome_description)
         
-        self.input_login = QTextEdit() 
+        self.input_login = QLineEdit() 
         self.input_login.setFixedHeight(48)
         self.input_login.setPlaceholderText("Введите логин или мыло: ")
         self.input_login.textChanged.connect(self.active_login_btn)
@@ -139,7 +139,7 @@ class LoginScreen(QWidget):
         self.setLayout(layout)
     
     def active_login_btn(self):
-        if self.input_login.toPlainText() and self.input_password.text():
+        if self.input_login.text() and self.input_password.text():
             self.continue_btn.setEnabled(True)
             self.continue_btn.setStyleSheet('''QPushButton {color: rgba(255,255,255,0.65); background-color: rgba(255,255,255,0.25);
                                                         border-radius: 10px; font-size: 16px; font-weight: bold;}
@@ -153,7 +153,7 @@ class LoginScreen(QWidget):
         parent_window.swetch_screen(RegScreen())
         
     def login(self):
-        login_text = self.input_login.toPlainText()
+        login_text = self.input_login.text()
         password_text = self.input_password.text()
 
         if login_text != '123':
