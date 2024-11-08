@@ -3,7 +3,7 @@ from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import ( QTextEdit, QVBoxLayout, QLabel, QGraphicsDropShadowEffect,
                                QHBoxLayout, QWidget, QPushButton, QLineEdit)
 
-from apps.registration.window import RegScreen
+from .registration import RegScreen
 from apps.chat.window import ChatScreen
 from apps.chat.style import MAIN_BOX_COLOR
 
@@ -141,7 +141,7 @@ class LoginScreen(QWidget):
     def active_login_btn(self):
         if self.input_login.text() and self.input_password.text():
             self.continue_btn.setEnabled(True)
-            self.continue_btn.setStyleSheet('''QPushButton {color: rgba(255,255,255,0.65); background-color: rgba(255,255,255,0.25);
+            self.continue_btn.setStyleSheet('''QPushButton {color: white; background-color: rgba(255,255,255,0.25);
                                                         border-radius: 10px; font-size: 16px; font-weight: bold;}
                                                 QPushButton:hover {background-color: rgba(255,255,255,0.4)}''')
         else:
