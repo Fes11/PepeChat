@@ -7,6 +7,7 @@ from PySide6.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve, Property
 from PySide6.QtWidgets import (QTextEdit, QScrollArea, QVBoxLayout, QLabel, QGraphicsDropShadowEffect,
                                QHBoxLayout, QWidget, QSizePolicy, QPushButton)
 from apps.profile.profile import Profile
+from apps.chat.serach import UsernameSearchWidget
 
 
 class ChatWidget(QWidget):
@@ -157,7 +158,7 @@ class Sidebar(QWidget):
 
         self.search_widget = QWidget()
         self.search_widget.setMaximumHeight(40)
-        self.search_widget.setStyleSheet('''background-color: rgba(255, 255, 255, 0.1); color: white; 
+        self.search_widget.setStyleSheet('''background-color: #3A3A40; color: white; 
                                             border-radius: 16px;''')
 
         self.seatch_image = QPushButton()
@@ -166,10 +167,7 @@ class Sidebar(QWidget):
         self.seatch_image.setIcon(QIcon('static/image/search_icon.png'))  # Установите путь к вашему изображению
         self.seatch_image.setIconSize(QSize(24, 24))
 
-        self.serch = QTextEdit()
-        self.serch.setStyleSheet('''background-color: rgba(255, 255, 255, 0); padding-top: 8px; padding-left: 5px;
-                                    font-weight: bold;''')
-        self.serch.setPlaceholderText("Search...")
+        self.serch = UsernameSearchWidget()
 
         self.search_layout.addWidget(self.seatch_image)
         self.search_layout.addWidget(self.serch)
@@ -180,14 +178,17 @@ class Sidebar(QWidget):
         top_layout.setContentsMargins(0,0,0,0)
 
         logo = QLabel(self)
-        pixmap = QPixmap('static/image/logo.png')
+        logo.setStyleSheet(f'background-color: {MAIN_COLOR}; border-radius: 10px;')
+        pixmap = QPixmap('static/image/logo_opaciti.png')
         pixmap.scaled(30, 30)
         logo.setPixmap(pixmap)
 
         # Создание эффекта свечения с использованием QGraphicsDropShadowEffect
         self.glow = QGraphicsDropShadowEffect(self)
         self.glow.setBlurRadius(20)  # радиус размытия
-        self.glow.setColor(QColor(123, 97, 255))  # цвет свечения
+        rgba = list(map(int, re.findall(r'\d+', MAIN_COLOR)))
+        color = QColor(rgba[0], rgba[1], rgba[2])
+        self.glow.setColor(color)  # цвет свечения
         self.glow.setOffset(0, 0)  # смещение тени
         logo.setGraphicsEffect(self.glow)
 
@@ -315,9 +316,9 @@ class Sidebar(QWidget):
         self.num += 1
         self.chat_widget = ChatWidget(self.main_window, self.num)
         self.chat_list_layout.addWidget(self.chat_widget)
-        messages_list = MessagesList()
-        messages_list.top_chat_name.setText(self.chat_widget.chat_name.text())
-        self.main_window.stack.addWidget(messages_list)
+        self.messages_list = MessagesList()
+        self.messages_list.top_chat_name.setText(self.chat_widget.chat_name.text())
+        self.main_window.stack.addWidget(self.messages_list)
 
         # Добавляем виджет чата в список
         self.main_window.chat_widgets.append(self.chat_widget)

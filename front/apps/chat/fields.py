@@ -19,6 +19,7 @@ class HoverButton(QPushButton):
     def __init__(self, text, path=None):
         super().__init__(text)
         self.path = path
+        self.setIcon(QIcon(f'{self.path}.png')) 
         
     def enterEvent(self, event):
         # Меняем цвет кнопки при наведении курсора
@@ -27,7 +28,7 @@ class HoverButton(QPushButton):
 
     def leaveEvent(self, event):
         # Возвращаем цвет кнопки при уходе курсора
-        self.setIcon(QIcon(f'{self.path}'))
+        self.setIcon(QIcon(f'{self.path}.png'))
         super().leaveEvent(event)
 
 class FirstNewChatButton(QPushButton):
@@ -86,8 +87,9 @@ class UserWidget(QWidget):
         self.setLayout(self.data_layout)
 
 class DarkenButton(QPushButton):
-    def __init__(self):
+    def __init__(self, size_btn: int):
         super().__init__()
+        self.size_btn = size_btn
         self.clicked.connect(self.open_file_dialog)
         self.file_list = QListWidget()
         self.original_pixmap = QPixmap('static/image/ava3.jpg')
@@ -95,7 +97,7 @@ class DarkenButton(QPushButton):
         
         self.setStyleSheet('background-color: rgba(255,255,255, 0);')
         self.border_icon = get_rounds_edges_image(self, self.original_pixmap)
-        self.setIconSize(QSize(90, 90))
+        self.setIconSize(QSize(self.size_btn, self.size_btn))
         self.setIcon(QIcon(self.border_icon))
     
     def enterEvent(self, event):

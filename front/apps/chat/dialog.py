@@ -4,7 +4,7 @@ from PySide6.QtGui import QIcon, QCursor, QTransform
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (QTextEdit, QVBoxLayout, QLabel, QListWidget,
                                QHBoxLayout, QWidget, QPushButton, QListWidgetItem)
-from .style import MAIN_COLOR, HOVER_MAIN_COLOR
+from .style import MAIN_COLOR, HOVER_MAIN_COLOR, BG_COLOR
 
 class CreateChatDialog(DialogWindow):
     '''Модальное окно создания чата. 
@@ -40,7 +40,7 @@ class CreateChatDialog(DialogWindow):
         top_layout = QHBoxLayout()
         top_layout.setSpacing(15)
         
-        iamge = DarkenButton()
+        iamge = DarkenButton(100)
         iamge.setCursor(QCursor(Qt.PointingHandCursor))
         top_layout.addWidget(iamge)
         
@@ -50,6 +50,7 @@ class CreateChatDialog(DialogWindow):
         name_chat = QTextEdit()
         name_chat.setFixedHeight(40)
         name_chat.setPlaceholderText("Введите название чата...")
+        name_chat.setStyleSheet(f'background-color: {BG_COLOR}')
         name_and_people_layout.addWidget(name_chat)
         
         searc_people = QPushButton(" Добавить участников")

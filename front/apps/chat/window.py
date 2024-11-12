@@ -1,6 +1,7 @@
 from apps.chat.fields import FirstNewChatButton
 from apps.chat.chat_list import Sidebar
 from apps.chat.dialog import CreateChatDialog
+from apps.chat.tabs import TabsBar
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QVBoxLayout,QHBoxLayout, QWidget, QStackedWidget)
 from .style import MAIN_COLOR, HOVER_MAIN_COLOR
@@ -10,7 +11,7 @@ class ChatScreen(QWidget):
     '''Основное окно чата.'''
     def __init__(self) -> None:
         super(ChatScreen, self).__init__()
-        self.setMinimumWidth(680)
+
         layout = QHBoxLayout()
         layout.setContentsMargins(0,0,0,0)
         
@@ -19,6 +20,8 @@ class ChatScreen(QWidget):
 
         # Добавляем виджеты в окно
         self.sidebar = Sidebar(self)
+
+        # self.stack.messages_list.tabs_bar_btn.clicked.connect(self.open_tabs_bar)
         layout.addWidget(self.sidebar)
 
         self.stack = QStackedWidget(self)
@@ -36,12 +39,24 @@ class ChatScreen(QWidget):
         self.first_chat = QWidget()
         self.first_chat.setLayout(self.first_chat_layout)
         self.stack.addWidget(self.first_chat)
-        
-        self.box = CreateChatDialog(self)  
+
+        self.tabs = TabsBar()
+        layout.addWidget(self.tabs)
+
+        self.box = CreateChatDialog(self)
         self.box.create_btn.clicked.connect(self.sidebar.add_chat)
         self.box.create_btn.clicked.connect(lambda: self.switch_chat(self.sidebar.num - 1))
         self.box.create_btn.clicked.connect(self.box.close)
         self.setLayout(layout)
+    
+    def open_tabs_bar(self):
+        print('Тут')
+        if self.tabs.isVisible():
+            self.tabs.setVisible(False)
+            print('Выключено')
+        else:
+            self.tabs.setVisible(True)
+            print('Включено')
     
     def open_add_chat(self):
         self.box.setVisible(True)

@@ -13,7 +13,7 @@ class Window(QMainWindow):
     """Класс для создания окон. """
     def __init__(self) -> None:
         super(Window, self).__init__()
-        self.setGeometry(350,170, 1100, 750)
+        self.setGeometry(350,170, 1300, 750)
 
         # BG_COLOR = 'rgba(0,0,0,0.6)'
         # GlobalBlur(self.winId(), Acrylic=True, QWidget=self) # Сильный блюр
@@ -66,35 +66,35 @@ class Window(QMainWindow):
         self.sizegrip = QSizeGrip(self.main)
         self.sizegrip.setStyleSheet("width: 5px; height: 5px; margin 0px; padding: 0px;")
     
-        # Создаем иконку для системного трея
-        self.tray_icon = QSystemTrayIcon(QIcon("static/image/logo.png"), self)
+        # # Создаем иконку для системного трея
+        # self.tray_icon = QSystemTrayIcon(QIcon("static/image/logo.png"), self)
         
-        # Добавляем контекстное меню для иконки в трее
-        self.tray_menu = QMenu()
+        # # Добавляем контекстное меню для иконки в трее
+        # self.tray_menu = QMenu()
 
-        # Действие для отображения/скрытия окна
-        show_action = QAction("Показать/Скрыть окно", self)
-        show_action.triggered.connect(self.toggle_visibility)
-        self.tray_menu.addAction(show_action)
+        # # Действие для отображения/скрытия окна
+        # show_action = QAction("Показать/Скрыть окно", self)
+        # show_action.triggered.connect(self.toggle_visibility)
+        # self.tray_menu.addAction(show_action)
 
-        # Действие для выхода из приложения
-        exit_action = QAction("Выход", self)
-        exit_action.triggered.connect(self.exit_application)
-        self.tray_menu.addAction(exit_action)
+        # # Действие для выхода из приложения
+        # exit_action = QAction("Выход", self)
+        # exit_action.triggered.connect(self.exit_application)
+        # self.tray_menu.addAction(exit_action)
         
-        # Устанавливаем меню для иконки
-        self.tray_icon.setContextMenu(self.tray_menu)
+        # # Устанавливаем меню для иконки
+        # self.tray_icon.setContextMenu(self.tray_menu)
 
-        # Подключаем событие нажатия на иконку
-        self.tray_icon.activated.connect(self.on_tray_icon_click)
+        # # Подключаем событие нажатия на иконку
+        # self.tray_icon.activated.connect(self.on_tray_icon_click)
         
-        # Показываем иконку в трее
-        self.tray_icon.show()
+        # # Показываем иконку в трее
+        # self.tray_icon.show()
 
-    def closeEvent(self, event):
-        # Скрываем окно и показываем уведомление при закрытии
-        event.ignore()
-        self.hide()
+    # def closeEvent(self, event):
+    #     # Скрываем окно и показываем уведомление при закрытии
+    #     event.ignore()
+    #     self.hide()
         # self.tray_icon.showMessage(
         #     "Приложение свернуто",
         #     "Приложение было свернуто в трей. Для отображения нажмите на иконку.",
@@ -102,13 +102,13 @@ class Window(QMainWindow):
         #     2000
         # )
 
-    def on_tray_icon_click(self, reason):
-        # Проверяем, какой кнопкой нажали на иконку в трее
-        if reason == QSystemTrayIcon.ActivationReason.Trigger:
-            self.toggle_visibility()
-        elif reason == QSystemTrayIcon.ActivationReason.Context:
-            # Открываем контекстное меню
-            self.tray_menu.exec(QCursor.pos())
+    # def on_tray_icon_click(self, reason):
+    #     # Проверяем, какой кнопкой нажали на иконку в трее
+    #     if reason == QSystemTrayIcon.ActivationReason.Trigger:
+    #         self.toggle_visibility()
+    #     elif reason == QSystemTrayIcon.ActivationReason.Context:
+    #         # Открываем контекстное меню
+    #         self.tray_menu.exec(QCursor.pos())
 
     def toggle_visibility(self):
         # Показываем или скрываем окно при нажатии на иконку

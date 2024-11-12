@@ -7,7 +7,7 @@ from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (QApplication, QTextEdit, QScrollArea, QVBoxLayout, QLabel, QListWidget,
                                QHBoxLayout, QWidget, QSizePolicy, QPushButton, QFileDialog)
 
-from apps.chat.fields import PlainTextEdit,HoverButton
+from apps.chat.fields import PlainTextEdit, HoverButton
 from apps.chat.style import MAIN_COLOR, MAIN_BOX_COLOR, NOT_USER_BUBLS, TEXT_COLOR, HOVER_MAIN_COLOR
 from apps.chat.messages import Message
 from apps.chat.input_panel import InputPanel
@@ -19,6 +19,7 @@ class MessagesList(QWidget):
 
         self.setContentsMargins(0,0,0,0)
         self.setMinimumWidth(550)
+
         self.setStyleSheet('''QWidget {background-color: rgba(0,0,0,0); border: none;}''')
 
         # Для добавления файлов
@@ -39,7 +40,7 @@ class MessagesList(QWidget):
 
         top_chat_panel_layout = QHBoxLayout()
         top_chat_panel_layout.setSpacing(10)
-        top_chat_panel_layout.setContentsMargins(10,0,0,0)
+        top_chat_panel_layout.setContentsMargins(10,0,10,0)
 
         iamge_chat = QPushButton()
         original_pixmap = QPixmap('static/image/person.png')
@@ -52,6 +53,15 @@ class MessagesList(QWidget):
         self.top_chat_name = QLabel('Name chat')
         self.top_chat_name.setStyleSheet('''background-color: rgba(0,0,0,0); font-size: 13px; font-weight: bold; color: white; border: none;''')
         top_chat_panel_layout.addWidget(self.top_chat_name)
+
+        top_chat_panel_layout.addStretch()
+
+        self.tabs_bar_btn = HoverButton(self, 'static/image/paper-clip')
+        self.tabs_bar_btn.setFixedSize(30,30)
+        self.tabs_bar_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        self.tabs_bar_btn.setStyleSheet('''background-color: rgba(0,0,0,0); border-radius: 15px; border: none;''')
+        self.tabs_bar_btn.setIconSize(QSize(25, 25))
+        top_chat_panel_layout.addWidget(self.tabs_bar_btn)
 
         top_chat_panel.setLayout(top_chat_panel_layout)
         layout.addWidget(top_chat_panel)

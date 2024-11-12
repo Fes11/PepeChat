@@ -3,6 +3,10 @@ from PySide6.QtWidgets import QGraphicsBlurEffect
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (QGraphicsDropShadowEffect)
 
+# Тестовые цвета
+# 235, 63, 63
+# 235, 35, 35
+
 # BG_COLOR = 'rgba(30, 27, 19, 1)'
 
 # Светлая тема
@@ -15,11 +19,11 @@ from PySide6.QtWidgets import (QGraphicsDropShadowEffect)
 
 # Темная тема
 BG_COLOR = 'rgba(23, 24, 27, 1)'
-MAIN_BOX_COLOR = 'rgba(255,255,255, 0.1)'
-MAIN_COLOR = 'rgba(123, 97, 255, 1);'
+MAIN_BOX_COLOR = 'rgba(37, 37, 41, 1)'
+MAIN_COLOR = 'rgba(235, 63, 63, 1);'
 NOT_USER_BUBLS = 'rgba(255,255,255, 0.2)'
 TEXT_COLOR = 'white'
-HOVER_MAIN_COLOR = 'rgba(112, 90, 224, 1);'
+HOVER_MAIN_COLOR = 'rgba(235, 35, 35, 1);'
 
 MAIN_COLOR_GRADIENT = 'qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #3D4E99, stop: 0.48 #5753C9, stop: 1 #6E7FF3);'
 
