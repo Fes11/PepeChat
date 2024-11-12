@@ -4,7 +4,7 @@ from PySide6.QtGui import QIcon, QCursor, QTransform
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (QTextEdit, QVBoxLayout, QLabel, QListWidget,
                                QHBoxLayout, QWidget, QPushButton, QListWidgetItem)
-
+from .style import MAIN_COLOR, HOVER_MAIN_COLOR
 
 class CreateChatDialog(DialogWindow):
     '''Модальное окно создания чата. 
@@ -92,8 +92,8 @@ class CreateChatDialog(DialogWindow):
         
         self.create_btn = QPushButton('Создать')
         self.create_btn.setObjectName('create_btn')
-        self.create_btn.setStyleSheet('''#create_btn {background-color: #7B61FF;}
-                                         #create_btn:hover {background: #9783FF;}''')
+        self.create_btn.setStyleSheet(f'''#create_btn {{background-color: {MAIN_COLOR};}}
+                                         #create_btn:hover {{background: {HOVER_MAIN_COLOR};}}''')
         self.create_btn.setFixedHeight(41)
         self.create_btn.setCursor(QCursor(Qt.PointingHandCursor))
         form_layout.addWidget(self.create_btn)
@@ -153,7 +153,6 @@ class CreateChatDialog(DialogWindow):
         item.setSizeHint(self.user_widget.sizeHint())
         # Привязываем пользовательский виджет к элементу списка
         self.user_list.setItemWidget(item, self.user_widget)
-
 
     def del_user(self):
         # Получаем текущий выбранный элемент

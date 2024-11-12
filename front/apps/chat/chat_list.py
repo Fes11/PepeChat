@@ -1,13 +1,11 @@
+import re
 from apps.chat.chat_area import MessagesList
 from apps.chat.style import MAIN_BOX_COLOR, MAIN_COLOR, TEXT_COLOR, HOVER_MAIN_COLOR
-from dialog import DialogWindow
-from apps.chat.fields import DarkenButton, FirstNewChatButton, UserWidget
-from window import Window
 from datetime import datetime
-from PySide6.QtGui import QIcon, QCursor, QPixmap, QColor, QTransform
-from PySide6.QtCore import Qt, QSize
-from PySide6.QtWidgets import (QTextEdit, QScrollArea, QVBoxLayout, QLabel, QListWidget, QLineEdit, QGraphicsDropShadowEffect,
-                               QHBoxLayout, QWidget, QSizePolicy, QPushButton, QStackedWidget, QListWidgetItem)
+from PySide6.QtGui import QIcon, QCursor, QPixmap, QColor, QMouseEvent
+from PySide6.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve, Property
+from PySide6.QtWidgets import (QTextEdit, QScrollArea, QVBoxLayout, QLabel, QGraphicsDropShadowEffect,
+                               QHBoxLayout, QWidget, QSizePolicy, QPushButton)
 from apps.profile.profile import Profile
 
 
@@ -50,20 +48,22 @@ class ChatWidget(QWidget):
         self.chat_time_layout.setContentsMargins(0,0,0,0)
 
         self.chat_time = QLabel(datetime.now().strftime('%H:%M'))
-        self.chat_time.setStyleSheet('QLabel {color: rgba(169, 171, 173, 1); background: rgba(0, 0, 0, 0);}')
+        self.chat_time.setStyleSheet('QLabel {color: rgba(255, 255, 255, 0.5); background: rgba(0, 0, 0, 0);}')
 
         # Создание эффекта свечения с использованием QGraphicsDropShadowEffect
         self.glow = QGraphicsDropShadowEffect(self)
         self.glow.setBlurRadius(20)  # радиус размытия
-        self.glow.setColor(QColor(123, 97, 255))  # цвет свечения
+        rgba = list(map(int, re.findall(r'\d+', MAIN_COLOR)))
+        color = QColor(rgba[0], rgba[1], rgba[2])
+        self.glow.setColor(color)  # цвет свечения
         self.glow.setOffset(0, 0)  # смещение тени
         
         self.new_mess = QLabel('1')
         self.new_mess.setContentsMargins(0,0,0,0)
         self.new_mess.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.new_mess.setFixedSize(16,16)
-        self.new_mess.setStyleSheet('''QLabel {background-color:rgba(123, 97, 255, 1); color: white; border-radius: 8px;
-                                         font-weight: bold; font-size: 10px;}''')
+        self.new_mess.setStyleSheet(f'''QLabel {{background-color: {MAIN_COLOR}; color: white; border-radius: 8px;
+                                         font-weight: bold; font-size: 10px;}}''')
         # Применение эффекта к new_mess
         self.new_mess.setGraphicsEffect(self.glow)
         
@@ -114,18 +114,19 @@ class Sidebar(QWidget):
     def __init__(self, main_window, parent=None):
         super().__init__(parent)
         self.main_window = main_window
+
+        self.setMouseTracking(True)  # Включаем отслеживание движения мыши
         self.setMinimumWidth(65)
         self.setMaximumWidth(300)
 
         self.num = 0
 
         # Настройки Sidebar
-        widget = QWidget()
-        widget.setObjectName('widget')
-        widget.setContentsMargins(0, 0, 0, 0)
-        widget.setStyleSheet(f'''#widget {{background-color: {MAIN_BOX_COLOR}; border-radius: 10px; border: none;}}''')
+        self.widget = QWidget()
+        self.widget.setObjectName('widget')
+        self.widget.setStyleSheet(f'''#widget {{background-color: {MAIN_BOX_COLOR}; border-radius: 10px; border: none;}}''')
         layout = QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(0,0,0,0)
 
         # Основной слой
         self.sidebar_layout = QVBoxLayout()
@@ -193,7 +194,7 @@ class Sidebar(QWidget):
         top_layout.addWidget(logo)
         top_layout.addWidget(self.search_widget)
 
-        self.new_chat_btn = QPushButton()
+        self.new_chat_btn = QPushButton('  Создать чат')
         self.new_chat_btn.setFixedHeight(35)
         self.new_chat_btn.setIcon(QIcon('static/image/add.png'))  # Установите путь к вашему изображению
         self.new_chat_btn.setIconSize(QSize(16, 16))
@@ -222,32 +223,92 @@ class Sidebar(QWidget):
         self.sidebar_layout.addWidget(self.chat_scroll)
         self.sidebar_layout.addLayout(self.new_chat_btn_layout)
 
-        widget.setLayout(self.sidebar_layout)
+        self.widget.setLayout(self.sidebar_layout)
 
         self.mini_profile = Profile()
+        self.mini_profile_height = 60
+        self.mini_profile_width = 300
+        self.open_profile = False
+        self.mini_profile.setFixedHeight(self.mini_profile_height)
+        self.mini_profile.arrow_btn.clicked.connect(self.open_mini_profile)
+        self.mini_profile.user_widget.avatar.clicked.connect(self.open_mini_profile)
 
-        layout.addWidget(widget)
+        layout.addWidget(self.widget)
         layout.addWidget(self.mini_profile)
         self.setLayout(layout)
 
-    def resizeEvent(self, event):
-        if self.size().width() < 250:
-            self.setMaximumWidth(65)
-            self.new_chat_btn.setText('')
-            self.search_widget.setVisible(False)
-            self.mini_profile.user_widget.username.setVisible(False)
-            self.mini_profile.user_widget.user_id.setVisible(False)
-            self.mini_profile.send_change_profile.setVisible(False)
-            self.mini_profile.arrow_btn.setVisible(False)
-            self.mini_profile.settings.setVisible(False)
-            self.mini_profile.user_widget.data_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        # Определение переменных для отслеживания состояния
+        self.resizing = False
+        self.resize_margin = 8  # Чувствительная зона для изменения размера
+
+        self.sidebar_hidden = True
+
+    def mousePressEvent(self, event: QMouseEvent):
+        if self.is_on_resize_margin(event.position()):
+            self.resizing = True
+            self.start_pos = event.globalPosition().x()
+            self.start_width = self.width()
+
+    def mouseMoveEvent(self, event: QMouseEvent):
+        if self.resizing:
+            delta = event.globalPosition().x() - self.start_pos
+            new_width = self.start_width + delta
+
+            # Устанавливаем максимальную и минимальную ширину
+            if new_width < 220:
+                self.setMaximumWidth(65)
+                self.collapse_sidebar()  # Скрываем элементы при ширине < 250
+            elif new_width >= 300:
+                self.setMaximumWidth(300)
+            else:
+                self.setMaximumWidth(int(new_width))
+                self.expand_sidebar()  # Показываем элементы при ширине >= 250
+
+            if self.parentWidget():
+                self.parentWidget().updateGeometry()
         else:
-            self.new_chat_btn.setText('  Создать чат')
-            self.search_widget.setVisible(True)
-            self.mini_profile.user_widget.username.setVisible(True)
-            self.mini_profile.user_widget.user_id.setVisible(True)
-            self.mini_profile.arrow_btn.setVisible(True)
-            self.mini_profile.settings.setVisible(True)
+            if self.is_on_resize_margin(event.position()):
+                self.setCursor(Qt.CursorShape.SizeHorCursor)
+            else:
+                self.setCursor(Qt.CursorShape.ArrowCursor)
+
+    def mouseReleaseEvent(self, event: QMouseEvent):
+        self.resizing = False
+
+    def is_on_resize_margin(self, pos):
+        # Проверяем, находится ли курсор в зоне чувствительности resize_margin справа
+        return self.width() - int(pos.x()) <= self.resize_margin
+
+    def collapse_sidebar(self):
+        """Скрываем элементы для компактного вида"""
+        self.sidebar_hidden = True
+        self.close_mini_profile()
+        self.open_profile = False
+        self.new_chat_btn.setText('')
+        self.search_widget.setVisible(False)
+        self.mini_profile.user_widget.username.setVisible(False)
+        self.mini_profile.user_widget.user_id.setVisible(False)
+        self.mini_profile.send_change_profile.setVisible(False)
+        self.mini_profile.arrow_btn.setVisible(False)
+        self.mini_profile.settings.setVisible(False)
+        self.mini_profile.user_widget.data_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+    def expand_sidebar(self):
+        """Показываем элементы для развернутого вида"""
+        self.sidebar_hidden = False
+        self.new_chat_btn.setText('  Создать чат')
+        self.search_widget.setVisible(True)
+        self.mini_profile.user_widget.username.setVisible(True)
+        self.mini_profile.user_widget.user_id.setVisible(True)
+        self.mini_profile.arrow_btn.setVisible(True)
+        self.mini_profile.settings.setVisible(True)
+    
+    def resizeEvent(self, event):
+        if self.size().width() == 220:
+            self.setMaximumWidth(65)
+            self.collapse_sidebar()
+        else:
+            self.expand_sidebar()
         super().resizeEvent(event)
 
     def add_chat(self):
@@ -260,3 +321,79 @@ class Sidebar(QWidget):
 
         # Добавляем виджет чата в список
         self.main_window.chat_widgets.append(self.chat_widget)
+    
+    @Property(int)
+    def animatedHeight(self):
+        return self.mini_profile_height
+
+    @animatedHeight.setter
+    def animatedHeight(self, value):
+        self.mini_profile_height = value
+        self.mini_profile.setFixedHeight(value)
+    
+    @Property(int)
+    def animatedWidth(self):
+        return self.mini_profile_width
+
+    @animatedWidth.setter
+    def animatedWidth(self, value):
+        self.mini_profile_width = value
+        self.setMaximumWidth(value)
+
+    @Property(QSize)
+    def avatarSize(self):
+        return self._avatar_size
+
+    @avatarSize.setter
+    def avatarSize(self, value):
+        self._avatar_size = value
+        self.mini_profile.user_widget.avatar.setFixedSize(value)
+        self.mini_profile.user_widget.avatar.setIconSize(value)
+
+    def open_mini_profile(self):
+        self.mini_profile.rotate_icon(self.mini_profile.arrow_btn, 180)
+
+        if self.open_profile:
+            self.close_mini_profile()
+            self.open_profile = False
+        else:
+            self.open_profile = True
+            self.sidebar_hidden = True
+            self.mini_profile.user_widget.setVisible(False)
+            self.mini_profile.mini_profile.setVisible(True)
+            self.mini_profile.logout_btn.setVisible(True)
+            self.animate(340, QSize(80, 80))
+            self.animate_width(300)       
+    
+    def close_mini_profile(self):
+        self.mini_profile.user_widget.setVisible(True)
+        self.mini_profile.mini_profile.setVisible(False)
+        self.mini_profile.logout_btn.setVisible(False)
+        self.animate(60, QSize(40, 40))
+
+    def animate(self, end_height, end_avatar_size): 
+        # Анимация высоты
+        self.height_animation = QPropertyAnimation(self, b"animatedHeight")
+        self.height_animation.setDuration(300)
+        self.height_animation.setStartValue(self.mini_profile.height())
+        self.height_animation.setEndValue(end_height)
+        self.height_animation.setEasingCurve(QEasingCurve.Type.InOutQuart)
+
+        # Анимация размера аватара
+        # self.avatar_animation = QPropertyAnimation(self, b"avatarSize")
+        # self.avatar_animation.setDuration(500)
+        # self.avatar_animation.setStartValue(self.avatarSize)
+        # self.avatar_animation.setEndValue(end_avatar_size)
+        # self.avatar_animation.setEasingCurve(QEasingCurve.Type.InOutQuart)
+
+        # Запуск обеих анимаций
+        self.height_animation.start()
+        # self.avatar_animation.start()
+
+    def animate_width(self, end_width):
+        self.width_animation = QPropertyAnimation(self, b"animatedWidth")
+        self.width_animation.setDuration(500)
+        self.width_animation.setStartValue(self.mini_profile.width())
+        self.width_animation.setEndValue(end_width)
+        self.width_animation.setEasingCurve(QEasingCurve.Type.InOutQuart)
+        self.width_animation.start()

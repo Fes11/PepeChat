@@ -20,21 +20,17 @@ class Avatar(QPushButton):
         self.setIconSize(QSize(30, 30))
 
 
-class Profile(QWidget):
+class Profile(QPushButton):
     def __init__(self):
         super(Profile, self).__init__()
         self.setContentsMargins(0,0,0,0)
         
-        self._height = 60
         self._avatar_size = QSize(40, 40)
-        self.setFixedHeight(self._height)
 
         layout = QVBoxLayout()
         layout.setContentsMargins(0,0,0,0)
 
         self.setStyleSheet('''QWidget {background-color: rgba(0, 0, 0, 0); border: none;}''')
-        self.setMinimumWidth(65)
-        self.setMaximumWidth(300)
         
         self.ava_file_list = QListWidget(self)
         self.ava_file_list.setStyleSheet('''QWidget {background-color: rgba(0, 0, 0, 0); border: none;}''')
@@ -71,7 +67,6 @@ class Profile(QWidget):
         self.arrow_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.arrow_btn.setIcon(QIcon('static/image/arrow.png'))
         self.arrow_btn.setIconSize(QSize(15, 15))
-        self.arrow_btn.clicked.connect(self.open_mini_profile)
         self.btn_layout.addWidget(self.arrow_btn)
 
         self.settings = QPushButton()
@@ -104,38 +99,6 @@ class Profile(QWidget):
     def logout(self):
         from apps.authorization.login import LoginScreen
         self.window().swetch_screen(LoginScreen())
-        
-    @Property(int)
-    def animatedHeight(self):
-        return self._height
-
-    @animatedHeight.setter
-    def animatedHeight(self, value):
-        self._height = value
-        self.setFixedHeight(value)
-
-    @Property(QSize)
-    def avatarSize(self):
-        return self._avatar_size
-
-    @avatarSize.setter
-    def avatarSize(self, value):
-        self._avatar_size = value
-        self.user_widget.avatar.setFixedSize(value)
-        self.user_widget.avatar.setIconSize(value)
-
-    def open_mini_profile(self):
-        self.rotate_icon(self.arrow_btn, 180)
-        if self.height() == 60:
-            self.user_widget.setVisible(False)
-            self.mini_profile.setVisible(True)
-            self.logout_btn.setVisible(True)
-            self.animate(340, QSize(80, 80))
-        else:
-            self.user_widget.setVisible(True)
-            self.mini_profile.setVisible(False)
-            self.logout_btn.setVisible(False)
-            self.animate(60, QSize(40, 40))
             
     def rotate_icon(self, widget, angle):
         # Извлекаем изображение из иконки
@@ -147,25 +110,6 @@ class Profile(QWidget):
         # Обновляем иконку на кнопке
         rotated_icon = QIcon(rotated_pixmap)
         widget.setIcon(rotated_icon)
-
-    def animate(self, end_height, end_avatar_size): 
-        # Анимация высоты
-        self.height_animation = QPropertyAnimation(self, b"animatedHeight")
-        self.height_animation.setDuration(500)
-        self.height_animation.setStartValue(self.height())
-        self.height_animation.setEndValue(end_height)
-        self.height_animation.setEasingCurve(QEasingCurve.Type.InOutQuart)
-
-        # Анимация размера аватара
-        # self.avatar_animation = QPropertyAnimation(self, b"avatarSize")
-        # self.avatar_animation.setDuration(500)
-        # self.avatar_animation.setStartValue(self.avatarSize)
-        # self.avatar_animation.setEndValue(end_avatar_size)
-        # self.avatar_animation.setEasingCurve(QEasingCurve.Type.InOutQuart)
-
-        # Запуск обеих анимаций
-        self.height_animation.start()
-        # self.avatar_animation.start()
         
     def open_file_dialog(self):
         dialog = QFileDialog(self)
@@ -233,7 +177,7 @@ class MiniProfile(QWidget):
         self.chang_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.chang_btn.setFixedSize(130, 25)
         self.chang_btn.setStyleSheet(f'''QPushButton {{background-color: {MAIN_COLOR}; color: white; border-radius: 10px; font-size: 12px;}}
-                                        QPushButton:hover {{background-color: rgb(134, 110, 255)}}''')
+                                        QPushButton:hover {{background-color: {HOVER_MAIN_COLOR}}}''')
         self.chang_btn.clicked.connect(self.start_change_profile)
         self.user_layout.addWidget(self.chang_btn)
 

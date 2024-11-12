@@ -5,7 +5,7 @@ from PySide6.QtWidgets import ( QTextEdit, QVBoxLayout, QLabel, QGraphicsDropSha
 
 from .registration import RegScreen
 from apps.chat.window import ChatScreen
-from apps.chat.style import MAIN_BOX_COLOR
+from apps.chat.style import MAIN_BOX_COLOR, MAIN_COLOR, HOVER_MAIN_COLOR
 
 
 class LoginScreen(QWidget):
@@ -116,9 +116,9 @@ class LoginScreen(QWidget):
         
         self.sign_in_btn = QPushButton('Sign up')
         self.sign_in_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        self.sign_in_btn.setStyleSheet('''QPushButton {color: #FFFFFF; background-color: #7B61FF;
-                                                       border-radius: 10px; font-size: 16px; font-weight: bold;}
-                                          QPushButton:hover {background-color: #9783FF}''')
+        self.sign_in_btn.setStyleSheet(f'''QPushButton {{color: #FFFFFF; background-color: {MAIN_COLOR};
+                                                       border-radius: 10px; font-size: 16px; font-weight: bold;}}
+                                          QPushButton:hover {{background-color: {HOVER_MAIN_COLOR}}}''')
 
         self.sign_in_btn.setFixedHeight(48)
         self.sign_in_btn.clicked.connect(self.open_reg)

@@ -19,7 +19,7 @@ MAIN_BOX_COLOR = 'rgba(255,255,255, 0.1)'
 MAIN_COLOR = 'rgba(123, 97, 255, 1);'
 NOT_USER_BUBLS = 'rgba(255,255,255, 0.2)'
 TEXT_COLOR = 'white'
-HOVER_MAIN_COLOR = 'rgba(123, 97, 255, 0.7);'
+HOVER_MAIN_COLOR = 'rgba(112, 90, 224, 1);'
 
 MAIN_COLOR_GRADIENT = 'qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #3D4E99, stop: 0.48 #5753C9, stop: 1 #6E7FF3);'
 

@@ -15,6 +15,7 @@ class DialogWindow(QPushButton):
         
         self.background = QPushButton()
         self.background.clicked.connect(self.close)
+        self.background.setGeometry(0, 0, self.width(), self.height())
         self.background.setStyleSheet('background: rgba(0, 0, 0, 0.5); border: none; border-radius:10px;')
         
         self.main_widget = QWidget()

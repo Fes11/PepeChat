@@ -2,7 +2,7 @@ from datetime import datetime
 from PySide6.QtGui import QIcon, QPixmap, QMovie, QCursor
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (QVBoxLayout, QLabel, QHBoxLayout, QWidget, QPushButton)
-from apps.chat.style import NOT_USER_BUBLS, TEXT_COLOR
+from apps.chat.style import NOT_USER_BUBLS, TEXT_COLOR, MAIN_COLOR
 from apps.profile.profile import Avatar
 from utils.media_view import MediaView
 from image import get_rounds_edges_image
@@ -103,13 +103,13 @@ class MessageBubble(QWidget):
             widget.setLayout(message_buble_layout)
     
             if self.me == True:
-                widget.setStyleSheet('''
+                widget.setStyleSheet(f'''
                             border-top-left-radius: 12px;
                             border-top-right-radius: 12px;
                             border-bottom-left-radius: 12px;
                             border-bottom-right-radius: 0px;
                             color: white;
-                            background-color: rgba(123, 97, 255, 1);''')
+                            background-color: {MAIN_COLOR};''')
             else:
                 widget.setStyleSheet(f'''
                             border-top-left-radius: 12px;

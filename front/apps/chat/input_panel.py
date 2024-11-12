@@ -215,7 +215,7 @@ class ViewFile(QPushButton):
         self.delete_btn.setIconSize(QSize(15, 15))
 
         self.delete_layout = QVBoxLayout()
-        self.delete_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.delete_layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight)
         self.delete_layout.addWidget(self.delete_btn)
 
         self.setLayout(self.delete_layout)

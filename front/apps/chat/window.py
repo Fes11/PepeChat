@@ -37,7 +37,7 @@ class ChatScreen(QWidget):
         self.first_chat.setLayout(self.first_chat_layout)
         self.stack.addWidget(self.first_chat)
         
-        self.box = CreateChatDialog(self)
+        self.box = CreateChatDialog(self)  
         self.box.create_btn.clicked.connect(self.sidebar.add_chat)
         self.box.create_btn.clicked.connect(lambda: self.switch_chat(self.sidebar.num - 1))
         self.box.create_btn.clicked.connect(self.box.close)
@@ -62,8 +62,8 @@ class ChatScreen(QWidget):
         # Установка цвета фона для текущего активного чата
         current_chat_widget = self.chat_widgets[index]
         current_chat_widget.chat_widget.setStyleSheet(
-            '''QPushButton {border-left: 5px solid rgba(123, 97, 255, 1); border-radius: 0px; background-color: rgba(255, 255, 255, 0.1);}
-               QPushButton:hover {background-color: rgba(0,0,0, 0.2); border-radius: 0px;}''')
+            f'''QPushButton {{border-left: 5px solid {MAIN_COLOR}; border-radius: 0px; background-color: rgba(255, 255, 255, 0.1);}}
+               QPushButton:hover {{background-color: rgba(0,0,0, 0.2); border-radius: 0px;}}''')
 
         self.stack.setCurrentIndex(index + 1)
         self.current_chat_index = index

@@ -221,3 +221,5 @@ class TopPanel(QWidget):
 
         # Переключаем флаг состояния окна
         self.is_fullscreen = not self.is_fullscreen
+    
+        
