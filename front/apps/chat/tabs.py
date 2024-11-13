@@ -1,5 +1,4 @@
 from apps.chat.fields import FirstNewChatButton
-from apps.chat.chat_list import Sidebar
 from apps.chat.dialog import CreateChatDialog
 from apps.chat.fields import DarkenButton
 from PySide6.QtCore import Qt, QSize
@@ -13,8 +12,7 @@ class TabsBar(QWidget):
     def __init__(self) -> None:
         super(TabsBar, self).__init__()
 
-        self.setMinimumWidth(200)
-        self.setMaximumWidth(300)
+        self.setFixedWidth(300)
         self.setStyleSheet('color: white; font-weight: bold; font-size: 12px;')
 
         layout = QVBoxLayout()
@@ -57,7 +55,8 @@ class TabsBar(QWidget):
         self.settings_tabs_btn.clicked.connect(self.open_settings_tabs)
         self.menu_tabs.addWidget(self.settings_tabs_btn)
 
-        self.tabs_layout.addWidget(MainTabs())
+        self.main_tabs = MainTabs()
+        self.tabs_layout.addWidget(self.main_tabs)
 
         self.tabs_layout.addStretch()
         widget.setLayout(self.tabs_layout)

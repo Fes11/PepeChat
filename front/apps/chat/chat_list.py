@@ -14,6 +14,7 @@ class ChatWidget(QWidget):
     def __init__(self, main_window, num):
         super().__init__()
         self.main_window = main_window
+        
         self.num = num
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -112,9 +113,10 @@ class ChatWidget(QWidget):
 class Sidebar(QWidget):
     '''Боковая панель с чатами, поиском и кнопкой добавления чатов.'''
 
-    def __init__(self, main_window, parent=None):
+    def __init__(self, main_window, orig_window, parent=None):
         super().__init__(parent)
         self.main_window = main_window
+        self.orig_window = orig_window
 
         self.setMouseTracking(True)  # Включаем отслеживание движения мыши
         self.setMinimumWidth(65)
@@ -179,7 +181,7 @@ class Sidebar(QWidget):
 
         logo = QLabel(self)
         logo.setStyleSheet(f'background-color: {MAIN_COLOR}; border-radius: 10px;')
-        pixmap = QPixmap('static/image/logo_opaciti.png')
+        pixmap = QPixmap('static/image/logo.png')
         pixmap.scaled(30, 30)
         logo.setPixmap(pixmap)
 
@@ -207,7 +209,7 @@ class Sidebar(QWidget):
 
         self.new_chat_btn_layout = QVBoxLayout()
         self.new_chat_btn_layout.setSpacing(0)
-        self.new_chat_btn_layout.setContentsMargins(10,10,10,10)
+        self.new_chat_btn_layout.setContentsMargins(10,0,10,10)
         self.new_chat_btn_layout.addWidget(self.new_chat_btn)
 
         chat_list_lable = QLabel('Chats')
@@ -316,8 +318,9 @@ class Sidebar(QWidget):
         self.num += 1
         self.chat_widget = ChatWidget(self.main_window, self.num)
         self.chat_list_layout.addWidget(self.chat_widget)
-        self.messages_list = MessagesList()
+        self.messages_list = MessagesList(self.main_window, self.orig_window)
         self.messages_list.top_chat_name.setText(self.chat_widget.chat_name.text())
+        self.messages_list.tabs_bar.main_tabs.name_chat.setText(self.chat_widget.chat_name.text())
         self.main_window.stack.addWidget(self.messages_list)
 
         # Добавляем виджет чата в список

@@ -11,12 +11,15 @@ from apps.chat.fields import PlainTextEdit, HoverButton
 from apps.chat.style import MAIN_COLOR, MAIN_BOX_COLOR, NOT_USER_BUBLS, TEXT_COLOR, HOVER_MAIN_COLOR
 from apps.chat.messages import Message
 from apps.chat.input_panel import InputPanel
+from apps.chat.tabs import TabsBar
 from image import get_rounds_edges_image
 
 class MessagesList(QWidget):
-    def __init__(self) -> None:
+    def __init__(self, main_window, orig_window) -> None:
         super(MessagesList, self).__init__()
 
+        self.orig_window = orig_window
+        self.main_window = main_window
         self.setContentsMargins(0,0,0,0)
         self.setMinimumWidth(550)
 
@@ -25,9 +28,12 @@ class MessagesList(QWidget):
         # Для добавления файлов
         self.file_list = QListWidget()
 
-        layout = QVBoxLayout()
-        layout.setSpacing(0)
+        layout = QHBoxLayout()
         layout.setContentsMargins(0,0,0,0)
+
+        chat_layout = QVBoxLayout()
+        chat_layout.setSpacing(0)
+        chat_layout.setContentsMargins(0,0,0,0)
 
         # Верхняя панель чата
         top_chat_panel = QWidget()
@@ -60,11 +66,12 @@ class MessagesList(QWidget):
         self.tabs_bar_btn.setFixedSize(30,30)
         self.tabs_bar_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.tabs_bar_btn.setStyleSheet('''background-color: rgba(0,0,0,0); border-radius: 15px; border: none;''')
-        self.tabs_bar_btn.setIconSize(QSize(25, 25))
+        self.tabs_bar_btn.setIconSize(QSize(25, 25)) 
+        self.tabs_bar_btn.clicked.connect(self.hide_task_bars)
         top_chat_panel_layout.addWidget(self.tabs_bar_btn)
 
         top_chat_panel.setLayout(top_chat_panel_layout)
-        layout.addWidget(top_chat_panel)
+        chat_layout.addWidget(top_chat_panel)
     
         # Поле на котором выводятся сообщения
         self.scroll_area = QScrollArea(self)
@@ -89,9 +96,15 @@ class MessagesList(QWidget):
         
         self.input_panel = InputPanel(self.file_list, self)
 
-        # Добавляем в основной layout
-        layout.addWidget(self.scroll_area)
-        layout.addWidget(self.input_panel)
+        # Добавляем в основной chat_layout
+        chat_layout.addWidget(self.scroll_area)
+        chat_layout.addWidget(self.input_panel)
+
+        self.tabs_bar = TabsBar()
+        self.tabs_bar.setVisible(False)
+
+        layout.addLayout(chat_layout)
+        layout.addWidget(self.tabs_bar)
         self.setLayout(layout)
     
     def add_message(self, text, i, path=''):
@@ -106,3 +119,13 @@ class MessagesList(QWidget):
     def scrollToBottom(self):
         QApplication.processEvents()
         self.scroll_area.verticalScrollBar().setValue(self.scroll_area.verticalScrollBar().maximum())
+
+    def hide_task_bars(self):
+        if self.tabs_bar.isVisible():
+            self.tabs_bar.setVisible(False)
+            if not self.orig_window.full_sreen:
+                self.orig_window.resize(self.orig_window.width() - 300, self.orig_window.height())
+        else:
+            self.tabs_bar.setVisible(True)
+            if not self.orig_window.full_sreen:
+                self.orig_window.resize(self.orig_window.width() + 300, self.orig_window.height())

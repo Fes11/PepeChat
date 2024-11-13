@@ -9,11 +9,16 @@ from BlurWindow.blurWindow import GlobalBlur
 
 from apps.chat.style import BG_COLOR, MAIN_BOX_COLOR, scroll_style
 
+WINDOW_WIDHT = 1100
+WINDOW_HEIGHT = 750
+
 class Window(QMainWindow):
     """Класс для создания окон. """
     def __init__(self) -> None:
         super(Window, self).__init__()
-        self.setGeometry(350,170, 1300, 750)
+        self.full_sreen = False
+
+        self.setGeometry(350,170, WINDOW_WIDHT, WINDOW_HEIGHT)
 
         # BG_COLOR = 'rgba(0,0,0,0.6)'
         # GlobalBlur(self.winId(), Acrylic=True, QWidget=self) # Сильный блюр
@@ -54,7 +59,6 @@ class Window(QMainWindow):
         self.window_layout.setSpacing(0)
 
         self.top_panel = TopPanel(self)
-        self.top_panel.setStyleSheet(f"background-color: grey;")
 
         self.window_layout.addWidget(self.top_panel)
         self.window_layout.addLayout(self.main_layout)
@@ -203,6 +207,7 @@ class TopPanel(QWidget):
             self.parent.move(self.parent.x() + delta.x(), self.parent.y() + delta.y())
             self.parent.oldPos = event.globalPosition().toPoint()
             style = self.parent.main.styleSheet()
+            self.parent.full_sreen = False
             self.parent.main.setStyleSheet(style + '''#main {border-radius: 10px;}''')
         except AttributeError:
             pass
@@ -212,10 +217,14 @@ class TopPanel(QWidget):
             # Запоминаем текущие размеры и положение окна
             self.parent.normal_geometry = self.parent.geometry()
             self.parent.showMaximized()
+            self.parent.full_sreen = True
+
             style = self.parent.main.styleSheet()
             self.parent.main.setStyleSheet(style + '''#main {border-radius: 0px;}''')
         else:
             self.parent.showNormal()
+            self.parent.full_sreen = False
+
             style = self.parent.main.styleSheet()
             self.parent.main.setStyleSheet(style + '''#main {border-radius: 10px;}''')
 

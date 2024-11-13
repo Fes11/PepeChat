@@ -1,3 +1,4 @@
+import re
 from PySide6.QtGui import QPixmap, QCursor, QIcon, QColor
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import ( QTextEdit, QVBoxLayout, QLabel, QGraphicsDropShadowEffect,
@@ -49,13 +50,18 @@ class LoginScreen(QWidget):
         welcome_layout.setContentsMargins(0,0,0,0)
 
         logo = QLabel(self)
+        logo.setStyleSheet(f'''background-color: {MAIN_COLOR}; border-radius: 12px;''')
         logo.setFixedSize(50,50)
         pixmap = QPixmap('static/image/logo.png')
         pixmap.scaled(30, 30)
         logo.setPixmap(pixmap)
+
+        
         self.glow = QGraphicsDropShadowEffect(self)
         self.glow.setBlurRadius(20)  # радиус размытия
-        self.glow.setColor(QColor(123, 97, 255))  # цвет свечения
+        rgba = list(map(int, re.findall(r'\d+', MAIN_COLOR)))
+        color = QColor(rgba[0], rgba[1], rgba[2])
+        self.glow.setColor(color)  # цвет свечения
         self.glow.setOffset(0, 0)  # смещение тени
         logo.setGraphicsEffect(self.glow)
         welcome_layout.addWidget(logo)
@@ -167,4 +173,4 @@ class LoginScreen(QWidget):
         else:
             parent_window = self.window()  # Получаем главное окно
             self.error_login.setVisible(False)
-            parent_window.swetch_screen(ChatScreen())  # Заменяем виджет на окно чата
+            parent_window.swetch_screen(ChatScreen(parent_window))  # Заменяем виджет на окно чата
