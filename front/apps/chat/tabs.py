@@ -9,8 +9,10 @@ from .style import MAIN_BOX_COLOR, MAIN_COLOR, HOVER_MAIN_COLOR
 
 class TabsBar(QWidget):
     '''Окно находящееся справа, c вложениями, описанием, участниками чаков и тд.'''
-    def __init__(self) -> None:
+    def __init__(self, chat_model) -> None:
         super(TabsBar, self).__init__()
+
+        self.chat_model = chat_model
 
         self.setFixedWidth(300)
         self.setStyleSheet('color: white; font-weight: bold; font-size: 12px;')
@@ -55,7 +57,7 @@ class TabsBar(QWidget):
         self.settings_tabs_btn.clicked.connect(self.open_settings_tabs)
         self.menu_tabs.addWidget(self.settings_tabs_btn)
 
-        self.main_tabs = MainTabs()
+        self.main_tabs = MainTabs(self.chat_model)
         self.tabs_layout.addWidget(self.main_tabs)
 
         self.tabs_layout.addStretch()
@@ -75,8 +77,10 @@ class TabsBar(QWidget):
 
 class MainTabs(QWidget):
     '''Основной блок с описанием и участниками. '''
-    def __init__(self) -> None:
+    def __init__(self, chat_model) -> None:
         super(MainTabs, self).__init__()
+
+        self.chat_model = chat_model
 
         self.setStyleSheet('background-color: rgba(0,0,0,0);')
 
@@ -92,7 +96,7 @@ class MainTabs(QWidget):
         description_layout.setSpacing(5)
         description_layout.setContentsMargins(0,0,0,0)
 
-        self.chat_image = DarkenButton(75)
+        self.chat_image = DarkenButton(75, self.chat_model.avatar_path)
         self.chat_image.setCursor(QCursor(Qt.PointingHandCursor))
         self.chat_image.setFixedSize(75, 75)
         description_layout.addWidget(self.chat_image)
@@ -102,12 +106,12 @@ class MainTabs(QWidget):
         description_text_layout.setSpacing(0)
         description_text_layout.setContentsMargins(0,0,0,0)
 
-        self.name_chat = QLabel('Name Chat')
+        self.name_chat = QLabel(self.chat_model.chat_name)
         self.name_chat.setStyleSheet('padding-left: 2px; font-size: 16px;')
         self.name_chat.setFixedHeight(20)
         description_text_layout.addWidget(self.name_chat)
 
-        self.description = QTextEdit('Здесь должно быть описание группы...')
+        self.description = QTextEdit(self.chat_model.description)
         self.description.setContentsMargins(0,0,0,0)
         self.description.setFixedSize(150, 50)
         self.description.setStyleSheet('color: rgba(255,255,255, 0.4); font-size: 13px;')
@@ -122,9 +126,15 @@ class MainTabs(QWidget):
         self.link.setStyleSheet('background-color: rgba(255,255,255, 0.1); border-radius: 20px;')
         layout.addWidget(self.link)
 
-        self.online_label = QLabel('Online - 4')
-        self.online_label.setStyleSheet('color: rgba(255,255,255, 0.4); font-size: 12px; padding-left: 2px;')
-        layout.addWidget(self.online_label)
+        if self.chat_model.chat_type == 'group':
+            self.online_label = QLabel('Online - 4')
+            self.online_label.setStyleSheet('color: rgba(255,255,255, 0.4); font-size: 12px; padding-left: 2px;')
+            layout.addWidget(self.online_label)
+        else:
+            self.info_label = QTextEdit('Это информация о пользователе с которым вы переписываетесь...')
+            self.info_label.setMaximumWidth(250)
+            self.info_label.setStyleSheet('color: rgba(255,255,255, 0.8); font-size: 12px; padding-left: 2px;')
+            layout.addWidget(self.info_label)
 
         layout.addStretch()
         self.setLayout(layout)
@@ -163,3 +173,6 @@ class Links(QWidget):
         layout.addWidget(self.link_btn)
 
         self.setLayout(layout)
+    
+    def copy_link(self) -> None:
+        pass

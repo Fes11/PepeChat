@@ -15,33 +15,79 @@ class Message(QHBoxLayout):
         super(Message, self).__init__()
         self.text = text
         self.path = path
+        self.index = i
 
-        mes_avatar = Avatar(path='static/image/person.png')
-        me_avatar = Avatar(path='static/image/ava.png')
+        self.mes_avatar = Avatar(path='static/image/person.png')
+        self.me_avatar = Avatar(path='static/image/ava.png')
+        self.me_left_avatar = Avatar(path='static/image/ava.png')
+        self.me_left_avatar.setVisible(False)  # Изначально скрыта
 
-        avatar_layout = QVBoxLayout()
-        avatar_layout.setAlignment(Qt.AlignmentFlag.AlignBottom)
+        # Создаем avatar_layout как атрибут экземпляра класса
+        self.avatar_layout = QVBoxLayout()
+        self.avatar_layout.setAlignment(Qt.AlignmentFlag.AlignBottom)
 
-        message = QLabel(self.text)
-        message.setWordWrap(True)
-        message.adjustSize()
-        message.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        message.setMaximumWidth(500)
-        message.setStyleSheet('''font-size: 14px; background: rgba(0, 0, 0, 0); font-weight: medium;''')
+        self.avatar_left_layout = QVBoxLayout()
+        self.avatar_left_layout.setAlignment(Qt.AlignmentFlag.AlignBottom)
+        self.avatar_left_layout.addWidget(self.me_left_avatar)  # Аватарка слева (скрыта)
 
-        if i % 2:
-            message_bubble = MessageBubble(me=True, message=message, path=path)
+        self.message = QLabel(self.text)
+        self.message.setWordWrap(True)
+        self.message.adjustSize()
+        self.message.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.message.setMaximumWidth(500)
+        self.message.setStyleSheet('''font-size: 14px; background: rgba(0, 0, 0, 0); font-weight: medium;''')
+
+        # Определяем, сообщение от текущего пользователя или нет
+        self.is_user_message = i % 2 == 1  # True для сообщений текущего пользователя
+        self.message_bubble = MessageBubble(me=self.is_user_message, message=self.message, path=path)
+        
+        if self.is_user_message:
+            # Сообщение текущего пользователя (справа)
             self.setAlignment(Qt.AlignmentFlag.AlignRight)
-            self.addWidget(message_bubble)
-
-            avatar_layout.addWidget(me_avatar)
-            self.addLayout(avatar_layout)
+            self.addLayout(self.avatar_left_layout)
+            self.addWidget(self.message_bubble)
+            self.avatar_layout.addWidget(self.me_avatar)  # Аватарка справа
+            self.addLayout(self.avatar_layout)
         else:
-            message_bubble = MessageBubble(me=False, message=message, path=path)
-            avatar_layout.addWidget(mes_avatar)
-            self.addLayout(avatar_layout)
-            self.addWidget(message_bubble)
+            # Сообщение другого пользователя (слева)
             self.setAlignment(Qt.AlignmentFlag.AlignLeft)
+            self.avatar_layout.addWidget(self.mes_avatar)  # Аватарка слева
+            self.addLayout(self.avatar_layout)
+            self.addWidget(self.message_bubble)
+
+    def set_alignment(self, align_left: bool):
+        '''Меняет расположение сообщения и аватарки в зависимости от ширины окна.'''
+
+        if self.is_user_message:
+            # Меняем расположение и видимость для текущего пользователя
+            if align_left:
+                self.setAlignment(Qt.AlignmentFlag.AlignLeft)
+                self.me_avatar.setVisible(False)
+                self.me_left_avatar.setVisible(True)
+                
+                self.message_bubble.widget.setStyleSheet(f'''
+                            border-top-left-radius: 12px;
+                            border-top-right-radius: 12px;
+                            border-bottom-left-radius: 0px;
+                            border-bottom-right-radius: 12px;
+                            color: white;
+                            background-color: {MAIN_COLOR};''')
+            else:
+                self.setAlignment(Qt.AlignmentFlag.AlignRight)
+                self.me_left_avatar.setVisible(False)
+                self.me_avatar.setVisible(True)
+
+                self.message_bubble.widget.setStyleSheet(f'''
+                            border-top-left-radius: 12px;
+                            border-top-right-radius: 12px;
+                            border-bottom-left-radius: 12px;
+                            border-bottom-right-radius: 0px;
+                            color: white;
+                            background-color: {MAIN_COLOR};''')
+
+
+
+        
 
 
 class MessageBubble(QWidget):
@@ -57,7 +103,7 @@ class MessageBubble(QWidget):
         self.path = path
 
         self.setContentsMargins(0,0,0,0)
-        widget = QWidget()
+        self.widget = QWidget()
         layout = QHBoxLayout()
         layout.setSpacing(0)
         layout.setContentsMargins(0,0,0,0)
@@ -84,26 +130,26 @@ class MessageBubble(QWidget):
                 gif = GifBubble(mes_time, self.path)
 
                 message_buble_layout.addWidget(gif)
-                widget.setLayout(message_buble_layout)
-                layout.addWidget(widget)
+                self.widget.setLayout(message_buble_layout)
+                layout.addWidget(self.widget)
             else:
                 image_bubbl = ImageBubble(mes_time, self.path)
                 image_bubbl.clicked.connect(self.open_media_view)
 
                 message_buble_layout.addWidget(image_bubbl)
-                widget.setLayout(message_buble_layout)
-                layout.addWidget(widget)
+                self.widget.setLayout(message_buble_layout)
+                layout.addWidget(self.widget)
 
-            widget.setFixedWidth(300) # Нужно будет переделать так, что ширина ровняется ширине картинки
+            self.widget.setFixedWidth(300) # Нужно будет переделать так, что ширина ровняется ширине картинки
         else:            
             message_layout.addWidget(self.message)
             message_layout.addLayout(mes_time_layout)
 
             message_buble_layout.addLayout(message_layout)
-            widget.setLayout(message_buble_layout)
+            self.widget.setLayout(message_buble_layout)
     
             if self.me == True:
-                widget.setStyleSheet(f'''
+                self.widget.setStyleSheet(f'''
                             border-top-left-radius: 12px;
                             border-top-right-radius: 12px;
                             border-bottom-left-radius: 12px;
@@ -111,7 +157,7 @@ class MessageBubble(QWidget):
                             color: white;
                             background-color: {MAIN_COLOR};''')
             else:
-                widget.setStyleSheet(f'''
+                self.widget.setStyleSheet(f'''
                             border-top-left-radius: 12px;
                             border-top-right-radius: 12px;
                             border-bottom-left-radius: 0px;
@@ -119,7 +165,7 @@ class MessageBubble(QWidget):
                             color: {TEXT_COLOR};
                             background-color: {NOT_USER_BUBLS};''')
 
-            layout.addWidget(widget)
+            layout.addWidget(self.widget)
         
         self.setLayout(layout)
 

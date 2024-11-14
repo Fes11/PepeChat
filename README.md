@@ -34,4 +34,4 @@
 <img src='screenshot/design.jpg'></img>
 
 ### Текущая стадия разработки интерфейса (Current stage of interface development) 
-<img src='screenshot/06.10.2024.PNG'></img>
+<img src='screenshot/13.11.2024.PNG'></img>

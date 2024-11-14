@@ -15,11 +15,14 @@ from apps.chat.tabs import TabsBar
 from image import get_rounds_edges_image
 
 class MessagesList(QWidget):
-    def __init__(self, main_window, orig_window) -> None:
+    def __init__(self, main_window, orig_window, chat_model) -> None:
         super(MessagesList, self).__init__()
 
         self.orig_window = orig_window
         self.main_window = main_window
+        self.chat_model = chat_model
+        self.messages = []
+
         self.setContentsMargins(0,0,0,0)
         self.setMinimumWidth(550)
 
@@ -49,14 +52,14 @@ class MessagesList(QWidget):
         top_chat_panel_layout.setContentsMargins(10,0,10,0)
 
         iamge_chat = QPushButton()
-        original_pixmap = QPixmap('static/image/person.png')
+        original_pixmap = QPixmap(self.chat_model.avatar_path)
         iamge_chat.setIcon(QIcon(get_rounds_edges_image(self, original_pixmap)))  # Установите путь к вашему изображению
         iamge_chat.setIconSize(QSize(40, 40))
         iamge_chat.setFixedSize(40,40)
         iamge_chat.setStyleSheet('''background: white; border: none; border-radius: 10px;''')
         top_chat_panel_layout.addWidget(iamge_chat)
 
-        self.top_chat_name = QLabel('Name chat')
+        self.top_chat_name = QLabel(self.chat_model.chat_name)
         self.top_chat_name.setStyleSheet('''background-color: rgba(0,0,0,0); font-size: 13px; font-weight: bold; color: white; border: none;''')
         top_chat_panel_layout.addWidget(self.top_chat_name)
 
@@ -100,21 +103,34 @@ class MessagesList(QWidget):
         chat_layout.addWidget(self.scroll_area)
         chat_layout.addWidget(self.input_panel)
 
-        self.tabs_bar = TabsBar()
+        self.tabs_bar = TabsBar(self.chat_model)
         self.tabs_bar.setVisible(False)
 
         layout.addLayout(chat_layout)
         layout.addWidget(self.tabs_bar)
         self.setLayout(layout)
     
+    def resizeEvent(self, event: QtCore.QEvent) -> None:
+        align_left = self.width() > 1200
+
+        for message in self.messages:
+            message.set_alignment(align_left)
+
+        return super().resizeEvent(event)
+    
     def add_message(self, text, i, path=''):
         if self.open_lable.isVisible():
-                self.open_lable.setVisible(False)
+            self.open_lable.setVisible(False)
+        
+        self.message = Message(text, i, path)
 
-        message = Message(text, i, path)
-        self.chat_area_layout.addLayout(message)
+        self.messages.append(self.message) 
+        self.chat_area_layout.addLayout(self.message)
         
         QtCore.QTimer.singleShot(0, self.scrollToBottom)
+
+        if self.width() > 1200:
+            self.message.set_alignment(True)
 
     def scrollToBottom(self):
         QApplication.processEvents()

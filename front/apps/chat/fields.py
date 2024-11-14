@@ -3,6 +3,7 @@ from PySide6.QtGui import QIcon, QCursor, QPixmap, QPainter, QColor, QBitmap
 from PySide6.QtCore import Qt, QSize, QRect
 from PySide6.QtWidgets import (QTextEdit, QVBoxLayout, QLabel, QFileDialog,
                                QHBoxLayout, QWidget, QPushButton, QListWidget)
+from PySide6.QtCore import Signal
 
 from image import get_rounds_edges_image
 
@@ -87,12 +88,15 @@ class UserWidget(QWidget):
         self.setLayout(self.data_layout)
 
 class DarkenButton(QPushButton):
-    def __init__(self, size_btn: int):
+    imageSelected = Signal(str)
+
+    def __init__(self, size_btn: int, path):
         super().__init__()
+        self.last_item = path
         self.size_btn = size_btn
         self.clicked.connect(self.open_file_dialog)
         self.file_list = QListWidget()
-        self.original_pixmap = QPixmap('static/image/ava3.jpg')
+        self.original_pixmap = QPixmap(path)
         self.overlay_pixmap = QPixmap('static/image/camera.png')  # Второе изображение для наложения
         
         self.setStyleSheet('background-color: rgba(255,255,255, 0);')
@@ -137,8 +141,10 @@ class DarkenButton(QPushButton):
                 
                 last_item_index = self.file_list.count() - 1
                 if last_item_index >= 0:
-                    last_item = self.file_list.item(last_item_index)
-                    self.switch_image(last_item.text())
+                    self.last_item = self.file_list.item(last_item_index)
+                    self.switch_image(self.last_item.text())
+                    self.imageSelected.emit(self.last_item.text())
+                    
     
     def switch_image(self, path):
         # Загружаем новое изображение и обновляем иконку

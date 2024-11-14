@@ -29,6 +29,9 @@ HOVER_MAIN_COLOR = 'rgba(235, 35, 35, 1);'
 BG_COLOR = 'rgba(23, 24, 27, 1)'
 MAIN_BOX_COLOR = 'rgba(37, 37, 41, 1)'
 
+# Блюр
+# MAIN_BOX_COLOR = 'rgba(37,37,41,0.7)'
+
 NOT_USER_BUBLS = 'rgba(255,255,255, 0.2)'
 TEXT_COLOR = 'white'
 

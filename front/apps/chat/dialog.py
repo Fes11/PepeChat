@@ -40,8 +40,10 @@ class CreateChatDialog(DialogWindow):
         top_layout = QHBoxLayout()
         top_layout.setSpacing(15)
         
-        iamge = DarkenButton(100)
+        self.image_path = 'static/image/person.png'  # Начальное значение для image_path
+        iamge = DarkenButton(100, self.image_path)
         iamge.setCursor(QCursor(Qt.PointingHandCursor))
+        iamge.imageSelected.connect(self.update_image_path)
         top_layout.addWidget(iamge)
         
         name_and_people_layout = QVBoxLayout()
@@ -100,6 +102,9 @@ class CreateChatDialog(DialogWindow):
         form_layout.addWidget(self.create_btn)
         
         self.main_widget.setLayout(form_layout)
+    
+    def update_image_path(self, new_path):
+        self.image_path = new_path 
     
     def add_user(self):
         self.avatar = QPushButton()

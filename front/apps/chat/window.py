@@ -1,5 +1,5 @@
 from apps.chat.fields import FirstNewChatButton
-from apps.chat.chat_list import Sidebar
+from apps.chat.sidebar import Sidebar
 from apps.chat.dialog import CreateChatDialog
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QVBoxLayout,QHBoxLayout, QWidget, QStackedWidget)
@@ -41,7 +41,7 @@ class ChatScreen(QWidget):
         self.stack.addWidget(self.first_chat)
 
         self.box = CreateChatDialog(self)
-        self.box.create_btn.clicked.connect(self.sidebar.add_chat)
+        self.box.create_btn.clicked.connect(lambda: self.sidebar.add_chat(self.box.image_path))
         self.box.create_btn.clicked.connect(lambda: self.switch_chat(self.sidebar.num - 1))
         self.box.create_btn.clicked.connect(self.box.close)
         self.setLayout(layout)
