@@ -1,8 +1,8 @@
 from datetime import datetime
-from PySide6.QtGui import QIcon, QPixmap, QMovie, QCursor
+from PySide6.QtGui import QIcon, QPixmap, QMovie, QCursor, QAction
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtWidgets import (QVBoxLayout, QLabel, QHBoxLayout, QWidget, QPushButton)
-from apps.chat.style import NOT_USER_BUBLS, TEXT_COLOR, MAIN_COLOR
+from PySide6.QtWidgets import (QVBoxLayout, QLabel, QHBoxLayout, QWidget, QPushButton, QMenu)
+from apps.chat.style import NOT_USER_BUBLS, TEXT_COLOR, MAIN_COLOR, MAIN_BOX_COLOR
 from apps.profile.profile import Avatar
 from utils.media_view import MediaView
 from image import get_rounds_edges_image
@@ -31,6 +31,7 @@ class Message(QHBoxLayout):
         self.avatar_left_layout.addWidget(self.me_left_avatar)  # Аватарка слева (скрыта)
 
         self.message = QLabel(self.text)
+        self.message.setContextMenuPolicy(Qt.NoContextMenu)
         self.message.setWordWrap(True)
         self.message.adjustSize()
         self.message.setTextInteractionFlags(Qt.TextSelectableByMouse)
@@ -84,10 +85,6 @@ class Message(QHBoxLayout):
                             border-bottom-right-radius: 0px;
                             color: white;
                             background-color: {MAIN_COLOR};''')
-
-
-
-        
 
 
 class MessageBubble(QWidget):
@@ -168,6 +165,51 @@ class MessageBubble(QWidget):
             layout.addWidget(self.widget)
         
         self.setLayout(layout)
+
+    def contextMenuEvent(self, event):
+        # Создание контекстного меню
+        menu = QMenu(self)
+
+        # Добавление действий в меню
+        mute_action = QAction("Удалить сообщение", self)
+        copy_action = QAction("Скопировать сообщение", self)
+        delete_action = QAction("Ответить", self)
+        # clear_action = QAction("Выбрать", self)
+        edit_action = QAction("Изменить", self)
+
+        menu.setStyleSheet(f"""
+            QMenu {{
+                background-color: {MAIN_BOX_COLOR}; /* Фон меню */
+                border: 1px solid #4C566A; /* Граница меню */
+                color: white; /* Цвет текста */
+                font-size: 14px; /* Размер шрифта */
+            }}
+            QMenu::item {{
+                padding: 8px 16px; /* Отступы внутри пунктов меню */
+                background-color: transparent; /* Прозрачный фон по умолчанию */
+            }}
+            QMenu::item:selected {{
+                background-color: #4C566A; /* Фон при выделении */
+                color: #E5E9F0; /* Цвет текста при выделении */
+            }}
+            QMenu::item:hover {{
+                background-color: #88C0D0; /* Цвет фона при наведении */
+                color: #2E3440; /* Цвет текста при наведении */
+            }}
+        """)
+
+        for action in menu.actions():
+            action.setProperty("hover", True)
+        menu.setCursor(Qt.PointingHandCursor)
+
+        # Добавляем действия в меню
+        menu.addAction(mute_action)
+        menu.addAction(delete_action)
+        # menu.addAction(clear_action)
+        menu.addAction(edit_action)
+
+        # Показываем меню в точке клика
+        menu.exec(event.globalPos())
 
     def open_media_view(self):
         window = MediaView(self.path)

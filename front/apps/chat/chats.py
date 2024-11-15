@@ -4,8 +4,8 @@ from apps.chat.style import MAIN_BOX_COLOR, MAIN_COLOR, TEXT_COLOR, HOVER_MAIN_C
 from datetime import datetime
 from PySide6.QtGui import QIcon, QCursor, QPixmap, QColor, QMouseEvent
 from PySide6.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve, Property
-from PySide6.QtWidgets import (QTextEdit, QScrollArea, QVBoxLayout, QLabel, QGraphicsDropShadowEffect,
-                               QHBoxLayout, QWidget, QSizePolicy, QPushButton)
+from PySide6.QtWidgets import (QMenu, QListWidgetItem, QVBoxLayout, QLabel, QGraphicsDropShadowEffect,
+                               QHBoxLayout, QWidget, QMessageBox, QPushButton)
 from apps.profile.profile import Profile
 from apps.chat.serach import UsernameSearchWidget
 
@@ -107,7 +107,61 @@ class ChatWidget(QWidget):
         self.chat_widget.setLayout(self.chat_layout)
 
         layout.addWidget(self.chat_widget)
-        self.setLayout(layout)
+        self.setLayout(layout) 
+
+    def contextMenuEvent(self, event):
+        """Обработчик события контекстного меню."""
+        menu = QMenu(self)
+
+        mute_action = menu.addAction("Замутить чат")
+        clear_action = menu.addAction("Очистить чат")
+        delete_action = menu.addAction("Удалить чат")
+
+        menu.setStyleSheet(f"""
+            QMenu {{
+                background-color: {MAIN_BOX_COLOR}; /* Фон меню */
+                border: 1px solid #4C566A; /* Граница меню */
+                color: white; /* Цвет текста */
+                font-size: 14px; /* Размер шрифта */
+            }}
+            QMenu::item {{
+                padding: 8px 16px; /* Отступы внутри пунктов меню */
+                background-color: transparent; /* Прозрачный фон по умолчанию */
+            }}
+            QMenu::item:selected {{
+                background-color: #4C566A; /* Фон при выделении */
+                color: #E5E9F0; /* Цвет текста при выделении */
+            }}
+            QMenu::item:hover {{
+                background-color: #88C0D0; /* Цвет фона при наведении */
+                color: #2E3440; /* Цвет текста при наведении */
+            }}
+        """)
+
+        for action in menu.actions():
+            action.setProperty("hover", True)
+        menu.setCursor(Qt.PointingHandCursor)
+        
+        # Показываем меню на позиции курсора
+        action = menu.exec_(event.globalPos())
+        if action == mute_action:
+            self.mute_chat()
+        elif action == clear_action:
+            self.clear_chat()
+        elif action == delete_action:
+            self.delete_chat()
+
+    def mute_chat(self):
+        """Логика для мутирования чата."""
+        QMessageBox.information(None, "Чат", f"Чат замучен.")
+
+    def clear_chat(self):
+        """Логика для очистки чата."""
+        QMessageBox.information(None, "Чат", f"Чат очищен.")
+
+    def delete_chat(self):
+        """Логика для удаления чата."""
+        QMessageBox.warning(None, "Чат", f"Чат удален.")   
 
     def resizeEvent(self, event):
         if self.size().width() < 200:

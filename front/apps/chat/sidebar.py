@@ -6,8 +6,8 @@ from apps.chat.chats import ChatWidget, ChatModel
 from datetime import datetime
 from PySide6.QtGui import QIcon, QCursor, QPixmap, QColor, QMouseEvent
 from PySide6.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve, Property
-from PySide6.QtWidgets import (QTextEdit, QScrollArea, QVBoxLayout, QLabel, QGraphicsDropShadowEffect,
-                               QHBoxLayout, QWidget, QSizePolicy, QPushButton)
+from PySide6.QtWidgets import (QAbstractItemView, QScrollArea, QVBoxLayout, QLabel, QGraphicsDropShadowEffect,
+                               QHBoxLayout, QWidget, QSizePolicy, QPushButton, QMenu, QListWidget, QListWidgetItem)
 from apps.profile.profile import Profile
 from apps.chat.serach import UsernameSearchWidget
 
@@ -45,15 +45,19 @@ class Sidebar(QWidget):
         self.chat_scroll.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.chat_scroll.setStyleSheet('''QWidget {border: none;}''')
 
-        self.chat_list_layout = QVBoxLayout()
-        self.chat_list_layout.setContentsMargins(0, 0, 0, 0)
-        self.chat_list_layout.setSpacing(0)
-        self.chat_list_layout.setAlignment(Qt.Alignment.AlignTop)
+        self.chat_list = QListWidget()
+        self.chat_list.setSelectionMode(QAbstractItemView.NoSelection)
+        self.chat_list.setContentsMargins(0, 0, 0, 0)
+        self.chat_list.setSpacing(0)
+        self.chat_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.chat_list.customContextMenuRequested.connect(self.show_context_menu)
 
-        self.sidebar = QWidget()
-        self.sidebar.setLayout(self.chat_list_layout)
+        self.sidebar = QVBoxLayout()
+        self.sidebar.setContentsMargins(0,0,0,0)
+        self.sidebar.setSpacing(0)
+        self.sidebar.addWidget(self.chat_list)
 
-        self.chat_scroll.setWidget(self.sidebar)
+        self.chat_scroll.setLayout(self.sidebar)
 
         # Поиск
         self.search_layout = QHBoxLayout()
@@ -147,6 +151,15 @@ class Sidebar(QWidget):
         self.resize_margin = 8  # Чувствительная зона для изменения размера
 
         self.sidebar_hidden = True
+    
+    def show_context_menu(self, position):
+        """Отображает контекстное меню для элемента списка."""
+        # Открываем контекстное меню для элемента
+        menu = QMenu(self)
+
+        mute_action = menu.addAction("Замутить чат")
+        clear_action = menu.addAction("Очистить чат")
+        delete_action = menu.addAction("Удалить чат")
 
     def mousePressEvent(self, event: QMouseEvent):
         if self.is_on_resize_margin(event.position()):
@@ -228,7 +241,10 @@ class Sidebar(QWidget):
         chat_model = ChatModel(chat_name=chat_name, users=['user1', 'user2'], avatar_path=avatar_path, description=description, chat_type=chat_type)
         self.chat_widget = ChatWidget(self.main_window, self.num, chat_model)
 
-        self.chat_list_layout.addWidget(self.chat_widget)
+        item = QListWidgetItem()
+        item.setSizeHint(self.chat_widget.sizeHint())
+        self.chat_list.addItem(item)
+        self.chat_list.setItemWidget(item, self.chat_widget)
         self.messages_list = MessagesList(self.main_window, self.orig_window, chat_model)
         
         self.main_window.stack.addWidget(self.messages_list)

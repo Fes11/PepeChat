@@ -4,8 +4,8 @@ from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (QGraphicsDropShadowEffect)
 
 # Тестовые цвета
-MAIN_COLOR = 'rgba(235, 63, 63, 1);'
-HOVER_MAIN_COLOR = 'rgba(235, 35, 35, 1);'
+MAIN_COLOR = 'rgba(66, 186, 255, 1);'
+HOVER_MAIN_COLOR = 'rgba(66, 163, 219, 1);'
 
 # PGV тема
 # MAIN_COLOR = 'rgba(57, 194, 54, 1);'

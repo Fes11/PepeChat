@@ -10,6 +10,7 @@ from image import get_rounds_edges_image
 class PlainTextEdit(QTextEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.setContextMenuPolicy(Qt.NoContextMenu)
 
     def insertFromMimeData(self, source):
         # Вставляем только обычный текст, игнорируя форматирование
