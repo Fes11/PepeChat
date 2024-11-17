@@ -15,7 +15,7 @@ from apps.chat.tabs import TabsBar
 from image import get_rounds_edges_image
 
 class MessagesList(QWidget):
-    def __init__(self, main_window, orig_window, chat_model) -> None:
+    def __init__(self, main_window, orig_window, chat_model, tabs_bar_visible) -> None:
         super(MessagesList, self).__init__()
 
         self.orig_window = orig_window
@@ -23,8 +23,10 @@ class MessagesList(QWidget):
         self.chat_model = chat_model
         self.messages = []
 
+        self.tabs_bar_visible = tabs_bar_visible
+
         self.setContentsMargins(0,0,0,0)
-        self.setMinimumWidth(550)
+        self.setMinimumWidth(500)
 
         self.setStyleSheet('''QWidget {background-color: rgba(0,0,0,0); border: none;}''')
 
@@ -70,7 +72,7 @@ class MessagesList(QWidget):
         self.tabs_bar_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.tabs_bar_btn.setStyleSheet('''background-color: rgba(0,0,0,0); border-radius: 15px; border: none;''')
         self.tabs_bar_btn.setIconSize(QSize(25, 25)) 
-        self.tabs_bar_btn.clicked.connect(self.hide_task_bars)
+        self.tabs_bar_btn.clicked.connect(self.tabs_bar_visible.toggle_tabs_bar)
         top_chat_panel_layout.addWidget(self.tabs_bar_btn)
 
         top_chat_panel.setLayout(top_chat_panel_layout)
@@ -136,12 +138,12 @@ class MessagesList(QWidget):
         QApplication.processEvents()
         self.scroll_area.verticalScrollBar().setValue(self.scroll_area.verticalScrollBar().maximum())
 
-    def hide_task_bars(self):
-        if self.tabs_bar.isVisible():
-            self.tabs_bar.setVisible(False)
-            if not self.orig_window.full_sreen:
-                self.orig_window.resize(self.orig_window.width() - 300, self.orig_window.height())
-        else:
-            self.tabs_bar.setVisible(True)
+    def hide_task_bars(self, visible):
+        """Обновить видимость TabsBar."""
+        self.tabs_bar.setVisible(visible)
+        if visible:
             if not self.orig_window.full_sreen:
                 self.orig_window.resize(self.orig_window.width() + 300, self.orig_window.height())
+        else:
+            if not self.orig_window.full_sreen:
+                self.orig_window.resize(self.orig_window.width() - 300, self.orig_window.height())

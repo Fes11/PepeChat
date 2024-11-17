@@ -8,7 +8,6 @@ from .style import MAIN_BOX_COLOR, MAIN_COLOR, HOVER_MAIN_COLOR
 
 
 class TabsBar(QWidget):
-    '''Окно находящееся справа, c вложениями, описанием, участниками чаков и тд.'''
     def __init__(self, chat_model) -> None:
         super(TabsBar, self).__init__()
 
@@ -19,61 +18,107 @@ class TabsBar(QWidget):
 
         layout = QVBoxLayout()
         layout.setSpacing(0)
-        layout.setContentsMargins(0,0,0,0)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         widget = QWidget()
         widget.setStyleSheet(f'background-color: {MAIN_BOX_COLOR}; border-radius: 10px;')
-        
+
         self.tabs_layout = QVBoxLayout()
-        self.tabs_layout.setContentsMargins(15,15,15,15)
+        self.tabs_layout.setContentsMargins(15, 15, 15, 15)
 
         self.menu_tabs = QHBoxLayout()
-        self.menu_tabs.setContentsMargins(0,0,0,15)
+        self.menu_tabs.setContentsMargins(0, 0, 0, 15)
         self.tabs_layout.addLayout(self.menu_tabs)
 
+        # Кнопки переключения вкладок
         self.main_tabs_btn = QPushButton('Main')
         self.main_tabs_btn.setFixedSize(60, 30)
-        self.main_tabs_btn.setStyleSheet(f'''QPushButton {{background-color: {MAIN_COLOR}; border-radius: 10px;}}
-                                             QPushButton:hover {{background-color: {HOVER_MAIN_COLOR};}}''')
         self.main_tabs_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        self.main_tabs_btn.clicked.connect(self.open_main_tabs)
+        self.main_tabs_btn.clicked.connect(lambda: self.open_tab(self.main_tabs, self.main_tabs_btn))
         self.menu_tabs.addWidget(self.main_tabs_btn)
 
         self.attachments_tabs_btn = QPushButton('Attachments')
-        self.attachments_tabs_btn.setStyleSheet('''QPushButton {background-color: rgba(0,0,0,0.2); border-radius: 10px;}
-                                                    QPushButton:hover {background-color: rgba(255,255,255, 0.3);}''')
         self.attachments_tabs_btn.setFixedSize(90, 30)
         self.attachments_tabs_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        self.attachments_tabs_btn.clicked.connect(self.open_attachments_tabs)
+        self.attachments_tabs_btn.clicked.connect(lambda: self.open_tab(self.attachments_tabs, self.attachments_tabs_btn))
         self.menu_tabs.addWidget(self.attachments_tabs_btn)
 
         self.menu_tabs.addStretch()
+
         self.settings_tabs_btn = QPushButton()
         self.settings_tabs_btn.setFixedSize(24, 24)
-        self.settings_tabs_btn.setStyleSheet(f'''background-color: rgba(0,0,0,0); border-radius: 15px;''')
         self.settings_tabs_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.settings_tabs_btn.setIcon(QIcon('static/image/settings.png'))
         self.settings_tabs_btn.setIconSize(QSize(24, 24))
-        self.settings_tabs_btn.clicked.connect(self.open_settings_tabs)
+        self.settings_tabs_btn.clicked.connect(lambda: self.open_tab(self.settings_tabs, self.settings_tabs_btn))
         self.menu_tabs.addWidget(self.settings_tabs_btn)
 
+        # Инициализация вкладок
         self.main_tabs = MainTabs(self.chat_model)
-        self.tabs_layout.addWidget(self.main_tabs)
+        self.attachments_tabs = AttachmentsTabs()
+        self.settings_tabs = SettingsTabs()
+
+        # Текущий виджет
+        self.current_tab = self.main_tabs
+        self.current_button = self.main_tabs_btn  # Текущая активная кнопка
+        self.tabs_layout.addWidget(self.current_tab)
+
+        self.update_button_styles()  # Установить стиль кнопок
 
         self.tabs_layout.addStretch()
         widget.setLayout(self.tabs_layout)
 
         layout.addWidget(widget)
         self.setLayout(layout)
-    
+
+    def switch_tab(self, new_tab):
+        """Смена текущей вкладки."""
+        self.tabs_layout.removeWidget(self.current_tab)
+        self.current_tab.hide()
+        self.current_tab = new_tab
+        self.tabs_layout.insertWidget(1, self.current_tab)
+        self.current_tab.show()
+
+    def update_button_styles(self):
+        """Обновить стиль кнопок, выделяя активную."""
+        active_style = f'''QPushButton {{
+                              background-color: {MAIN_COLOR}; 
+                              border-radius: 10px;
+                          }}
+                          QPushButton:hover {{
+                              background-color: {HOVER_MAIN_COLOR};
+                          }}'''
+
+        inactive_style = '''QPushButton {
+                              background-color: rgba(0,0,0,0.2); 
+                              border-radius: 10px;
+                          }
+                          QPushButton:hover {
+                              background-color: rgba(255,255,255,0.3);
+                          }'''
+
+        # Установить стиль для каждой кнопки
+        self.main_tabs_btn.setStyleSheet(active_style if self.current_button == self.main_tabs_btn else inactive_style)
+        self.attachments_tabs_btn.setStyleSheet(active_style if self.current_button == self.attachments_tabs_btn else inactive_style)
+        self.settings_tabs_btn.setStyleSheet(active_style if self.current_button == self.settings_tabs_btn else inactive_style)
+
+    def open_tab(self, tab_widget, tab_button):
+        """Открыть вкладку и обновить активную кнопку."""
+        self.switch_tab(tab_widget)
+        self.current_button = tab_button
+        self.update_button_styles()
+
     def open_main_tabs(self):
-        pass
-    
+        """Открыть главную вкладку."""
+        self.switch_tab(self.main_tabs)
+
     def open_attachments_tabs(self):
-        pass
+        """Открыть вкладку вложений."""
+        self.switch_tab(self.attachments_tabs)
 
     def open_settings_tabs(self):
-        pass
+        """Открыть вкладку настроек."""
+        self.switch_tab(self.settings_tabs)
 
 class MainTabs(QWidget):
     '''Основной блок с описанием и участниками. '''
@@ -145,11 +190,25 @@ class AttachmentsTabs(QWidget):
     def __init__(self) -> None:
         super(AttachmentsTabs, self).__init__()
 
+        layout = QVBoxLayout()
+
+        text = QLabel('Это вложения...')
+        layout.addWidget(text)
+
+        self.setLayout(layout)
+
 
 class SettingsTabs(QWidget):
     '''Настройки чатов.'''
     def __init__(self) -> None:
         super(SettingsTabs, self).__init__()
+
+        layout = QVBoxLayout()
+
+        text = QLabel('Это настройки...')
+        layout.addWidget(text)
+
+        self.setLayout(layout)
 
 
 class Links(QWidget):

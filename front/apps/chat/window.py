@@ -13,8 +13,9 @@ class ChatScreen(QWidget):
         
         self.orig_window = window
         layout = QHBoxLayout()
+        layout.setSpacing(0)
         layout.setContentsMargins(0,0,0,0)
-        
+    
         self.current_chat_index = None  # Хранит индекс текущего чата
         self.chat_widgets = []  # Список виджетов чатов
 

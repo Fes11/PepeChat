@@ -28,7 +28,7 @@ class Window(QMainWindow):
 
         # Базовые настройки
         self.setWindowTitle("PepeChat")
-        self.setMinimumSize(840, 570)
+        self.setMinimumSize(1100, 570)
         self.resize_margin = 10
         self.setStyleSheet(scroll_style + '''QWidget {background-color: rgba(0,0,0,0);}''')
 

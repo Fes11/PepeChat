@@ -21,17 +21,18 @@ class Sidebar(QWidget):
         self.orig_window = orig_window
 
         self.setMouseTracking(True)  # Включаем отслеживание движения мыши
-        self.setMinimumWidth(65)
-        self.setMaximumWidth(300)
+        self.setFixedWidth(300)
 
         self.num = 0
+        self.tabs_bar_visible = False
+        self._messages_list = []
 
         # Настройки Sidebar
         self.widget = QWidget()
         self.widget.setObjectName('widget')
         self.widget.setStyleSheet(f'''#widget {{background-color: {MAIN_BOX_COLOR}; border-radius: 10px; border: none;}}''')
         layout = QVBoxLayout()
-        layout.setContentsMargins(0,0,0,0)
+        layout.setContentsMargins(0,0,6,0)
 
         # Основной слой
         self.sidebar_layout = QVBoxLayout()
@@ -174,12 +175,12 @@ class Sidebar(QWidget):
 
             # Устанавливаем максимальную и минимальную ширину
             if new_width < 220:
-                self.setMaximumWidth(65)
+                self.setFixedWidth(72)
                 self.collapse_sidebar()  # Скрываем элементы при ширине < 250
             elif new_width >= 300:
-                self.setMaximumWidth(300)
+                self.setFixedWidth(300)
             else:
-                self.setMaximumWidth(int(new_width))
+                self.setFixedWidth(int(new_width))
                 self.expand_sidebar()  # Показываем элементы при ширине >= 250
 
             if self.parentWidget():
@@ -223,9 +224,9 @@ class Sidebar(QWidget):
     
     def resizeEvent(self, event):
         if self.size().width() == 220:
-            self.setMaximumWidth(65)
+            self.setFixedWidth(72)
             self.collapse_sidebar()
-        else:
+        elif self.size().width() > 75:
             self.expand_sidebar()
         super().resizeEvent(event)
 
@@ -245,12 +246,20 @@ class Sidebar(QWidget):
         item.setSizeHint(self.chat_widget.sizeHint())
         self.chat_list.addItem(item)
         self.chat_list.setItemWidget(item, self.chat_widget)
-        self.messages_list = MessagesList(self.main_window, self.orig_window, chat_model)
-        
+        self.messages_list = MessagesList(self.main_window, self.orig_window, chat_model, self)
+
+
+        self._messages_list.append(self.messages_list)
         self.main_window.stack.addWidget(self.messages_list)
 
         # Добавляем виджет чата в список
         self.main_window.chat_widgets.append(self.chat_widget)
+    
+    def toggle_tabs_bar(self):
+        """Переключить видимость TabsBar для всех чатов."""
+        self.tabs_bar_visible = not self.tabs_bar_visible
+        for chat in self._messages_list:
+            chat.hide_task_bars(self.tabs_bar_visible)
     
     @Property(int)
     def animatedHeight(self):
