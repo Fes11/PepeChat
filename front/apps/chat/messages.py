@@ -132,8 +132,29 @@ class MessageBubble(QWidget):
             else:
                 image_bubbl = ImageBubble(mes_time, self.path)
                 image_bubbl.clicked.connect(self.open_media_view)
-
                 message_buble_layout.addWidget(image_bubbl)
+
+                if self.message.text():
+                    message_layout.addWidget(self.message)
+                    message_buble_layout.addLayout(message_layout)
+
+                    if self.me == True:
+                        self.widget.setStyleSheet(f'''
+                                    border-top-left-radius: 12px;
+                                    border-top-right-radius: 12px;
+                                    border-bottom-left-radius: 12px;
+                                    border-bottom-right-radius: 0px;
+                                    color: white;
+                                    background-color: {MAIN_COLOR};''')
+                    else:
+                        self.widget.setStyleSheet(f'''
+                                    border-top-left-radius: 12px;
+                                    border-top-right-radius: 12px;
+                                    border-bottom-left-radius: 0px;
+                                    border-bottom-right-radius: 12px;
+                                    color: {TEXT_COLOR};
+                                    background-color: {NOT_USER_BUBLS};''')
+                    
                 self.widget.setLayout(message_buble_layout)
                 layout.addWidget(self.widget)
 

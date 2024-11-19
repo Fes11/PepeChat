@@ -246,7 +246,7 @@ class Sidebar(QWidget):
         item.setSizeHint(self.chat_widget.sizeHint())
         self.chat_list.addItem(item)
         self.chat_list.setItemWidget(item, self.chat_widget)
-        self.messages_list = MessagesList(self.main_window, self.orig_window, chat_model, self)
+        self.messages_list = MessagesList(self, self.main_window, self.orig_window, chat_model, self.tabs_bar_visible)
 
 
         self._messages_list.append(self.messages_list)
@@ -258,6 +258,12 @@ class Sidebar(QWidget):
     def toggle_tabs_bar(self):
         """Переключить видимость TabsBar для всех чатов."""
         self.tabs_bar_visible = not self.tabs_bar_visible
+        if self.tabs_bar_visible:
+            if not self.orig_window.full_sreen:
+                self.orig_window.resize(self.orig_window.width() + 300, self.orig_window.height())
+        else:
+            if not self.orig_window.full_sreen:
+                self.orig_window.resize(self.orig_window.width() - 300, self.orig_window.height())
         for chat in self._messages_list:
             chat.hide_task_bars(self.tabs_bar_visible)
     

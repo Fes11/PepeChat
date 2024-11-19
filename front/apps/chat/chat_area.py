@@ -15,9 +15,9 @@ from apps.chat.tabs import TabsBar
 from image import get_rounds_edges_image
 
 class MessagesList(QWidget):
-    def __init__(self, main_window, orig_window, chat_model, tabs_bar_visible) -> None:
+    def __init__(self, parent, main_window, orig_window, chat_model, tabs_bar_visible) -> None:
         super(MessagesList, self).__init__()
-
+        self.parent = parent
         self.orig_window = orig_window
         self.main_window = main_window
         self.chat_model = chat_model
@@ -72,7 +72,7 @@ class MessagesList(QWidget):
         self.tabs_bar_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.tabs_bar_btn.setStyleSheet('''background-color: rgba(0,0,0,0); border-radius: 15px; border: none;''')
         self.tabs_bar_btn.setIconSize(QSize(25, 25)) 
-        self.tabs_bar_btn.clicked.connect(self.tabs_bar_visible.toggle_tabs_bar)
+        self.tabs_bar_btn.clicked.connect(self.parent.toggle_tabs_bar)
         top_chat_panel_layout.addWidget(self.tabs_bar_btn)
 
         top_chat_panel.setLayout(top_chat_panel_layout)
@@ -106,7 +106,7 @@ class MessagesList(QWidget):
         chat_layout.addWidget(self.input_panel)
 
         self.tabs_bar = TabsBar(self.chat_model)
-        self.tabs_bar.setVisible(False)
+        self.tabs_bar.setVisible(self.tabs_bar_visible)
 
         layout.addLayout(chat_layout)
         layout.addWidget(self.tabs_bar)
@@ -141,9 +141,4 @@ class MessagesList(QWidget):
     def hide_task_bars(self, visible):
         """Обновить видимость TabsBar."""
         self.tabs_bar.setVisible(visible)
-        if visible:
-            if not self.orig_window.full_sreen:
-                self.orig_window.resize(self.orig_window.width() + 300, self.orig_window.height())
-        else:
-            if not self.orig_window.full_sreen:
-                self.orig_window.resize(self.orig_window.width() - 300, self.orig_window.height())
+        

@@ -1,6 +1,7 @@
 from apps.chat.fields import FirstNewChatButton
 from apps.chat.dialog import CreateChatDialog
 from apps.chat.fields import DarkenButton
+from apps.chat.user import User
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QIcon, QCursor, QIcon, QCursor
 from PySide6.QtWidgets import (QVBoxLayout,QHBoxLayout, QWidget, QPushButton, QLabel, QTextEdit, QLineEdit)
@@ -175,6 +176,21 @@ class MainTabs(QWidget):
             self.online_label = QLabel('Online - 4')
             self.online_label.setStyleSheet('color: rgba(255,255,255, 0.4); font-size: 12px; padding-left: 2px;')
             layout.addWidget(self.online_label)
+
+            self.user_list = QVBoxLayout()
+            self.user_list.setSpacing(0)
+            self.user_list.setContentsMargins(0,0,0,0)
+
+            self.user = User()
+            self.user_list.addWidget(self.user)
+
+            self.user = User()
+            self.user_list.addWidget(self.user)
+
+            self.user = User()
+            self.user_list.addWidget(self.user)
+
+            layout.addLayout(self.user_list)
         else:
             self.info_label = QTextEdit('Это информация о пользователе с которым вы переписываетесь...')
             self.info_label.setMaximumWidth(250)
