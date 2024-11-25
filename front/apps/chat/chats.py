@@ -1,6 +1,6 @@
 import re
 from apps.chat.chat_area import MessagesList
-from apps.chat.style import MAIN_BOX_COLOR, MAIN_COLOR, TEXT_COLOR, HOVER_MAIN_COLOR
+from apps.chat.style import MAIN_BOX_COLOR, MAIN_COLOR, TEXT_COLOR, HOVER_MAIN_COLOR, context_menu_style
 from datetime import datetime
 from PySide6.QtGui import QIcon, QCursor, QPixmap, QColor, QMouseEvent
 from PySide6.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve, Property
@@ -8,17 +8,7 @@ from PySide6.QtWidgets import (QMenu, QListWidgetItem, QVBoxLayout, QLabel, QGra
                                QHBoxLayout, QWidget, QMessageBox, QPushButton)
 from apps.profile.profile import Profile
 from apps.chat.serach import UsernameSearchWidget
-
-
-
-class ChatModel:
-    def __init__(self, chat_name, users, avatar_path, description, chat_type='private'):
-        self.chat_name = chat_name
-        self.users = users
-        self.avatar_path = avatar_path
-        self.chat_type = chat_type  # 'private' or 'group'
-        self.description = description
-        self.messages = []
+from apps.chat.models import ChatModel
 
 
 class ChatWidget(QWidget):
@@ -117,26 +107,7 @@ class ChatWidget(QWidget):
         clear_action = menu.addAction("Очистить чат")
         delete_action = menu.addAction("Удалить чат")
 
-        menu.setStyleSheet(f"""
-            QMenu {{
-                background-color: {MAIN_BOX_COLOR}; /* Фон меню */
-                border: 1px solid #4C566A; /* Граница меню */
-                color: white; /* Цвет текста */
-                font-size: 14px; /* Размер шрифта */
-            }}
-            QMenu::item {{
-                padding: 8px 16px; /* Отступы внутри пунктов меню */
-                background-color: transparent; /* Прозрачный фон по умолчанию */
-            }}
-            QMenu::item:selected {{
-                background-color: #4C566A; /* Фон при выделении */
-                color: #E5E9F0; /* Цвет текста при выделении */
-            }}
-            QMenu::item:hover {{
-                background-color: #88C0D0; /* Цвет фона при наведении */
-                color: #2E3440; /* Цвет текста при наведении */
-            }}
-        """)
+        menu.setStyleSheet(context_menu_style)
 
         for action in menu.actions():
             action.setProperty("hover", True)

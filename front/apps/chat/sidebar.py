@@ -2,7 +2,8 @@ import re
 import random
 from apps.chat.chat_area import MessagesList
 from apps.chat.style import MAIN_BOX_COLOR, MAIN_COLOR, TEXT_COLOR, HOVER_MAIN_COLOR
-from apps.chat.chats import ChatWidget, ChatModel
+from apps.chat.chats import ChatWidget
+from apps.chat.models import ChatModel
 from datetime import datetime
 from PySide6.QtGui import QIcon, QCursor, QPixmap, QColor, QMouseEvent
 from PySide6.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve, Property

@@ -1,11 +1,11 @@
 from datetime import datetime
 from PySide6.QtGui import QIcon, QPixmap, QMovie, QCursor, QAction
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtWidgets import (QVBoxLayout, QLabel, QHBoxLayout, QWidget, QPushButton, QMenu)
-from apps.chat.style import NOT_USER_BUBLS, TEXT_COLOR, MAIN_COLOR, MAIN_BOX_COLOR
+from PySide6.QtWidgets import (QVBoxLayout, QLabel, QHBoxLayout, QWidget, QPushButton, QMenu, QSizePolicy)
+from apps.chat.style import NOT_USER_BUBLS, TEXT_COLOR, MAIN_COLOR, MAIN_BOX_COLOR, context_menu_style
 from apps.profile.profile import Avatar
 from utils.media_view import MediaView
-from image import get_rounds_edges_image
+from image import get_rounds_edges_image, get_top_rounded_image
 
 
 class Message(QHBoxLayout):
@@ -101,6 +101,7 @@ class MessageBubble(QWidget):
 
         self.setContentsMargins(0,0,0,0)
         self.widget = QWidget()
+        self.widget.setMaximumWidth(400)
         layout = QHBoxLayout()
         layout.setSpacing(0)
         layout.setContentsMargins(0,0,0,0)
@@ -130,30 +131,22 @@ class MessageBubble(QWidget):
                 self.widget.setLayout(message_buble_layout)
                 layout.addWidget(self.widget)
             else:
-                image_bubbl = ImageBubble(mes_time, self.path)
+                text = self.message.text()
+                image_bubbl = ImageBubble(mes_time, self.path, text)
                 image_bubbl.clicked.connect(self.open_media_view)
                 message_buble_layout.addWidget(image_bubbl)
 
-                if self.message.text():
+                if text:
                     message_layout.addWidget(self.message)
+                    message_layout.addLayout(mes_time_layout)
                     message_buble_layout.addLayout(message_layout)
-
-                    if self.me == True:
-                        self.widget.setStyleSheet(f'''
-                                    border-top-left-radius: 12px;
-                                    border-top-right-radius: 12px;
-                                    border-bottom-left-radius: 12px;
-                                    border-bottom-right-radius: 0px;
-                                    color: white;
-                                    background-color: {MAIN_COLOR};''')
-                    else:
-                        self.widget.setStyleSheet(f'''
-                                    border-top-left-radius: 12px;
-                                    border-top-right-radius: 12px;
-                                    border-bottom-left-radius: 0px;
-                                    border-bottom-right-radius: 12px;
-                                    color: {TEXT_COLOR};
-                                    background-color: {NOT_USER_BUBLS};''')
+                    
+                    self.widget.setStyleSheet(f'''border-top-left-radius: 12px;
+                                                  border-top-right-radius: 12px;
+                                                  border-bottom-left-radius: {'12px' if me else 0};
+                                                  border-bottom-right-radius: {'12px' if not me else 0};
+                                                  color: {TEXT_COLOR};
+                                                  background-color: {MAIN_COLOR if me else NOT_USER_BUBLS};''')
                     
                 self.widget.setLayout(message_buble_layout)
                 layout.addWidget(self.widget)
@@ -166,22 +159,12 @@ class MessageBubble(QWidget):
             message_buble_layout.addLayout(message_layout)
             self.widget.setLayout(message_buble_layout)
     
-            if self.me == True:
-                self.widget.setStyleSheet(f'''
-                            border-top-left-radius: 12px;
-                            border-top-right-radius: 12px;
-                            border-bottom-left-radius: 12px;
-                            border-bottom-right-radius: 0px;
-                            color: white;
-                            background-color: {MAIN_COLOR};''')
-            else:
-                self.widget.setStyleSheet(f'''
-                            border-top-left-radius: 12px;
-                            border-top-right-radius: 12px;
-                            border-bottom-left-radius: 0px;
-                            border-bottom-right-radius: 12px;
-                            color: {TEXT_COLOR};
-                            background-color: {NOT_USER_BUBLS};''')
+            self.widget.setStyleSheet(f'''border-top-left-radius: 12px;
+                                          border-top-right-radius: 12px;
+                                          border-bottom-left-radius: {'12px' if me else 0};
+                                          border-bottom-right-radius: {'12px' if not me else 0};
+                                          color: {TEXT_COLOR};
+                                          background-color: {MAIN_COLOR if me else NOT_USER_BUBLS};''')
 
             layout.addWidget(self.widget)
         
@@ -198,26 +181,7 @@ class MessageBubble(QWidget):
         # clear_action = QAction("Выбрать", self)
         edit_action = QAction("Изменить", self)
 
-        menu.setStyleSheet(f"""
-            QMenu {{
-                background-color: {MAIN_BOX_COLOR}; /* Фон меню */
-                border: 1px solid #4C566A; /* Граница меню */
-                color: white; /* Цвет текста */
-                font-size: 14px; /* Размер шрифта */
-            }}
-            QMenu::item {{
-                padding: 8px 16px; /* Отступы внутри пунктов меню */
-                background-color: transparent; /* Прозрачный фон по умолчанию */
-            }}
-            QMenu::item:selected {{
-                background-color: #4C566A; /* Фон при выделении */
-                color: #E5E9F0; /* Цвет текста при выделении */
-            }}
-            QMenu::item:hover {{
-                background-color: #88C0D0; /* Цвет фона при наведении */
-                color: #2E3440; /* Цвет текста при наведении */
-            }}
-        """)
+        menu.setStyleSheet(context_menu_style)
 
         for action in menu.actions():
             action.setProperty("hover", True)
@@ -260,25 +224,29 @@ class GifBubble(QLabel):
 
 
 class ImageBubble(QPushButton):
-    def __init__(self, time, path) -> None:
+    def __init__(self, time, path, text='') -> None:
         super(ImageBubble, self).__init__()
         self.time = time
         self.path = path
-
-        time = QLabel(self.time.text())
-        time.setFixedSize(50, 22)
-        time.setStyleSheet('background-color: rgba(0,0,0,0.5); color: white; padding: 5px; border-radius: 10px; font-size: 12px; font-weight: bold;')
-
-        time_layout = QVBoxLayout()
-        time_layout.setAlignment(Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignRight)
-        time_layout.addWidget(time)
-        self.setLayout(time_layout)
+        self.text = text
 
         self.setCursor(QCursor(Qt.PointingHandCursor))
         self.setStyleSheet('background-color: rgba(0, 0, 0, 0)')
         original_pixmap = QPixmap(path)
-        self.setIcon(QIcon(get_rounds_edges_image(self, original_pixmap, rounded=20)))
         self.setIconSize(QSize(300, 300))
+
+        if self.text:
+            self.setIcon(QIcon(get_top_rounded_image(original_pixmap, radius=20)))
+        else:
+            self.setIcon(QIcon(get_rounds_edges_image(self, original_pixmap, rounded=20)))
+            time = QLabel(self.time.text())
+            time.setFixedSize(50, 22)
+            time.setStyleSheet('background-color: rgba(0,0,0,0.5); color: white; padding: 5px; border-radius: 10px; font-size: 12px; font-weight: bold;')
+
+            time_layout = QVBoxLayout()
+            time_layout.setAlignment(Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignRight)
+            time_layout.addWidget(time)
+            self.setLayout(time_layout)
 
 
 class TextBubble(QPushButton):

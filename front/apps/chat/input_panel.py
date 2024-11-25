@@ -137,21 +137,30 @@ class MessageInput(QWidget):
         self.message_edit.setStyleSheet('''background-color: rgba(0, 0, 0, 0); padding: 10px 0px 10px 15px;''')
 
         self.message_input_layout = QHBoxLayout()
-        self.message_input_layout.setContentsMargins(0,0,0,0)
+        self.message_input_layout.setContentsMargins(0,0,5,0)
         self.message_input_layout.setSpacing(0)
         
         self.send_file = HoverButton(self, path='static/image/paper-clip')
-        self.send_file.setFixedSize(45, 42)
+        self.send_file.setFixedSize(30, 42)
         self.send_file.setCursor(QCursor(Qt.PointingHandCursor))
         self.send_file.setStyleSheet('''background-color: rgba(255, 255, 255, 0);''')
         self.send_file.setIcon(QIcon('static/image/paper-clip.png'))
         self.send_file.setIconSize(QSize(27, 27))
         self.send_file.clicked.connect(self.open_file_dialog)
 
-        self.send_file_layout = QVBoxLayout()
+        self.smile_btn = HoverButton(self, path='static/image/smile')
+        self.smile_btn.setFixedSize(30, 42)
+        self.smile_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        self.smile_btn.setStyleSheet('''background-color: rgba(255, 255, 255, 0);''')
+        self.smile_btn.setIcon(QIcon('static/image/smile.png'))
+        self.smile_btn.setIconSize(QSize(27, 27))
+
+        self.send_file_layout = QHBoxLayout()
+        self.send_file_layout.setSpacing(5)
         self.send_file_layout.setAlignment(Qt.AlignmentFlag.AlignBottom)
 
         self.send_file_layout.addWidget(self.send_file)
+        self.send_file_layout.addWidget(self.smile_btn)
         
         self.message_input_layout.addWidget(self.message_edit)
         self.message_input_layout.addLayout(self.send_file_layout)

@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (QVBoxLayout, QListWidget, QHBoxLayout, QWidget, Q
 
 from apps.chat.fields import UserWidget
 from apps.chat.style import MAIN_BOX_COLOR, MAIN_COLOR, HOVER_MAIN_COLOR
+from apps.chat.models import ProfileModel
 from image import get_rounded_image, scaled_image, darken_image
 
 

@@ -82,3 +82,24 @@ QScrollBar::sub-page:vertical {
 
 send_btn_style = '''QPushButton {background-color: rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 5px;}
                     QPushButton:hover {background-color: rgba(255, 255, 255, 0.4);}'''
+
+context_menu_style = f"""
+            QMenu {{
+                background-color: {MAIN_BOX_COLOR}; /* Фон меню */
+                border: 1px solid #4C566A; /* Граница меню */
+                color: white; /* Цвет текста */
+                font-size: 14px; /* Размер шрифта */
+            }}
+            QMenu::item {{
+                padding: 8px 16px; /* Отступы внутри пунктов меню */
+                background-color: transparent; /* Прозрачный фон по умолчанию */
+            }}
+            QMenu::item:selected {{
+                background-color: #4C566A; /* Фон при выделении */
+                color: #E5E9F0; /* Цвет текста при выделении */
+            }}
+            QMenu::item:hover {{
+                background-color: #88C0D0; /* Цвет фона при наведении */
+                color: #2E3440; /* Цвет текста при наведении */
+            }}
+        """
