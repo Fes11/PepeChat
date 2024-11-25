@@ -35,7 +35,7 @@ class Message(QHBoxLayout):
         self.message.setWordWrap(True)
         self.message.adjustSize()
         self.message.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        self.message.setMaximumWidth(500)
+        self.message.setMaximumWidth(650)
         self.message.setStyleSheet('''font-size: 14px; background: rgba(0, 0, 0, 0); font-weight: medium;''')
 
         # Определяем, сообщение от текущего пользователя или нет
@@ -101,7 +101,7 @@ class MessageBubble(QWidget):
 
         self.setContentsMargins(0,0,0,0)
         self.widget = QWidget()
-        self.widget.setMaximumWidth(400)
+        self.widget.setMaximumWidth(600)
         layout = QHBoxLayout()
         layout.setSpacing(0)
         layout.setContentsMargins(0,0,0,0)
