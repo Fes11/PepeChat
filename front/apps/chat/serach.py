@@ -30,6 +30,7 @@ class UsernameSearchWidget(QWidget):
         super().__init__()
 
         # Инициализация интерфейса
+        self.setWindowFlags(Qt.Popup)
         self.setWindowTitle("Поиск по никнеймам")
         self.resize(300, 50)
 

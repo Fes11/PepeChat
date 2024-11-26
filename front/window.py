@@ -9,7 +9,7 @@ from BlurWindow.blurWindow import GlobalBlur
 
 from apps.chat.style import BG_COLOR, MAIN_BOX_COLOR, scroll_style
 
-WINDOW_WIDHT = 1100
+WINDOW_WIDHT = 1000
 WINDOW_HEIGHT = 750
 
 class Window(QMainWindow):
@@ -28,7 +28,7 @@ class Window(QMainWindow):
 
         # Базовые настройки
         self.setWindowTitle("PepeChat")
-        self.setMinimumSize(1100, 570)
+        self.setMinimumSize(950, 570)
         self.resize_margin = 10
         self.setStyleSheet(scroll_style + '''QWidget {background-color: rgba(0,0,0,0);}''')
 

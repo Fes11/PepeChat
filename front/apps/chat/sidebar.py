@@ -262,8 +262,10 @@ class Sidebar(QWidget):
         if self.tabs_bar_visible:
             if not self.orig_window.full_sreen:
                 self.orig_window.resize(self.orig_window.width() + 300, self.orig_window.height())
+                self.orig_window.setMinimumWidth(self.orig_window.minimumWidth() + 300)
         else:
             if not self.orig_window.full_sreen:
+                self.orig_window.setMinimumWidth(self.orig_window.minimumWidth() - 300)
                 self.orig_window.resize(self.orig_window.width() - 300, self.orig_window.height())
         for chat in self._messages_list:
             chat.hide_task_bars(self.tabs_bar_visible)

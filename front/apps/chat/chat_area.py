@@ -113,7 +113,7 @@ class MessagesList(QWidget):
         self.setLayout(layout)
     
     def resizeEvent(self, event: QtCore.QEvent) -> None:
-        align_left = self.width() > 1200
+        align_left = self.width() > 1350
 
         for message in self.messages:
             message.set_alignment(align_left)

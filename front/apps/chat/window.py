@@ -10,8 +10,10 @@ class ChatScreen(QWidget):
     '''Основное окно чата.'''
     def __init__(self, window) -> None:
         super(ChatScreen, self).__init__()
-        
+
         self.orig_window = window
+        self.orig_window.setMinimumSize(950, 570)
+
         layout = QHBoxLayout()
         layout.setSpacing(0)
         layout.setContentsMargins(0,0,0,0)

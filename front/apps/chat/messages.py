@@ -1,5 +1,6 @@
+import re
 from datetime import datetime
-from PySide6.QtGui import QIcon, QPixmap, QMovie, QCursor, QAction
+from PySide6.QtGui import QIcon, QPixmap, QMovie, QCursor, QAction, QFontMetrics
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (QVBoxLayout, QLabel, QHBoxLayout, QWidget, QPushButton, QMenu, QSizePolicy)
 from apps.chat.style import NOT_USER_BUBLS, TEXT_COLOR, MAIN_COLOR, MAIN_BOX_COLOR, context_menu_style
@@ -17,6 +18,8 @@ class Message(QHBoxLayout):
         self.path = path
         self.index = i
 
+        self.max_width = 480
+
         self.mes_avatar = Avatar(path='static/image/person.png')
         self.me_avatar = Avatar(path='static/image/ava.png')
         self.me_left_avatar = Avatar(path='static/image/ava.png')
@@ -30,12 +33,15 @@ class Message(QHBoxLayout):
         self.avatar_left_layout.setAlignment(Qt.AlignmentFlag.AlignBottom)
         self.avatar_left_layout.addWidget(self.me_left_avatar)  # Аватарка слева (скрыта)
 
-        self.message = QLabel(self.text)
+        self.formatted_text = self.format_links(text)
+
+        self.message = QLabel(text)
         self.message.setContextMenuPolicy(Qt.NoContextMenu)
         self.message.setWordWrap(True)
         self.message.adjustSize()
-        self.message.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        self.message.setMaximumWidth(650)
+        self.message.setOpenExternalLinks(True)
+        self.message.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse | Qt.TextInteractionFlag.TextBrowserInteraction)
+        self.message.setMaximumWidth(self.max_width)
         self.message.setStyleSheet('''font-size: 14px; background: rgba(0, 0, 0, 0); font-weight: medium;''')
 
         # Определяем, сообщение от текущего пользователя или нет
@@ -55,6 +61,27 @@ class Message(QHBoxLayout):
             self.avatar_layout.addWidget(self.mes_avatar)  # Аватарка слева
             self.addLayout(self.avatar_layout)
             self.addWidget(self.message_bubble)
+        
+        self._adjust_label_size()
+
+    def _adjust_label_size(self):
+        """Пересчитывает размер QLabel с учетом длины текста."""
+        font_metrics = QFontMetrics(self.message.font())
+        text = self.message.text()
+        
+        # Разбиваем текст с учетом максимальной ширины (перенос строк)
+        text_size = font_metrics.boundingRect(0, 0, self.max_width, 0, Qt.TextFlag.TextWordWrap, text)
+
+        # Устанавливаем ширину QLabel на основе ширины текста, но не больше max_width
+        self.message.setFixedWidth(min(text_size.width(), self.message.maximumWidth()))
+        self.message.setText(self.formatted_text)
+    
+    @staticmethod
+    def format_links(text):
+        # Регулярное выражение для поиска ссылок
+        url_pattern = re.compile(r'(https?://[^\s]+)')
+        # Заменяем найденные ссылки на кликабельные
+        return url_pattern.sub(r'<a style="color:white;padding:0;margin:0;" href="\1">\1</a>', text)
 
     def set_alignment(self, align_left: bool):
         '''Меняет расположение сообщения и аватарки в зависимости от ширины окна.'''
@@ -101,7 +128,6 @@ class MessageBubble(QWidget):
 
         self.setContentsMargins(0,0,0,0)
         self.widget = QWidget()
-        self.widget.setMaximumWidth(600)
         layout = QHBoxLayout()
         layout.setSpacing(0)
         layout.setContentsMargins(0,0,0,0)
@@ -116,7 +142,7 @@ class MessageBubble(QWidget):
 
         # Метка времени
         mes_time = QLabel(datetime.now().strftime('%H:%M'))
-        mes_time.setStyleSheet('QLabel {color: rgba(255, 255, 255, 0.65); background: rgba(0, 0, 0, 0);}')
+        mes_time.setStyleSheet('QLabel {color: rgba(255, 255, 255, 0.65); background: rgba(0, 0, 0, 0); font-size: 12px; font-weight: bold;}')
 
         mes_time_layout = QVBoxLayout()
         mes_time_layout.setContentsMargins(0,0,0,0)
@@ -135,8 +161,10 @@ class MessageBubble(QWidget):
                 image_bubbl = ImageBubble(mes_time, self.path, text)
                 image_bubbl.clicked.connect(self.open_media_view)
                 message_buble_layout.addWidget(image_bubbl)
+                self.widget.setStyleSheet(f'''background-color: rgba(0,0,0,0)''')
 
                 if text:
+                    self.message.setFixedWidth(250)
                     message_layout.addWidget(self.message)
                     message_layout.addLayout(mes_time_layout)
                     message_buble_layout.addLayout(message_layout)

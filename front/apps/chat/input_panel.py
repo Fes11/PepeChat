@@ -3,10 +3,10 @@ from random import randrange
 from datetime import datetime
 from PySide6 import QtCore
 from PySide6.QtGui import QIcon, QCursor, QPixmap
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import Qt, QSize, Signal
 from PySide6.QtWidgets import (QApplication, QTextEdit, QScrollArea, QVBoxLayout, QLabel, QListWidget,
                                QHBoxLayout, QWidget, QSizePolicy, QPushButton, QFileDialog)
-
+from apps.chat.emoji import EmojiPicker
 from apps.chat.fields import PlainTextEdit, HoverButton
 from apps.chat.style import MAIN_COLOR, MAIN_BOX_COLOR, NOT_USER_BUBLS, TEXT_COLOR, HOVER_MAIN_COLOR
 from image import get_rounds_edges_image
@@ -137,11 +137,11 @@ class MessageInput(QWidget):
         self.message_edit.setStyleSheet('''background-color: rgba(0, 0, 0, 0); padding: 10px 0px 10px 15px;''')
 
         self.message_input_layout = QHBoxLayout()
-        self.message_input_layout.setContentsMargins(0,0,5,0)
+        self.message_input_layout.setContentsMargins(0,0,10,0)
         self.message_input_layout.setSpacing(0)
         
         self.send_file = HoverButton(self, path='static/image/paper-clip')
-        self.send_file.setFixedSize(30, 42)
+        self.send_file.setFixedSize(30, 45)
         self.send_file.setCursor(QCursor(Qt.PointingHandCursor))
         self.send_file.setStyleSheet('''background-color: rgba(255, 255, 255, 0);''')
         self.send_file.setIcon(QIcon('static/image/paper-clip.png'))
@@ -149,11 +149,12 @@ class MessageInput(QWidget):
         self.send_file.clicked.connect(self.open_file_dialog)
 
         self.smile_btn = HoverButton(self, path='static/image/smile')
-        self.smile_btn.setFixedSize(30, 42)
+        self.smile_btn.setFixedSize(30, 45)
         self.smile_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.smile_btn.setStyleSheet('''background-color: rgba(255, 255, 255, 0);''')
         self.smile_btn.setIcon(QIcon('static/image/smile.png'))
         self.smile_btn.setIconSize(QSize(27, 27))
+        self.smile_btn.clicked.connect(self.show_emoji_picker)
 
         self.send_file_layout = QHBoxLayout()
         self.send_file_layout.setSpacing(5)
@@ -169,6 +170,28 @@ class MessageInput(QWidget):
         main_layout.setContentsMargins(0,0,0,0)
         main_layout.addWidget(widget)
         self.setLayout(main_layout)
+        
+        self.emoji_picker = EmojiPicker(self, self.message_edit)
+
+    def show_emoji_picker(self):
+        # Получаем кнопку
+        button = self.sender()
+
+        # Глобальная позиция кнопки
+        button_global_pos = button.mapToGlobal(button.rect().topLeft())
+
+        # Сдвиги для точной настройки
+        offset_x = -self.emoji_picker.width() + 10 # Влево
+        offset_y = -button.height() - 30  # Над кнопкой, чуть выше (уменьшаем на 5 пикселей)
+
+        # Вычисляем новую позицию
+        pos = button_global_pos
+        pos.setX(pos.x() + offset_x)
+        pos.setY(pos.y() + offset_y)
+
+        # Перемещаем и показываем окно
+        self.emoji_picker.move(pos)
+        self.emoji_picker.show()
     
     def open_file_dialog(self):
         dialog = QFileDialog(self)
@@ -185,8 +208,25 @@ class MessageInput(QWidget):
                 last_item = self.file_list.item(last_item_index)
                 
                 self.view_file = ViewFile(last_item.text())
+                self.view_file.file_removed.connect(self.remove_file)
                 self.input_panel.view_file_layout.addWidget(self.view_file)
                 self.input_panel.setFixedHeight(self.size().height() + 140)
+    
+    def remove_file(self, filename: str):
+        # Удаление из QListWidget
+        items = self.file_list.findItems(filename, Qt.MatchFlag.MatchExactly)
+        for item in items:
+            row = self.file_list.row(item)
+            self.file_list.takeItem(row)
+
+        # Удаление виджета ViewFile из layout
+        for i in range(self.input_panel.view_file_layout.count()):
+            widget = self.input_panel.view_file_layout.itemAt(i).widget()
+            if isinstance(widget, ViewFile) and widget.path == filename:
+                widget.setParent(None)  # Удаление из интерфейса
+                self.input_panel.adjustHeight()
+                self.adjustHeight()
+                break
 
     def adjustHeight(self):
         # Подсчёт количества строк текста
@@ -205,6 +245,8 @@ class MessageInput(QWidget):
         self.setFixedHeight(self.message_edit.size().height() - 10)
 
 class ViewFile(QPushButton):
+    file_removed = Signal(str)
+
     def __init__(self, path) -> None:
         super(ViewFile, self).__init__()
         self.path = path
@@ -222,9 +264,13 @@ class ViewFile(QPushButton):
         self.delete_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.delete_btn.setIcon(QIcon('static/image/close.png'))
         self.delete_btn.setIconSize(QSize(15, 15))
+        self.delete_btn.clicked.connect(self.delete_file)
 
         self.delete_layout = QVBoxLayout()
         self.delete_layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight)
         self.delete_layout.addWidget(self.delete_btn)
 
         self.setLayout(self.delete_layout)
+
+    def delete_file(self):
+        self.file_removed.emit(self.path)
