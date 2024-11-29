@@ -1,14 +1,15 @@
+import re
 from pathlib import Path
 from random import randrange
 from datetime import datetime
 from PySide6 import QtCore
-from PySide6.QtGui import QIcon, QCursor, QPixmap
+from PySide6.QtGui import QIcon, QCursor, QPixmap, QColor
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtWidgets import (QApplication, QTextEdit, QScrollArea, QVBoxLayout, QLabel, QListWidget,
+from PySide6.QtWidgets import (QApplication, QGraphicsDropShadowEffect, QScrollArea, QVBoxLayout, QLabel, QListWidget,
                                QHBoxLayout, QWidget, QSizePolicy, QPushButton, QFileDialog)
 
 from apps.chat.fields import PlainTextEdit, HoverButton
-from apps.chat.style import MAIN_COLOR, MAIN_BOX_COLOR, NOT_USER_BUBLS, TEXT_COLOR, HOVER_MAIN_COLOR
+from apps.chat.style import MAIN_COLOR, MAIN_BOX_COLOR, BG_COLOR, TEXT_COLOR, HOVER_MAIN_COLOR
 from apps.chat.messages import Message
 from apps.chat.input_panel import InputPanel
 from apps.chat.tabs import TabsBar
@@ -53,17 +54,57 @@ class MessagesList(QWidget):
         top_chat_panel_layout.setSpacing(10)
         top_chat_panel_layout.setContentsMargins(10,0,10,0)
 
+        SIZE_AVATAR = 45
+        SIZE_AVATAR_WIDGET = 45
         iamge_chat = QPushButton()
         original_pixmap = QPixmap(self.chat_model.avatar_path)
-        iamge_chat.setIcon(QIcon(get_rounds_edges_image(self, original_pixmap)))  # Установите путь к вашему изображению
-        iamge_chat.setIconSize(QSize(40, 40))
-        iamge_chat.setFixedSize(40,40)
-        iamge_chat.setStyleSheet('''background: white; border: none; border-radius: 10px;''')
+        iamge_chat.setFixedSize(SIZE_AVATAR_WIDGET, SIZE_AVATAR_WIDGET)
+        iamge_chat.setStyleSheet(f'''QPushButton {{border: none; background-color: rgba(0,0,0,0);}}''')
+        if self.chat_model == 'group':
+            iamge_chat.setIcon(QIcon(get_rounds_edges_image(self, original_pixmap, SIZE_AVATAR_WIDGET))) 
+        else:
+            iamge_chat.setIcon(QIcon(get_rounds_edges_image(self, original_pixmap, SIZE_AVATAR_WIDGET)))  # Установите путь к вашему изображению
+        iamge_chat.setIconSize(QSize(SIZE_AVATAR, SIZE_AVATAR))
+
         top_chat_panel_layout.addWidget(iamge_chat)
 
         self.top_chat_name = QLabel(self.chat_model.chat_name)
+        self.top_chat_name.setFixedHeight(14)
         self.top_chat_name.setStyleSheet('''background-color: rgba(0,0,0,0); font-size: 13px; font-weight: bold; color: white; border: none;''')
-        top_chat_panel_layout.addWidget(self.top_chat_name)
+
+        top_chat_name_layout = QVBoxLayout()
+        top_chat_name_layout.setSpacing(0)
+        top_chat_name_layout.addWidget(self.top_chat_name)
+
+        if chat_model.chat_type == 'group':
+            self.online_layout = QHBoxLayout()
+            self.online_layout.setSpacing(5)
+
+            self.glow = QGraphicsDropShadowEffect(self)
+            self.glow.setBlurRadius(20)  # радиус размытия
+            rgba = list(map(int, re.findall(r'\d+', MAIN_COLOR)))
+            color = QColor(rgba[0], rgba[1], rgba[2])
+            self.glow.setColor(color)  # цвет свечения
+            self.glow.setOffset(0, 0)  # смещение тени
+            
+            self.sensor_online = QWidget()
+            self.sensor_online.setContentsMargins(0,0,0,0)
+            self.sensor_online.setFixedSize(10,10)
+            self.sensor_online.setStyleSheet(f'''background-color: {MAIN_COLOR}; border-radius: 5px;''')
+
+            self.sensor_online.setGraphicsEffect(self.glow)
+
+            self.online_label = QLabel('Online: 4')
+            self.online_label.setFixedHeight(13)
+            self.online_label.setStyleSheet('''border: none; background-color: rgba(0,0,0,0); color: rgba(255,255,255, 0.2); 
+                                               font-weight: bold; padding-bottom: 3px;''')
+
+            self.online_layout.addWidget(self.sensor_online)
+            self.online_layout.addWidget(self.online_label)
+
+            top_chat_name_layout.addLayout(self.online_layout)
+
+        top_chat_panel_layout.addLayout(top_chat_name_layout)
 
         top_chat_panel_layout.addStretch()
 

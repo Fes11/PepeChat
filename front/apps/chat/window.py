@@ -12,7 +12,7 @@ class ChatScreen(QWidget):
         super(ChatScreen, self).__init__()
 
         self.orig_window = window
-        self.orig_window.setMinimumSize(950, 570)
+        self.setMinimumSize(700, 570)
 
         layout = QHBoxLayout()
         layout.setSpacing(0)
@@ -78,7 +78,10 @@ class ChatScreen(QWidget):
         current_chat_widget = self.chat_widgets[index]
         current_chat_widget.chat_widget.setStyleSheet(
             f'''QPushButton {{border-left: 5px solid {MAIN_COLOR}; border-radius: 0px; background-color: rgba(255, 255, 255, 0.1);}}
-               QPushButton:hover {{background-color: rgba(0,0,0, 0.2); border-radius: 0px;}}''')
+                QPushButton:hover {{background-color: rgba(0,0,0, 0.2); border-radius: 0px;}}''')
+        
+        # if current_chat_widget.chat_widget.findChild(QWidget, "online"):
+        #     current_chat_widget.chat_widget.sensor_online.setStyleSheet('border: 3px solid background-color: rgba(0,0,0, 0.2);')
 
         self.stack.setCurrentIndex(index + 1)
         self.current_chat_index = index

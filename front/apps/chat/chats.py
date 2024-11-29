@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (QMenu, QListWidgetItem, QVBoxLayout, QLabel, QGra
 from apps.profile.profile import Profile
 from apps.chat.serach import UsernameSearchWidget
 from apps.chat.models import ChatModel
-
+from image import get_rounds_edges_image
 
 class ChatWidget(QWidget):
     def __init__(self, main_window, num, model: ChatModel):
@@ -39,13 +39,29 @@ class ChatWidget(QWidget):
         self.last_message.setStyleSheet('''QLabel {color: #b5b5b5;}''')
         self.chat_info_layout.addWidget(self.last_message)
 
+        SIZE_AVATAR = 40
+        SIZE_AVATAR_WIDGET = 45
         chat_avatar = QPushButton(self)
-        chat_avatar.setFixedSize(40, 40)
-        avatar_radius = 10 if model.chat_type == 'group' else 20
-        chat_avatar.setStyleSheet(f'''QPushButton {{border: none; background-color: white; border-radius: {avatar_radius}px}}''')
+        chat_avatar.setFixedSize(SIZE_AVATAR_WIDGET, SIZE_AVATAR_WIDGET)
+        chat_avatar.setStyleSheet(f'''QPushButton {{border: none; background-color: rgba(0,0,0,0);}}''')
         chat_avatar.clicked.connect(lambda: self.main_window.switch_chat(self.num - 1))
-        chat_avatar.setIcon(QIcon(model.avatar_path))  # Установите путь к вашему изображению
-        chat_avatar.setIconSize(QSize(25, 25))
+
+        # avatar_radius = 10 if model.chat_type == 'group' else 20
+        original_pixmap = QPixmap(model.avatar_path)
+        chat_avatar.setIcon(QIcon(get_rounds_edges_image(self, original_pixmap, 20)))  # Установите путь к вашему изображению
+        chat_avatar.setIconSize(QSize(SIZE_AVATAR, SIZE_AVATAR))
+  
+        if model.chat_type != 'group':   
+            chat_avatar.setIcon(QIcon(get_rounds_edges_image(self, original_pixmap, 45))) 
+            self.sensor_online = QWidget()
+            self.sensor_online.setFixedSize(14,14)
+            self.sensor_online.setObjectName('online')
+            self.sensor_online.setStyleSheet(f'''background-color: {MAIN_COLOR}; border-radius: 7px; border: 3px solid {MAIN_BOX_COLOR}''')
+
+            self.sensor_online_layout = QVBoxLayout()
+            self.sensor_online_layout.setContentsMargins(0,30,0,0)
+            self.sensor_online_layout.addWidget(self.sensor_online)
+            chat_avatar.setLayout(self.sensor_online_layout)
 
         self.chat_time_layout = QVBoxLayout()
         self.chat_time_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
@@ -66,14 +82,16 @@ class ChatWidget(QWidget):
         self.new_mess = QLabel('1')
         self.new_mess.setContentsMargins(0,0,0,0)
         self.new_mess.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.new_mess.setFixedSize(16,16)
-        self.new_mess.setStyleSheet(f'''QLabel {{background-color: {MAIN_COLOR}; color: white; border-radius: 8px;
-                                         font-weight: bold; font-size: 10px;}}''')
+        self.new_mess.setFixedSize(17,17)
+        self.new_mess.setStyleSheet(f'''QLabel {{background-color: {MAIN_COLOR}; color: white; border-radius: 8px; padding-bottom: 2px;
+                                                 font-weight: bold; font-size: 11px;}}''')
         # Применение эффекта к new_mess
         self.new_mess.setGraphicsEffect(self.glow)
         
         new_mess_layout = QHBoxLayout()
-        new_mess_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
+        new_mess_layout.setContentsMargins(0,0,0,0)
+        new_mess_layout.setSpacing(0)
+        new_mess_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         new_mess_layout.addWidget(self.new_mess)
 
         self.chat_time_layout.addWidget(self.chat_time)
