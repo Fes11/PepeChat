@@ -3,8 +3,9 @@ from apps.chat.dialog import CreateChatDialog
 from apps.chat.fields import DarkenButton
 from apps.chat.user import User
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QIcon, QCursor, QIcon, QCursor
-from PySide6.QtWidgets import (QVBoxLayout,QHBoxLayout, QWidget, QPushButton, QLabel, QTextEdit, QLineEdit)
+from PySide6.QtGui import QIcon, QCursor, QIcon, QCursor, QPixmap
+from PySide6.QtWidgets import (QVBoxLayout,QHBoxLayout, QWidget, QPushButton, QLabel, QTextEdit, QLineEdit, QScrollArea, QGridLayout)
+from image import get_rounds_edges_image
 from .style import MAIN_BOX_COLOR, MAIN_COLOR, HOVER_MAIN_COLOR
 
 
@@ -142,7 +143,7 @@ class MainTabs(QWidget):
         description_layout.setSpacing(5)
         description_layout.setContentsMargins(0,0,0,0)
 
-        self.chat_image = DarkenButton(75, self.chat_model.avatar_path)
+        self.chat_image = DarkenButton(75, self.chat_model.avatar_path, rounded=100)
         self.chat_image.setCursor(QCursor(Qt.PointingHandCursor))
         self.chat_image.setFixedSize(75, 75)
         description_layout.addWidget(self.chat_image)
@@ -181,16 +182,26 @@ class MainTabs(QWidget):
             self.user_list.setSpacing(0)
             self.user_list.setContentsMargins(0,0,0,0)
 
-            self.user = User()
-            self.user_list.addWidget(self.user)
-
-            self.user = User()
-            self.user_list.addWidget(self.user)
-
-            self.user = User()
-            self.user_list.addWidget(self.user)
+            for i in range(0,3):
+                self.user = User()
+                self.user_list.addWidget(self.user)
 
             layout.addLayout(self.user_list)
+
+            self.online_label = QLabel('Offline - 4')
+            self.online_label.setStyleSheet('color: rgba(255,255,255, 0.4); font-size: 12px; padding-left: 2px;')
+            layout.addWidget(self.online_label)
+
+            self.ofline_user_list = QVBoxLayout()
+            self.ofline_user_list.setSpacing(0)
+            self.ofline_user_list.setContentsMargins(0,0,0,0)
+
+            for i in range(0,2):
+                self.ofline_user = User()
+                self.ofline_user.setEnabled(False)
+                self.ofline_user_list.addWidget(self.ofline_user)
+
+            layout.addLayout(self.ofline_user_list)
         else:
             self.info_label = QTextEdit('Это информация о пользователе с которым вы переписываетесь...')
             self.info_label.setMaximumWidth(250)
@@ -201,17 +212,51 @@ class MainTabs(QWidget):
         self.setLayout(layout)
 
 
-class AttachmentsTabs(QWidget):
+class AttachmentsTabs(QScrollArea):
     '''Вложения.'''
     def __init__(self) -> None:
         super(AttachmentsTabs, self).__init__()
+        self.setWidgetResizable(True)
 
-        layout = QVBoxLayout()
+        # Основной виджет и его макет
+        self.container = QWidget()
+        self.setWidget(self.container)
+        self.layout = QGridLayout()
+        self.layout.setContentsMargins(0,0,0,0)
+        self.container.setLayout(self.layout)
 
         text = QLabel('Это вложения...')
-        layout.addWidget(text)
+        self.layout.addWidget(text)
 
-        self.setLayout(layout)
+        # Настройки сетки
+        self.image_size = 130
+        self.max_width = 300
+        self.column_count = self.max_width // self.image_size
+
+        self.row = 0
+        self.column = 0
+
+        for i in range(0, 5):
+            self.add_image('static/image/ava3.jpg')
+
+    def add_image(self, image_path):
+        # Создаем QLabel для изображения
+        pixmap = QPixmap(image_path).scaled(
+            self.image_size, self.image_size, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
+        )
+        label = QLabel()
+        label.setPixmap(get_rounds_edges_image(self, pixmap, 10))
+        label.setFixedSize(self.image_size, self.image_size)
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        # Добавляем в сетку
+        self.layout.addWidget(label, self.row, self.column)
+
+        # Обновляем положение
+        self.column += 1
+        if self.column >= self.column_count:
+            self.column = 0
+            self.row += 1
 
 
 class SettingsTabs(QWidget):

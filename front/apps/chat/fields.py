@@ -91,10 +91,11 @@ class UserWidget(QWidget):
 class DarkenButton(QPushButton):
     imageSelected = Signal(str)
 
-    def __init__(self, size_btn: int, path):
+    def __init__(self, size_btn: int, path, rounded=20):
         super().__init__()
         self.last_item = path
         self.size_btn = size_btn
+        self.rounded = rounded
         self.clicked.connect(self.open_file_dialog)
         self.file_list = QListWidget()
         self.original_pixmap = QPixmap(path)
@@ -120,7 +121,7 @@ class DarkenButton(QPushButton):
             scaled_overlay
         )
 
-        rounded_pixmap = get_rounds_edges_image(self, darkened_pixmap)
+        rounded_pixmap = get_rounds_edges_image(self, darkened_pixmap, self.rounded)
         
         painter.end()
         self.setIcon(QIcon(rounded_pixmap))  # Устанавливаем иконку с наложением

@@ -1,56 +1,80 @@
+from PySide6.QtWidgets import (
+    QApplication, QMainWindow, QScrollArea, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QGridLayout
+)
+from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QMouseEvent
-from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel
+import sys
 
 
-class ResizableWidget(QWidget):
-    def __init__(self, width=300, height=500):
+class ImageGallery(QScrollArea):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWidgetResizable(True)
+        
+        # Основной виджет и его макет
+        self.container = QWidget()
+        self.setWidget(self.container)
+        self.layout = QGridLayout()
+        self.container.setLayout(self.layout)
+
+        # Настройки сетки
+        self.image_size = 100
+        self.max_width = 300
+        self.column_count = self.max_width // self.image_size
+
+        self.row = 0
+        self.column = 0
+
+    def add_image(self, image_path):
+        # Создаем QLabel для изображения
+        pixmap = QPixmap(image_path).scaled(
+            self.image_size, self.image_size, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
+        )
+        label = QLabel()
+        label.setPixmap(pixmap)
+        label.setFixedSize(self.image_size, self.image_size)
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        # Добавляем в сетку
+        self.layout.addWidget(label, self.row, self.column)
+
+        # Обновляем положение
+        self.column += 1
+        if self.column >= self.column_count:
+            self.column = 0
+            self.row += 1
+
+
+class MainWindow(QMainWindow):
+    def __init__(self):
         super().__init__()
-        self.setFixedHeight(height)
-        self.setGeometry(100, 100, width, height)
-        self.setMinimumWidth(100)  # Минимальная ширина виджета
-        self.setMouseTracking(True)  # Включаем отслеживание движения мыши
+        self.setWindowTitle("Image Gallery")
+        self.setGeometry(100, 100, 320, 480)
 
-        # Внутренний layout и пример содержимого
-        layout = QVBoxLayout()
-        layout.addWidget(QLabel("Тяните за правый край, чтобы изменить ширину"))
-        self.setLayout(layout)
+        # Основной виджет
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
 
-        # Определение переменных для отслеживания состояния
-        self.resizing = False
-        self.resize_margin = 8  # Чувствительная зона для изменения размера
+        # Макет
+        layout = QVBoxLayout(central_widget)
 
-    def mousePressEvent(self, event: QMouseEvent):
-        # Проверяем, если мышь находится рядом с правым краем для начала изменения размера
-        if self.is_on_resize_margin(event.position()):
-            self.resizing = True
-            self.start_pos = event.globalPosition().x()
-            self.start_width = self.width()
+        # Галерея изображений
+        self.gallery = ImageGallery()
+        layout.addWidget(self.gallery)
 
-    def mouseMoveEvent(self, event: QMouseEvent):
-        # Если resizing активно, изменяем ширину в зависимости от положения курсора
-        if self.resizing:
-            delta = event.globalPosition().x() - self.start_pos
-            new_width = self.start_width + delta
-            # Устанавливаем новую ширину, проверяя, чтобы она не была меньше минимальной и не превышала максимальную
-            self.setFixedWidth(max(self.minimumWidth(), min(int(new_width), self.maximumWidth())))
-        else:
-            # Меняем курсор при наведении на правый край
-            if self.is_on_resize_margin(event.position()):
-                self.setCursor(Qt.SizeHorCursor)
-            else:
-                self.setCursor(Qt.ArrowCursor)
+        # Кнопка для добавления изображений
+        add_button = QPushButton("Add Image")
+        add_button.clicked.connect(self.add_image)
+        layout.addWidget(add_button)
 
-    def mouseReleaseEvent(self, event: QMouseEvent):
-        self.resizing = False
-
-    def is_on_resize_margin(self, pos):
-        # Проверяем, находится ли курсор в зоне чувствительности resize_margin справа
-        return self.width() - int(pos.x()) <= self.resize_margin
+    def add_image(self):
+        # Пример пути к изображению
+        image_path = "static/image/ava3.jpg"  # Укажите свой путь
+        self.gallery.add_image(image_path)
 
 
 if __name__ == "__main__":
-    app = QApplication([])
-    widget = ResizableWidget()
-    widget.show()
-    app.exec()
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec())

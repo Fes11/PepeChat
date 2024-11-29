@@ -2,7 +2,7 @@ from PySide6.QtGui import QPainterPath, QPixmap, QPainter, QBrush
 from PySide6.QtCore import Qt, QRect
 from PIL import Image, ImageEnhance, ImageFilter
 
-def get_rounds_edges_image(self, pixmap, rounded=110):
+def get_rounds_edges_image(self, pixmap, rounded=20):
     '''Закругляет все края изоброжения.'''
     size = pixmap.size()
     rounded_pixmap = QPixmap(size)

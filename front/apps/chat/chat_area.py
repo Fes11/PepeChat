@@ -60,10 +60,12 @@ class MessagesList(QWidget):
         original_pixmap = QPixmap(self.chat_model.avatar_path)
         iamge_chat.setFixedSize(SIZE_AVATAR_WIDGET, SIZE_AVATAR_WIDGET)
         iamge_chat.setStyleSheet(f'''QPushButton {{border: none; background-color: rgba(0,0,0,0);}}''')
-        if self.chat_model == 'group':
-            iamge_chat.setIcon(QIcon(get_rounds_edges_image(self, original_pixmap, SIZE_AVATAR_WIDGET))) 
+
+        if self.chat_model.chat_type == 'group':
+            iamge_chat.setIcon(QIcon(get_rounds_edges_image(self, original_pixmap, 20))) 
         else:
             iamge_chat.setIcon(QIcon(get_rounds_edges_image(self, original_pixmap, SIZE_AVATAR_WIDGET)))  # Установите путь к вашему изображению
+
         iamge_chat.setIconSize(QSize(SIZE_AVATAR, SIZE_AVATAR))
 
         top_chat_panel_layout.addWidget(iamge_chat)
@@ -76,7 +78,7 @@ class MessagesList(QWidget):
         top_chat_name_layout.setSpacing(0)
         top_chat_name_layout.addWidget(self.top_chat_name)
 
-        if chat_model.chat_type == 'group':
+        if self.chat_model.chat_type == 'group':
             self.online_layout = QHBoxLayout()
             self.online_layout.setSpacing(5)
 
