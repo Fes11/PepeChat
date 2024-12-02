@@ -78,10 +78,11 @@ class MessagesList(QWidget):
         top_chat_name_layout.setSpacing(0)
         top_chat_name_layout.addWidget(self.top_chat_name)
 
-        if self.chat_model.chat_type == 'group':
-            self.online_layout = QHBoxLayout()
-            self.online_layout.setSpacing(5)
+        self.online_layout = QHBoxLayout()
+        self.online_layout.setSpacing(5)
 
+
+        if self.chat_model.online:
             self.glow = QGraphicsDropShadowEffect(self)
             self.glow.setBlurRadius(20)  # радиус размытия
             rgba = list(map(int, re.findall(r'\d+', MAIN_COLOR)))
@@ -97,15 +98,32 @@ class MessagesList(QWidget):
             self.sensor_online.setGraphicsEffect(self.glow)
 
             self.online_label = QLabel('Online: 4')
+            if self.chat_model.chat_type == 'group':
+                self.online_label.setText('Online: 4')
+            else:
+                self.online_label.setText('Online')
             self.online_label.setFixedHeight(13)
             self.online_label.setStyleSheet('''border: none; background-color: rgba(0,0,0,0); color: rgba(255,255,255, 0.2); 
                                                font-weight: bold; padding-bottom: 3px;''')
 
             self.online_layout.addWidget(self.sensor_online)
             self.online_layout.addWidget(self.online_label)
+        else:
+            self.sensor_online = QWidget()
+            self.sensor_online.setContentsMargins(0,0,0,0)
+            self.sensor_online.setFixedSize(10,10)
+            self.sensor_online.setStyleSheet(f'''background-color: {BG_COLOR}; border-radius: 5px;''')
 
-            top_chat_name_layout.addLayout(self.online_layout)
+            self.online_label = QLabel('Ofline')
+            self.online_label.setFixedHeight(13)
+            self.online_label.setStyleSheet('''border: none; background-color: rgba(0,0,0,0); color: rgba(255,255,255, 0.2); 
+                                               font-weight: bold; padding-bottom: 3px;''')
 
+            self.online_layout.addWidget(self.sensor_online)
+            self.online_layout.addWidget(self.online_label)
+        
+
+        top_chat_name_layout.addLayout(self.online_layout)
         top_chat_panel_layout.addLayout(top_chat_name_layout)
 
         top_chat_panel_layout.addStretch()

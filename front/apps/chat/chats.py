@@ -56,7 +56,7 @@ class ChatWidget(QWidget):
             self.sensor_online = QWidget()
             self.sensor_online.setFixedSize(14,14)
             self.sensor_online.setObjectName('online')
-            self.sensor_online.setStyleSheet(f'''background-color: {MAIN_COLOR}; border-radius: 7px; border: 3px solid {MAIN_BOX_COLOR}''')
+            self.sensor_online.setStyleSheet(f'''background-color: {MAIN_COLOR}; border-radius: 7px; border: 3px solid {MAIN_BOX_COLOR};''')
 
             self.sensor_online_layout = QVBoxLayout()
             self.sensor_online_layout.setContentsMargins(0,30,0,0)

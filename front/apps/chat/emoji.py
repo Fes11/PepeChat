@@ -1,6 +1,7 @@
-from PySide6.QtWidgets import QWidget, QGridLayout, QPushButton
+from PySide6.QtWidgets import QWidget, QGridLayout, QPushButton, QScrollArea, QVBoxLayout, QHBoxLayout
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QCursor
+from apps.chat.style import BG_COLOR, MAIN_BOX_COLOR
 
 
 class EmojiPicker(QWidget):
@@ -8,19 +9,73 @@ class EmojiPicker(QWidget):
         super().__init__(parent)
         self.message_edit = message_edit
 
+        # Настройка окна
         self.setWindowFlags(Qt.Popup)  # Окно закрывается при клике вне его
-        self.setLayout(QGridLayout())
-        self.setStyleSheet('''QPushButton {border:none;}
-                              QPushButton:hover {background-color: rgba(255, 255, 255, 0.1);}''')
+        self.setStyleSheet(f'''
+            QWidget {{
+                background-color: {BG_COLOR};
+                border-radius: 10px;
+                border: 1px solid #ccc;
+            }}
+            QPushButton {{
+                border: none;
+            }}
+            QPushButton:hover {{
+                background-color: rgba(200, 200, 200, 0.1);
+                color: white;
+            }}
+        ''')
+        self.setFixedSize(240, 200)  # Размер окна
 
-        # Добавляем кнопки-смайлики
-        emojis = ["😀", "😁", "😂", "🤣", "😃", "😄", "😅", "😆", "😉", "😊"]  # Пример
-        for i, emoji in enumerate(emojis):
+        # Основной макет
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(5,5,5,5)
+
+        top_panel_layout = QHBoxLayout()
+        top_panel_layout.setContentsMargins(0,0,0,0)
+
+        self.emoji_btn = QPushButton('Emoji')
+        self.emoji_btn.setFixedHeight(25)
+        self.emoji_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        self.emoji_btn.setStyleSheet('font-size: 16px; color: grey;')
+        top_panel_layout.addWidget(self.emoji_btn)
+
+        self.webm_btn = QPushButton('Webm')
+        self.webm_btn.setFixedHeight(25)
+        self.webm_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        self.webm_btn.setStyleSheet('font-size: 16px; color: grey;')
+        top_panel_layout.addWidget(self.webm_btn)
+
+        main_layout.addLayout(top_panel_layout)
+
+        # Создаём область прокрутки
+        scroll_area = QScrollArea(self)
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll_area.setStyleSheet("border: none;")
+
+        # Виджет для смайликов
+        emoji_widget = QWidget()
+        emoji_layout = QGridLayout(emoji_widget)
+        emoji_layout.setContentsMargins(0, 0, 0, 0)
+        emoji_layout.setSpacing(5)
+
+        # Заполнение смайликами
+        with open("static/emoji.txt", "r", encoding="utf-8") as file:
+            emojis = file.read()
+
+        for i, emoji in enumerate(emojis.split(',')):
             btn = QPushButton(emoji)
             btn.setCursor(QCursor(Qt.PointingHandCursor))
+            btn.setFixedWidth(40)
             btn.setStyleSheet("font-size: 20px;")
             btn.clicked.connect(lambda _, e=emoji: self.on_emoji_selected(e))
-            self.layout().addWidget(btn, i // 5, i % 5)  # Сетка 5xN
+            emoji_layout.addWidget(btn, i // 5, i % 5)  # Сетка 5xN
+
+        emoji_widget.setLayout(emoji_layout)
+        scroll_area.setWidget(emoji_widget)
+
+        main_layout.addWidget(scroll_area)
 
     def on_emoji_selected(self, emoji):
         self.message_edit.insertPlainText(emoji)

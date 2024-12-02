@@ -182,7 +182,7 @@ class MessageInput(QWidget):
 
         # Сдвиги для точной настройки
         offset_x = -self.emoji_picker.width() + 10 # Влево
-        offset_y = -button.height() - 30  # Над кнопкой, чуть выше (уменьшаем на 5 пикселей)
+        offset_y = -button.height() - 150
 
         # Вычисляем новую позицию
         pos = button_global_pos
