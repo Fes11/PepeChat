@@ -136,7 +136,7 @@ class Sidebar(QWidget):
 
         self.widget.setLayout(self.sidebar_layout)
 
-        self.mini_profile = Profile()
+        self.mini_profile = Profile(self.main_window)
         self.mini_profile_height = 60
         self.mini_profile_width = 300
         self.open_profile = False

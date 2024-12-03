@@ -66,22 +66,22 @@ class CreateChatDialog(DialogWindow):
         top_layout.addLayout(name_and_people_layout)
         form_layout.addLayout(top_layout)
 
-        rules_layout = QHBoxLayout()
+        # rules_layout = QHBoxLayout()
 
-        rules_label = QLabel('Роли')
-        rules_layout.addWidget(rules_label)
+        # rules_label = QLabel('Роли')
+        # rules_layout.addWidget(rules_label)
 
-        rules_btn = QPushButton()
-        rules_btn.setObjectName('rules_btn')
-        rules_btn.setIcon(QIcon('static/image/close_hover.png'))  # Установите путь к вашему изображению
-        rules_btn.setStyleSheet('''#rules_btn {background: rgba(255,255,255,0.1); border-radius: 5px;}
-                                   #rules_btn:hover {background: rgba(255,255,255,0.2);}''')
-        rules_btn.setIconSize(QSize(22, 22))
-        self.rotate_icon(rules_btn, 45)
-        rules_btn.setFixedSize(25, 25)
-        rules_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        rules_layout.addWidget(rules_btn)
-        form_layout.addLayout(rules_layout)
+        # rules_btn = QPushButton()
+        # rules_btn.setObjectName('rules_btn')
+        # rules_btn.setIcon(QIcon('static/image/close_hover.png'))  # Установите путь к вашему изображению
+        # rules_btn.setStyleSheet('''#rules_btn {background: rgba(255,255,255,0.1); border-radius: 5px;}
+        #                            #rules_btn:hover {background: rgba(255,255,255,0.2);}''')
+        # rules_btn.setIconSize(QSize(22, 22))
+        # self.rotate_icon(rules_btn, 45)
+        # rules_btn.setFixedSize(25, 25)
+        # rules_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        # rules_layout.addWidget(rules_btn)
+        # form_layout.addLayout(rules_layout)
         
         people_label = QLabel('Участники: ')
         form_layout.addWidget(people_label)
@@ -137,3 +137,18 @@ class CreateChatDialog(DialogWindow):
         # Обновляем иконку на кнопке
         rotated_icon = QIcon(rotated_pixmap)
         widget.setIcon(rotated_icon)
+
+
+class SettingsDialog(DialogWindow):
+    '''Модальное окно настроек приложения. '''
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        form_layout = QVBoxLayout()
+        
+        self.label = QLabel('Settings')
+        form_layout.addWidget(self.label)
+
+
+        self.main_widget.setLayout(form_layout)

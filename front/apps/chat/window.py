@@ -1,6 +1,6 @@
 from apps.chat.fields import FirstNewChatButton
 from apps.chat.sidebar import Sidebar
-from apps.chat.dialog import CreateChatDialog
+from apps.chat.dialog import CreateChatDialog, SettingsDialog
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QVBoxLayout,QHBoxLayout, QWidget, QStackedWidget)
 from .style import MAIN_COLOR, HOVER_MAIN_COLOR
@@ -47,6 +47,9 @@ class ChatScreen(QWidget):
         self.box.create_btn.clicked.connect(lambda: self.sidebar.add_chat(self.box.image_path))
         self.box.create_btn.clicked.connect(lambda: self.switch_chat(self.sidebar.num - 1))
         self.box.create_btn.clicked.connect(self.box.close)
+
+        self.settings_dialog = SettingsDialog(self)
+
         self.setLayout(layout)
     
     def open_tabs_bar(self):
@@ -64,6 +67,7 @@ class ChatScreen(QWidget):
         
     def resizeEvent(self, event):
         self.box.setGeometry(0, 0, self.width(), self.height())
+        self.settings_dialog.setGeometry(0, 0, self.width(), self.height())
         super().resizeEvent(event)
 
     def switch_chat(self, index):

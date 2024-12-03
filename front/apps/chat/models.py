@@ -8,7 +8,9 @@ class ChatModel:
         self.chat_type = chat_type  # 'private' or 'group'
         self.description = description
         self.messages = []
-        self.online = False
+        self.online = True
+        self.superuser = True
+        self.admin = True
 
 
 class UserModel:

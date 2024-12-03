@@ -11,23 +11,19 @@ class EmojiPicker(QWidget):
 
         # Настройка окна
         self.setWindowFlags(Qt.Popup)  # Окно закрывается при клике вне его
-        self.setStyleSheet(f'''
-            QWidget {{
-                background-color: {BG_COLOR};
-                border-radius: 10px;
-                border: 1px solid #ccc;
-            }}
-            QPushButton {{
-                border: none;
-            }}
-            QPushButton:hover {{
-                background-color: rgba(200, 200, 200, 0.1);
-                color: white;
-            }}
-        ''')
-        self.setFixedSize(240, 200)  # Размер окна
+        self.setFixedSize(240, 300)  # Размер окна
 
         # Основной макет
+        widget = QWidget()
+        widget.setStyleSheet(f'''QWidget {{
+                background-color: {BG_COLOR};
+                border-radius: 10px;
+            }}''')
+        
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0,0,0,0)
+
+
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(5,5,5,5)
 
@@ -37,13 +33,29 @@ class EmojiPicker(QWidget):
         self.emoji_btn = QPushButton('Emoji')
         self.emoji_btn.setFixedHeight(25)
         self.emoji_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        self.emoji_btn.setStyleSheet('font-size: 16px; color: grey;')
+        self.emoji_btn.setStyleSheet(f'''
+            QPushButton {{
+                border: none; font-size: 16px; color: grey;
+            }}
+            QPushButton:hover {{
+                background-color: rgba(200, 200, 200, 0.1);
+                color: white;
+            }}
+        ''')
         top_panel_layout.addWidget(self.emoji_btn)
 
         self.webm_btn = QPushButton('Webm')
         self.webm_btn.setFixedHeight(25)
         self.webm_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        self.webm_btn.setStyleSheet('font-size: 16px; color: grey;')
+        self.webm_btn.setStyleSheet(f'''
+            QPushButton {{
+                border: none; font-size: 16px; color: grey;
+            }}
+            QPushButton:hover {{
+                background-color: rgba(200, 200, 200, 0.1);
+                color: white;
+            }}
+        ''')
         top_panel_layout.addWidget(self.webm_btn)
 
         main_layout.addLayout(top_panel_layout)
@@ -68,7 +80,14 @@ class EmojiPicker(QWidget):
             btn = QPushButton(emoji)
             btn.setCursor(QCursor(Qt.PointingHandCursor))
             btn.setFixedWidth(40)
-            btn.setStyleSheet("font-size: 20px;")
+            btn.setStyleSheet(f'''
+            QPushButton {{
+                border: none; font-size: 20px; color: grey;
+            }}
+            QPushButton:hover {{
+                background-color: rgba(200, 200, 200, 0.1);
+                color: white;
+            }}''')
             btn.clicked.connect(lambda _, e=emoji: self.on_emoji_selected(e))
             emoji_layout.addWidget(btn, i // 5, i % 5)  # Сетка 5xN
 
@@ -76,6 +95,11 @@ class EmojiPicker(QWidget):
         scroll_area.setWidget(emoji_widget)
 
         main_layout.addWidget(scroll_area)
+        widget.setLayout(main_layout)
+
+        layout.addWidget(widget)
+
+        self.setLayout(layout)
 
     def on_emoji_selected(self, emoji):
         self.message_edit.insertPlainText(emoji)

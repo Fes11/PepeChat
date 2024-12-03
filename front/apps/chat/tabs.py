@@ -4,7 +4,7 @@ from apps.chat.fields import DarkenButton
 from apps.chat.user import User
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QIcon, QCursor, QIcon, QCursor, QPixmap
-from PySide6.QtWidgets import (QVBoxLayout,QHBoxLayout, QWidget, QPushButton, QLabel, QTextEdit, QLineEdit, QScrollArea, QGridLayout)
+from PySide6.QtWidgets import (QVBoxLayout,QHBoxLayout, QWidget, QPushButton, QLabel, QTextEdit, QLineEdit, QScrollArea, QGridLayout, QComboBox)
 from image import get_rounds_edges_image
 from .style import MAIN_BOX_COLOR, MAIN_COLOR, HOVER_MAIN_COLOR
 
@@ -212,21 +212,56 @@ class MainTabs(QWidget):
         self.setLayout(layout)
 
 
-class AttachmentsTabs(QScrollArea):
+class AttachmentsTabs(QWidget):
     '''Вложения.'''
     def __init__(self) -> None:
         super(AttachmentsTabs, self).__init__()
-        self.setWidgetResizable(True)
 
-        # Основной виджет и его макет
+        # Основной вертикальный лейаут
+        self.layout = QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+
+        # Заголовок
+        # self.label = QLabel("Media")
+        # self.label.setFixedHeight(20)
+        # self.label.setStyleSheet('font-size: 14px;')
+        # self.layout.addWidget(self.label)
+
+        # Выпадающий список
+        self.combo_box = QComboBox()
+        self.combo_box.setFixedSize(70, 30)
+        self.combo_box.setCursor(Qt.PointingHandCursor)
+        self.combo_box.setStyleSheet("""
+            QComboBox {
+                background-color: rgba(0,0,0, 0); 
+                border-radius: 5px;
+                font-size: 14px; border: none;
+            }
+            QComboBox QAbstractItemView {
+                border-radius: 0;
+                background-color: rgba(255,255,255, 0); 
+            }
+            QComboBox QAbstractItemView::item:hover {
+                background-color: rgba(255,255,255,0.1); /* Цвет фона элемента при наведении */
+            }""")
+        self.combo_box.addItems(["Media", "File", "Links"])
+        self.layout.addWidget(self.combo_box)
+
+        # Подключение события изменения выбора
+        self.combo_box.currentTextChanged.connect(self.on_selection_change)
+
+        # Область прокрутки
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setFixedHeight(800)
+        self.scroll_area.setWidgetResizable(True)
+        self.layout.addWidget(self.scroll_area)
+
+        # Контейнер для содержимого
         self.container = QWidget()
-        self.setWidget(self.container)
-        self.layout = QGridLayout()
-        self.layout.setContentsMargins(0,0,0,0)
-        self.container.setLayout(self.layout)
-
-        text = QLabel('Это вложения...')
-        self.layout.addWidget(text)
+        self.attachment_layout = QGridLayout()
+        self.attachment_layout.setContentsMargins(0, 0, 0, 0)
+        self.container.setLayout(self.attachment_layout)
+        self.scroll_area.setWidget(self.container)
 
         # Настройки сетки
         self.image_size = 130
@@ -236,8 +271,11 @@ class AttachmentsTabs(QScrollArea):
         self.row = 0
         self.column = 0
 
-        for i in range(0, 5):
+        for i in range(0, 15):
             self.add_image('static/image/ava3.jpg')
+    
+    def on_selection_change(self, text):
+        pass
 
     def add_image(self, image_path):
         # Создаем QLabel для изображения
@@ -245,18 +283,19 @@ class AttachmentsTabs(QScrollArea):
             self.image_size, self.image_size, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
         )
         label = QLabel()
-        label.setPixmap(get_rounds_edges_image(self, pixmap, 10))
+        label.setPixmap(pixmap)
         label.setFixedSize(self.image_size, self.image_size)
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Добавляем в сетку
-        self.layout.addWidget(label, self.row, self.column)
+        self.attachment_layout.addWidget(label, self.row, self.column)
 
         # Обновляем положение
         self.column += 1
         if self.column >= self.column_count:
             self.column = 0
             self.row += 1
+
 
 
 class SettingsTabs(QWidget):

@@ -6,6 +6,7 @@ from PySide6.QtWidgets import (QVBoxLayout, QListWidget, QHBoxLayout, QWidget, Q
 from apps.chat.fields import UserWidget
 from apps.chat.style import MAIN_BOX_COLOR, MAIN_COLOR, HOVER_MAIN_COLOR
 from apps.chat.models import ProfileModel
+from apps.chat.dialog import SettingsDialog
 from image import get_rounded_image, scaled_image, darken_image
 
 
@@ -22,9 +23,10 @@ class Avatar(QPushButton):
 
 
 class Profile(QPushButton):
-    def __init__(self):
+    def __init__(self, main_window):
         super(Profile, self).__init__()
         self.setContentsMargins(0,0,0,0)
+        self.main_window = main_window
         
         self._avatar_size = QSize(40, 40)
 
@@ -77,6 +79,7 @@ class Profile(QPushButton):
         self.settings.setCursor(QCursor(Qt.PointingHandCursor))
         self.settings.setIcon(QIcon('static/image/settings.png'))  # Установите путь к вашему изображению
         self.settings.setIconSize(QSize(30, 30))
+        self.settings.clicked.connect(self.open_settings)
 
         self.btn_layout.addWidget(self.settings)
         
@@ -100,6 +103,10 @@ class Profile(QPushButton):
     def logout(self):
         from apps.authorization.login import LoginScreen
         self.window().swetch_screen(LoginScreen())
+    
+    def open_settings(self):
+        self.main_window.settings_dialog.setVisible(True)
+        self.main_window.settings_dialog.raise_()
             
     def rotate_icon(self, widget, angle):
         # Извлекаем изображение из иконки

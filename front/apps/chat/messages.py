@@ -63,7 +63,7 @@ class Message(QHBoxLayout):
             self.addWidget(self.message_bubble)
         
         self._adjust_label_size()
-
+        
     def _adjust_label_size(self):
         """Пересчитывает размер QLabel с учетом длины текста."""
         font_metrics = QFontMetrics(self.message.font())
@@ -112,7 +112,8 @@ class Message(QHBoxLayout):
                             border-bottom-right-radius: 0px;
                             color: white;
                             background-color: {MAIN_COLOR};''')
-
+                
+            self.message_bubble.emoji_in_text()
 
 class MessageBubble(QWidget):
     '''Бабл сообщений.
@@ -132,9 +133,9 @@ class MessageBubble(QWidget):
         layout.setSpacing(0)
         layout.setContentsMargins(0,0,0,0)
 
-        message_layout = QHBoxLayout()
-        message_layout.setSpacing(10)
-        message_layout.setContentsMargins(10,7,10,7)
+        self.message_layout = QHBoxLayout()
+        self.message_layout.setSpacing(10)
+        self.message_layout.setContentsMargins(10,7,10,7)
 
         message_buble_layout = QVBoxLayout()
         message_buble_layout.setSpacing(0)
@@ -165,9 +166,9 @@ class MessageBubble(QWidget):
 
                 if text:
                     self.message.setFixedWidth(250)
-                    message_layout.addWidget(self.message)
-                    message_layout.addLayout(mes_time_layout)
-                    message_buble_layout.addLayout(message_layout)
+                    self.message_layout.addWidget(self.message)
+                    self.message_layout.addLayout(mes_time_layout)
+                    message_buble_layout.addLayout(self.message_layout)
                     
                     self.widget.setStyleSheet(f'''border-top-left-radius: 12px;
                                                   border-top-right-radius: 12px;
@@ -181,10 +182,10 @@ class MessageBubble(QWidget):
 
             self.widget.setFixedWidth(300) # Нужно будет переделать так, что ширина ровняется ширине картинки
         else:            
-            message_layout.addWidget(self.message)
-            message_layout.addLayout(mes_time_layout)
+            self.message_layout.addWidget(self.message)
+            self.message_layout.addLayout(mes_time_layout)
 
-            message_buble_layout.addLayout(message_layout)
+            message_buble_layout.addLayout(self.message_layout)
             self.widget.setLayout(message_buble_layout)
     
             self.widget.setStyleSheet(f'''border-top-left-radius: 12px;
@@ -197,6 +198,8 @@ class MessageBubble(QWidget):
             layout.addWidget(self.widget)
         
         self.setLayout(layout)
+
+        self.emoji_in_text()
 
     def contextMenuEvent(self, event):
         # Создание контекстного меню
@@ -227,6 +230,18 @@ class MessageBubble(QWidget):
     def open_media_view(self):
         window = MediaView(self.path)
         window.show()
+    
+    def emoji_in_text(self):
+        with open("static/emoji.txt", "r", encoding="utf-8") as file:
+            emojis = file.read().split(',')
+        message = self.message.text().strip()
+        
+        if message in emojis:
+            self.message.setStyleSheet('font-size: 120px; background: rgba(0, 0, 0, 0);')
+            self.widget.setStyleSheet(f'''background-color: rgba(0,0,0,0);''')
+            self.widget.setFixedSize(160,160)
+            self.message_layout.setSpacing(0)
+            self.message_layout.setContentsMargins(0,0,10,5)
 
 
 class GifBubble(QLabel):
