@@ -1,5 +1,5 @@
 from dialog import DialogWindow
-from apps.chat.fields import HoverButton, DarkenButton
+from apps.chat.fields import HoverButton, ImageChanger
 from apps.chat.user import User
 from PySide6.QtGui import QIcon, QCursor, QTransform
 from PySide6.QtCore import Qt, QSize
@@ -41,11 +41,9 @@ class CreateChatDialog(DialogWindow):
         top_layout = QHBoxLayout()
         top_layout.setSpacing(15)
         
-        self.image_path = 'static/image/person.png'  # Начальное значение для image_path
-        iamge = DarkenButton(100, self.image_path)
-        iamge.setCursor(QCursor(Qt.PointingHandCursor))
-        iamge.imageSelected.connect(self.update_image_path)
-        top_layout.addWidget(iamge)
+        self.image = ImageChanger(size=75, active=True)
+        self.image.setCursor(QCursor(Qt.PointingHandCursor))
+        top_layout.addWidget(self.image)
         
         name_and_people_layout = QVBoxLayout()
         name_and_people_layout.setSpacing(10)
@@ -101,9 +99,6 @@ class CreateChatDialog(DialogWindow):
         form_layout.addWidget(self.create_btn)
         
         self.main_widget.setLayout(form_layout)
-    
-    def update_image_path(self, new_path):
-        self.image_path = new_path 
     
     def add_user(self):
         self.user_widget = User()

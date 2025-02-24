@@ -1,6 +1,6 @@
 from apps.chat.fields import FirstNewChatButton
 from apps.chat.dialog import CreateChatDialog
-from apps.chat.fields import DarkenButton
+from apps.chat.fields import ImageChanger
 from apps.chat.user import User
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QIcon, QCursor, QIcon, QCursor, QPixmap
@@ -143,9 +143,14 @@ class MainTabs(QWidget):
         description_layout.setSpacing(5)
         description_layout.setContentsMargins(0,0,0,0)
 
-        self.chat_image = DarkenButton(75, self.chat_model.avatar_path, rounded=100)
-        self.chat_image.setCursor(QCursor(Qt.PointingHandCursor))
+        if chat_model.chat_type != 'group': # и пользователь не админ чата
+            self.chat_image = ImageChanger(size=75, path=self.chat_model.avatar_path, rounded=10, active=False, chat_model=self.chat_model)
+        else:
+            self.chat_image = ImageChanger(size=75, path=self.chat_model.avatar_path, rounded=10, chat_model=self.chat_model)
+            self.chat_image.setCursor(QCursor(Qt.PointingHandCursor))
+
         self.chat_image.setFixedSize(75, 75)
+        
         description_layout.addWidget(self.chat_image)
 
         description_text_layout = QVBoxLayout()

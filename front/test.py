@@ -1,55 +1,105 @@
-from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QFrame, QPushButton, QHBoxLayout
-from PySide6.QtGui import QColor, QPainter
-from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QWidget, QLabel, QFileDialog
+from PySide6.QtGui import QPixmap, QPainterPath, QPainter
+from PySide6.QtCore import Qt, QSize, QRect
+from PySide6.QtWidgets import QApplication, QMainWindow
 
-class ColorPalette(QWidget):
+
+class AvatarWidget(QLabel):
+    def __init__(self, size=45, parent=None):
+        super().__init__(parent)
+        self.setFixedSize(size, size)
+        self.setCursor(Qt.PointingHandCursor)
+
+        self.default_pixmap = self.create_circle_pixmap(QPixmap(size, size))  # Серый круг по умолчанию
+        self.setPixmap(self.default_pixmap)
+
+        self.setAcceptDrops(True)  # Включаем поддержку Drag & Drop
+
+    def paintEvent(self, event):
+        """Рисует круглую аватарку."""
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.SmoothPixmapTransform)
+
+        if not self.pixmap() or self.pixmap().isNull():
+            return
+
+        # Создаем круглую маску
+        path = QPainterPath()
+        path.addEllipse(self.rect())
+
+        painter.setClipPath(path)  # Обрезаем область под круг
+        painter.drawPixmap(self.rect(), self.pixmap())  # Рисуем картинку
+
+    def mousePressEvent(self, event):
+        """Вызывает диалог выбора файла при клике."""
+        if event.button() == Qt.LeftButton:
+            file_path, _ = QFileDialog.getOpenFileName(self, "Выберите изображение", "", "Images (*.png *.jpg *.jpeg)")
+            if file_path:
+                self.set_avatar(file_path)
+
+    def set_avatar(self, file_path):
+        """Загружает изображение и делает его круглым."""
+        pixmap = QPixmap(file_path)
+        if pixmap.isNull():
+            return
+
+        # Обрезаем изображение в квадрат и масштабируем
+        size = min(pixmap.width(), pixmap.height())
+        rect = QRect((pixmap.width() - size) // 2, (pixmap.height() - size) // 2, size, size)
+        pixmap = pixmap.copy(rect).scaled(self.size(), Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
+
+        # Создаем круглую версию изображения
+        self.setPixmap(self.create_circle_pixmap(pixmap))
+
+    def create_circle_pixmap(self, pixmap):
+        """Обрезает изображение в круг и возвращает `QPixmap`."""
+        size = min(self.width(), self.height())
+        circle_pixmap = QPixmap(size, size)
+        circle_pixmap.fill(Qt.transparent)  # Прозрачный фон
+
+        painter = QPainter(circle_pixmap)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.SmoothPixmapTransform)
+
+        # Создаем круглую маску
+        path = QPainterPath()
+        path.addEllipse(0, 0, size, size)
+        painter.setClipPath(path)
+
+        # Рисуем изображение
+        painter.drawPixmap(0, 0, size, size, pixmap)
+        painter.end()
+
+        return circle_pixmap
+
+    # === DRAG & DROP ===
+    def dragEnterEvent(self, event):
+        """Разрешаем перетаскивание только изображений."""
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+
+    def dropEvent(self, event):
+        """Обрабатываем перетаскивание файла."""
+        urls = event.mimeData().urls()
+        if urls:
+            file_path = urls[0].toLocalFile()
+            self.set_avatar(file_path)
+
+
+
+class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Color Palette Inside Widget")
-        self.setGeometry(100, 100, 400, 300)
+        self.setWindowTitle("Avatar Widget")
+        self.setFixedSize(300, 300)
 
-        # Основной layout
-        self.main_layout = QVBoxLayout(self)
-
-        # Метка для отображения выбранного цвета
-        self.color_label = QLabel("Выбранный цвет: None")
-        self.color_label.setStyleSheet("background-color: none; padding: 10px; font-size: 16px;")
-        self.main_layout.addWidget(self.color_label)
-
-        # Виджет с палитрой цветов
-        self.palette_frame = QFrame()
-        self.palette_frame.setFixedHeight(150)
-        self.palette_frame.setStyleSheet("background-color: #f0f0f0; border: 1px solid #ccc;")
-        self.main_layout.addWidget(self.palette_frame)
-
-        # Layout для палитры внутри frame
-        self.palette_layout = QHBoxLayout(self.palette_frame)
-
-        # Список цветов
-        self.colors = [
-            "#FF5733", "#33FF57", "#3357FF", "#FFFF33", 
-            "#FF33FF", "#33FFFF", "#AAAAAA", "#000000", 
-            "#FFFFFF", "#FF8800", "#8800FF", "#0088FF"
-        ]
-
-        self.create_color_palette()
-
-    def create_color_palette(self):
-        """Создаёт кнопки-палитру внутри виджета"""
-        for color in self.colors:
-            color_button = QPushButton()
-            color_button.setFixedSize(40, 40)
-            color_button.setStyleSheet(f"background-color: {color}; border: 1px solid #000;")
-            color_button.clicked.connect(lambda _, c=color: self.set_selected_color(c))
-            self.palette_layout.addWidget(color_button)
-
-    def set_selected_color(self, color):
-        """Обновляет метку выбранным цветом"""
-        self.color_label.setText(f"Выбранный цвет: {color}")
-        self.color_label.setStyleSheet(f"background-color: {color}; color: {'#000' if color != '#000000' else '#FFF'}; padding: 10px; font-size: 16px;")
+        self.avatar = AvatarWidget(size=140, parent=self)
+        self.avatar.setStyleSheet('background-color: rgba(0,0,0, 0.2); border-radius: 70px;')
+        self.avatar.move(75, 75)  # Центрируем
 
 if __name__ == "__main__":
     app = QApplication([])
-    demo = ColorPalette()
-    demo.show()
+    window = MainWindow()
+    window.show()
     app.exec()

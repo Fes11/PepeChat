@@ -123,6 +123,9 @@ def scaled_image(image_path):
 def darken_image(image_path, output_path):
     # Открываем изображение
     image = Image.open(image_path)
+
+    if image.mode == 'RGBA':
+        image = image.convert('RGB')
     
     # Затемняем изображение
     enhancer = ImageEnhance.Brightness(image)

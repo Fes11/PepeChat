@@ -10,6 +10,7 @@ from apps.profile.profile import Profile
 from apps.chat.serach import UsernameSearchWidget
 from apps.chat.models import ChatModel
 from image import get_rounds_edges_image
+from apps.chat.fields import HoverButton, ImageChanger
 
 class ChatWidget(QWidget):
     def __init__(self, main_window, num, model: ChatModel):
@@ -38,21 +39,10 @@ class ChatWidget(QWidget):
         self.last_message.setMaximumHeight(50)
         self.last_message.setStyleSheet('''QLabel {color: #b5b5b5;}''')
         self.chat_info_layout.addWidget(self.last_message)
-
-        SIZE_AVATAR = 40
-        SIZE_AVATAR_WIDGET = 45
-        chat_avatar = QPushButton(self)
-        chat_avatar.setFixedSize(SIZE_AVATAR_WIDGET, SIZE_AVATAR_WIDGET)
-        chat_avatar.setStyleSheet(f'''QPushButton {{border: none; background-color: rgba(0,0,0,0);}}''')
-        chat_avatar.clicked.connect(lambda: self.main_window.switch_chat(self.num - 1))
-
-        # avatar_radius = 10 if model.chat_type == 'group' else 20
-        original_pixmap = QPixmap(model.avatar_path)
-        chat_avatar.setIcon(QIcon(get_rounds_edges_image(self, original_pixmap, 20)))  # Установите путь к вашему изображению
-        chat_avatar.setIconSize(QSize(SIZE_AVATAR, SIZE_AVATAR))
   
-        if model.chat_type != 'group':   
-            chat_avatar.setIcon(QIcon(get_rounds_edges_image(self, original_pixmap, 45))) 
+        if model.chat_type != 'group':
+            chat_avatar = ImageChanger(size=45, rounded=100, path=model.avatar_path, active=False)
+            # chat_avatar.clicked.connect(lambda: self.main_window.switch_chat(self.num - 1))
             self.sensor_online = QWidget()
             self.sensor_online.setFixedSize(14,14)
             self.sensor_online.setObjectName('online')
@@ -62,6 +52,8 @@ class ChatWidget(QWidget):
             self.sensor_online_layout.setContentsMargins(0,30,0,0)
             self.sensor_online_layout.addWidget(self.sensor_online)
             chat_avatar.setLayout(self.sensor_online_layout)
+        else:
+            chat_avatar = ImageChanger(size=45, rounded=10, path=model.avatar_path, active=False)
 
         self.chat_time_layout = QVBoxLayout()
         self.chat_time_layout.setAlignment(Qt.AlignmentFlag.AlignTop)

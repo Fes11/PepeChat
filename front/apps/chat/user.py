@@ -1,5 +1,5 @@
 from dialog import DialogWindow
-from apps.chat.fields import HoverButton, DarkenButton
+from apps.chat.fields import HoverButton
 from PySide6.QtGui import QIcon, QCursor, QTransform
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (QTextEdit, QVBoxLayout, QLabel, QListWidget,

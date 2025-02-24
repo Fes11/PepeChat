@@ -1,10 +1,9 @@
 from pathlib import Path
-from PySide6.QtGui import QIcon, QCursor, QPixmap, QPainter, QColor, QBitmap
-from PySide6.QtCore import Qt, QSize, QRect
+from PySide6.QtGui import QIcon, QCursor, QPixmap, QPainter, QColor, QPainterPath
+from PySide6.QtCore import Qt, QSize, QRectF, QRect
 from PySide6.QtWidgets import (QTextEdit, QVBoxLayout, QLabel, QFileDialog,
-                               QHBoxLayout, QWidget, QPushButton, QListWidget)
+                               QHBoxLayout, QWidget, QPushButton, QGraphicsOpacityEffect)
 from PySide6.QtCore import Signal
-
 from image import get_rounds_edges_image
 
 class PlainTextEdit(QTextEdit):
@@ -88,68 +87,125 @@ class UserWidget(QWidget):
 
         self.setLayout(self.data_layout)
 
-class DarkenButton(QPushButton):
-    imageSelected = Signal(str)
 
-    def __init__(self, size_btn: int, path, rounded=20):
-        super().__init__()
-        self.last_item = path
-        self.size_btn = size_btn
-        self.rounded = rounded
-        self.clicked.connect(self.open_file_dialog)
-        self.file_list = QListWidget()
-        self.original_pixmap = QPixmap(path)
-        self.overlay_pixmap = QPixmap('static/image/camera.png')  # Второе изображение для наложения
+class ImageChanger(QLabel):
+    def __init__(self, size=100, rounded=20, path='static/image/person.png', active=True, chat_model=None, parent=None):
+        super().__init__(parent)
+        self.setFixedSize(size, size)
+        self.setCursor(Qt.PointingHandCursor if active else Qt.ArrowCursor)
+        self.path = path
+
+        self.rounded = rounded  # Радиус скругления
+        self.active = active  # Флаг активности
         
-        self.setStyleSheet('background-color: rgba(255,255,255, 0);')
-        self.border_icon = get_rounds_edges_image(self, self.original_pixmap)
-        self.setIconSize(QSize(self.size_btn, self.size_btn))
-        self.setIcon(QIcon(self.border_icon))
+        self.current_pixmap = self.load_image(self.path)
+
+        if chat_model:
+            chat_model.avatar_changed.connect(self.set_avatar)
+        
+        self.setPixmap(self.current_pixmap)
+        self.setAcceptDrops(active)  # Drag & Drop только если активен
+
+    def update_image_path(self, new_path):
+        self.path = new_path
+
+    def load_image(self, file_path):
+        """Загружает изображение с указанного пути."""
+        self.update_image_path(file_path)
+        pixmap = QPixmap(file_path)
+        return pixmap
+
+    def paintEvent(self, event):
+        """Рисует аватар с закругленными краями."""
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.SmoothPixmapTransform)
+
+        if not self.current_pixmap or self.current_pixmap.isNull():
+            return
+
+        path = QPainterPath()
+        path.addRoundedRect(QRectF(self.rect()), self.rounded, self.rounded)
+        painter.setClipPath(path)
+
+        # Центрируем изображение
+        scaled_pixmap = self.current_pixmap.scaled(self.size(), Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
+        target_rect = QRect(0, 0, self.width(), self.height())
+        source_rect = QRect((scaled_pixmap.width() - self.width()) // 2, 
+                            (scaled_pixmap.height() - self.height()) // 2,
+                            self.width(), self.height())
+
+        painter.drawPixmap(target_rect, scaled_pixmap, source_rect)
+
+    def mousePressEvent(self, event):
+        """Вызывает диалог выбора файла при клике, если активен."""
+        if not self.active:
+            return
+        if event.button() == Qt.LeftButton:
+            file_path, _ = QFileDialog.getOpenFileName(self, "Выберите изображение", "", "Images (*.png *.jpg *.jpeg)")
+            if file_path:
+                self.set_avatar(file_path)
+
+    def set_avatar(self, file_path):
+        """Загружает изображение и делает его с закругленными краями."""
+        self.current_pixmap = self.load_image(file_path)
+        # Обрезаем изображение в квадрат и масштабируем
+        size = min(self.current_pixmap.width(), self.current_pixmap.height())
+        rect = QRect((self.current_pixmap.width() - size) // 2, (self.current_pixmap.height() - size) // 2, size, size)
+        pixmap = self.current_pixmap.copy(rect).scaled(self.size(), Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
+
+        # Создаем круглую версию изображения
+        self.setPixmap(self.create_rounded_pixmap(pixmap))
+
+
+    def create_rounded_pixmap(self, pixmap):
+        """Обрезает изображение с закругленными углами и возвращает `QPixmap`."""
+        size = min(self.width(), self.height())
+        rounded_pixmap = QPixmap(size, size)
+        rounded_pixmap.fill(Qt.transparent)
+
+        painter = QPainter(rounded_pixmap)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.SmoothPixmapTransform)
+
+        path = QPainterPath()
+        path.addRoundedRect(QRectF(0, 0, size, size), self.rounded, self.rounded)
+        painter.setClipPath(path)
+        painter.drawPixmap(0, 0, size, size, pixmap)
+        painter.end()
+
+        return rounded_pixmap
+
+    # === DRAG & DROP ===
+    def dragEnterEvent(self, event):
+        """Разрешаем перетаскивание только если активен."""
+        if self.active and event.mimeData().hasUrls():
+            event.acceptProposedAction()
+
+    def dropEvent(self, event):
+        """Обрабатываем перетаскивание файла, если активен."""
+        if not self.active:
+            return
+        urls = event.mimeData().urls()
+        if urls:
+            file_path = urls[0].toLocalFile()
+            self.set_avatar(file_path)
     
     def enterEvent(self, event):
-        darkened_pixmap = self.border_icon.copy()
-        painter = QPainter(darkened_pixmap)
-        # Добавляем затемнение
-        painter.fillRect(darkened_pixmap.rect(), QColor(0, 0, 0, 100))
-        
-        # Накладываем второе изображение поверх
-        overlay_size = QSize(400, 400)  # Определяем размер второго изображения
-        scaled_overlay = self.overlay_pixmap.scaled(overlay_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)  # Изменяем размер наложенного изображения
-        painter.drawPixmap(
-            (darkened_pixmap.width() - overlay_size.width()) // 2,  # По центру
-            (darkened_pixmap.height() - overlay_size.height()) // 2,
-            scaled_overlay
-        )
-
-        rounded_pixmap = get_rounds_edges_image(self, darkened_pixmap, self.rounded)
-        
-        painter.end()
-        self.setIcon(QIcon(rounded_pixmap))  # Устанавливаем иконку с наложением
+        """Затемняет изображение при наведении, если активен."""
+        if self.active:
+            self.setGraphicsEffect(self.get_hover_effect(0.5))  # Затемняем до 60%
         super().enterEvent(event)
-    
+
     def leaveEvent(self, event):
-        self.setIcon(QIcon(self.border_icon))  # Возвращаем оригинальную иконку
+        """Убирает затемнение при уходе курсора."""
+        if self.active:
+            self.setGraphicsEffect(None)
         super().leaveEvent(event)
-    
-    def open_file_dialog(self):
-        dialog = QFileDialog(self)
-        dialog.setFileMode(QFileDialog.FileMode.ExistingFiles)
-        dialog.setNameFilter("Images (*.png *.jpg)")
-        dialog.setViewMode(QFileDialog.ViewMode.List)
-        if dialog.exec():
-            filenames = dialog.selectedFiles()
-            if filenames:
-                self.file_list.addItems([str(Path(filename)) for filename in filenames])
-                
-                last_item_index = self.file_list.count() - 1
-                if last_item_index >= 0:
-                    self.last_item = self.file_list.item(last_item_index)
-                    self.switch_image(self.last_item.text())
-                    self.imageSelected.emit(self.last_item.text())
-                    
-    
-    def switch_image(self, path):
-        # Загружаем новое изображение и обновляем иконку
-        self.original_pixmap = QPixmap(path)
-        self.border_icon = get_rounds_edges_image(self, self.original_pixmap)
-        self.setIcon(QIcon(self.border_icon))  # Устанавливаем новое изображение как иконку
+
+    def get_hover_effect(self, opacity):
+        """Возвращает эффект затемнения."""
+        effect = QGraphicsOpacityEffect(self)
+        effect.setOpacity(opacity)
+        return effect
+

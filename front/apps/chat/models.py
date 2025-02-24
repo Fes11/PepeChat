@@ -1,16 +1,31 @@
+from PySide6.QtCore import QObject, Signal
 
 
-class ChatModel:
+class ChatModel(QObject):
+    avatar_changed = Signal(str)  # Сигнал с путем к новому изображению
+
     def __init__(self, chat_name, users, avatar_path, description, chat_type='private'):
+        super().__init__()
         self.chat_name = chat_name
         self.users = users
-        self.avatar_path = avatar_path
-        self.chat_type = chat_type  # 'private' or 'group'
+        self._avatar_path = avatar_path  # Используем _avatar_path вместо avatar_path
+        self.chat_type = chat_type  # 'private' или 'group'
         self.description = description
         self.messages = []
         self.online = True
         self.superuser = True
         self.admin = True
+
+    @property
+    def avatar_path(self):
+        return self._avatar_path
+
+    @avatar_path.setter
+    def avatar_path(self, new_path):
+        if self._avatar_path != new_path:
+            self._avatar_path = new_path
+            self.avatar_changed.emit(new_path)  # Отправляем сигнал с новым путемём
+            print('Signal new_path: ', new_path)
 
 
 class UserModel:

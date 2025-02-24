@@ -8,7 +8,7 @@ from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (QApplication, QGraphicsDropShadowEffect, QScrollArea, QVBoxLayout, QLabel, QListWidget,
                                QHBoxLayout, QWidget, QSizePolicy, QPushButton, QFileDialog)
 
-from apps.chat.fields import PlainTextEdit, HoverButton
+from apps.chat.fields import ImageChanger, HoverButton
 from apps.chat.style import MAIN_COLOR, MAIN_BOX_COLOR, BG_COLOR, TEXT_COLOR, HOVER_MAIN_COLOR
 from apps.chat.messages import Message
 from apps.chat.input_panel import InputPanel
@@ -54,20 +54,12 @@ class MessagesList(QWidget):
         top_chat_panel_layout.setSpacing(10)
         top_chat_panel_layout.setContentsMargins(10,0,10,0)
 
-        SIZE_AVATAR = 45
-        SIZE_AVATAR_WIDGET = 45
-        iamge_chat = QPushButton()
-        original_pixmap = QPixmap(self.chat_model.avatar_path)
-        iamge_chat.setFixedSize(SIZE_AVATAR_WIDGET, SIZE_AVATAR_WIDGET)
-        iamge_chat.setStyleSheet(f'''QPushButton {{border: none; background-color: rgba(0,0,0,0);}}''')
-
         if self.chat_model.chat_type == 'group':
-            iamge_chat.setIcon(QIcon(get_rounds_edges_image(self, original_pixmap, 20))) 
+            iamge_chat = ImageChanger(size=45, rounded=10, path=chat_model.avatar_path, active=False)
         else:
-            iamge_chat.setIcon(QIcon(get_rounds_edges_image(self, original_pixmap, SIZE_AVATAR_WIDGET)))  # Установите путь к вашему изображению
+            iamge_chat = ImageChanger(size=45, rounded=100, path=chat_model.avatar_path, active=False)
 
-        iamge_chat.setIconSize(QSize(SIZE_AVATAR, SIZE_AVATAR))
-
+        iamge_chat.setStyleSheet('background-color: rgba(0,0,0,0); border: none;')
         top_chat_panel_layout.addWidget(iamge_chat)
 
         self.top_chat_name = QLabel(self.chat_model.chat_name)
