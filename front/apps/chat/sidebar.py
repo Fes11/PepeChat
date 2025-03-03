@@ -142,7 +142,7 @@ class Sidebar(QWidget):
         self.open_profile = False
         self.mini_profile.setFixedHeight(self.mini_profile_height)
         self.mini_profile.arrow_btn.clicked.connect(self.open_mini_profile)
-        self.mini_profile.user_widget.avatar.clicked.connect(self.open_mini_profile)
+        # self.mini_profile.user_widget.avatar.clicked.connect(self.open_mini_profile)
 
         layout.addWidget(self.widget)
         layout.addWidget(self.mini_profile)
@@ -231,16 +231,20 @@ class Sidebar(QWidget):
             self.expand_sidebar()
         super().resizeEvent(event)
 
-    def add_chat(self, image_path):
+    def add_chat(self, image_path, user, chat_name):
         self.num += 1
         chat_type = random.choice(['private', 'group'])
         avatar_path = image_path
         description = 'Описание там сям...'
-        if chat_type == 'group':
+
+        if chat_type == 'group' and not chat_name:
             chat_name = f"Групповой чат {self.num}"
-        else:
+        elif chat_type == 'private':
             chat_name = f"Пользователь {self.num}"
-        chat_model = ChatModel(chat_name=chat_name, users=['user1', 'user2'], avatar_path=avatar_path, description=description, chat_type=chat_type)
+        else:
+            chat_name = chat_name
+
+        chat_model = ChatModel(chat_name=chat_name, users=user, avatar_path=avatar_path, description=description, chat_type=chat_type)
         self.chat_widget = ChatWidget(self.main_window, self.num, chat_model)
 
         item = QListWidgetItem()

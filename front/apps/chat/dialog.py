@@ -5,7 +5,7 @@ from PySide6.QtGui import QIcon, QCursor, QTransform
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (QTextEdit, QVBoxLayout, QLabel, QListWidget,
                                QHBoxLayout, QWidget, QPushButton, QListWidgetItem)
-from .style import MAIN_COLOR, HOVER_MAIN_COLOR, BG_COLOR
+from .style import MAIN_COLOR, HOVER_MAIN_COLOR, BG_COLOR, MAIN_COLOR_NOT_ACTIVE
 
 class CreateChatDialog(DialogWindow):
     '''Модальное окно создания чата. 
@@ -15,6 +15,9 @@ class CreateChatDialog(DialogWindow):
     
     def __init__(self, parent=None):
         super().__init__(parent)
+
+        self.user = 0
+        self.chat_name = ""
         
         form_layout = QVBoxLayout()
         form_layout.setSpacing(10)
@@ -48,11 +51,12 @@ class CreateChatDialog(DialogWindow):
         name_and_people_layout = QVBoxLayout()
         name_and_people_layout.setSpacing(10)
         
-        name_chat = QTextEdit()
-        name_chat.setFixedHeight(40)
-        name_chat.setPlaceholderText("Введите название чата...")
-        name_chat.setStyleSheet(f'background-color: {BG_COLOR}')
-        name_and_people_layout.addWidget(name_chat)
+        self.edit_chat_name = QTextEdit()
+        self.edit_chat_name.setFixedHeight(40)
+        self.edit_chat_name.setPlaceholderText("Введите название чата...")
+        self.edit_chat_name.setStyleSheet(f'background-color: {BG_COLOR}')
+        self.edit_chat_name.textChanged.connect(self.update_chat_name)
+        name_and_people_layout.addWidget(self.edit_chat_name)
         
         searc_people = QPushButton(" Добавить участников")
         searc_people.setFixedHeight(40)
@@ -85,42 +89,81 @@ class CreateChatDialog(DialogWindow):
         form_layout.addWidget(people_label)
         
         self.user_list = QListWidget()
-        self.user_list.setStyleSheet('background-color: rgba(255,255,255, 0);')
+        self.user_list.setStyleSheet('''
+            QListWidget {
+                background-color: rgba(255, 255, 255, 0);
+                outline: 0;
+            }
+            QListWidget::item {
+                border: none;
+            }
+            QListWidget::item:hover {
+                background-color: transparent;
+            }
+            QListWidget::item:selected {
+                background-color: transparent;
+                color: black;
+            }''')
         self.user_list.setSpacing(0)
         self.user_list.setContentsMargins(0,0,0,0)
         form_layout.addWidget(self.user_list)
         
         self.create_btn = QPushButton('Создать')
+        self.create_btn.setEnabled(False) 
         self.create_btn.setObjectName('create_btn')
-        self.create_btn.setStyleSheet(f'''#create_btn {{background-color: {MAIN_COLOR};}}
-                                         #create_btn:hover {{background: {HOVER_MAIN_COLOR};}}''')
+        self.create_btn.setStyleSheet(f'''#create_btn {{background-color: {MAIN_COLOR_NOT_ACTIVE};}}''')
         self.create_btn.setFixedHeight(41)
         self.create_btn.setCursor(QCursor(Qt.PointingHandCursor))
         form_layout.addWidget(self.create_btn)
         
         self.main_widget.setLayout(form_layout)
     
+    def update_chat_name(self):
+        """Обновляет переменную self.chat_name и проверяет, можно ли активировать кнопку."""
+        self.chat_name = self.edit_chat_name.toPlainText().strip()  # Сохраняем текст без лишних пробелов
+    
     def add_user(self):
-        self.user_widget = User()
-        self.user_widget.setStyleSheet('background-color: rgba(0, 0, 0, 0); border: none;')
-        self.user_widget.delit_user_btn.clicked.connect(self.del_user)
+        self.user += 1
+        if self.user > 0:
+            self.create_btn.setEnabled(True) 
+            self.create_btn.setStyleSheet(f'''#create_btn {{background-color: {MAIN_COLOR};}}''')
+        else:
+            self.create_btn.setEnabled(False) 
+            self.create_btn.setStyleSheet(f'''#create_btn {{background-color: {MAIN_COLOR_NOT_ACTIVE};}}
+                                              #create_btn:hover {{background: {HOVER_MAIN_COLOR};}}''') 
 
-        # Создаем пользовательский виджет
+        # Создаем новый виджет пользователя
+        user_widget = User()
+        user_widget.setStyleSheet('background-color: rgba(0, 0, 0, 0); border: none;')
+        
+        # Передаем виджет пользователя в метод del_user через лямбда-функцию
+        user_widget.delit_user_btn.clicked.connect(lambda: self.del_user(user_widget))
+
         # Создаем пустой элемент QListWidgetItem
         item = QListWidgetItem(self.user_list)
         # Устанавливаем размер элемента на основе размера виджета
-        item.setSizeHint(self.user_widget.sizeHint())
+        item.setSizeHint(user_widget.sizeHint())
         # Привязываем пользовательский виджет к элементу списка
-        self.user_list.setItemWidget(item, self.user_widget)
+        self.user_list.setItemWidget(item, user_widget)
 
-    def del_user(self):
-        # Получаем текущий выбранный элемент
-        selected_item = self.user_list.currentItem()
-        if selected_item:
-            # Получаем индекс текущего элемента
-            row = self.user_list.row(selected_item)
-            # Удаляем элемент по индексу
-            self.user_list.takeItem(row)
+    def del_user(self, user_widget):
+        self.user -= 1
+        if self.user > 0:
+            self.create_btn.setEnabled(True) 
+            self.create_btn.setStyleSheet(f'''#create_btn {{background-color: {MAIN_COLOR};}}''')
+        else:
+            self.create_btn.setEnabled(False) 
+            self.create_btn.setStyleSheet(f'''#create_btn {{background-color: {MAIN_COLOR_NOT_ACTIVE};}}
+                                              #create_btn:hover {{background: {HOVER_MAIN_COLOR};}}''')
+        # Проходим по всем элементам списка
+        for i in range(self.user_list.count()):
+            item = self.user_list.item(i)
+            # Получаем виджет, связанный с текущим элементом
+            widget = self.user_list.itemWidget(item)
+            # Если виджет совпадает с переданным, удаляем элемент
+            if widget == user_widget:
+                self.user_list.takeItem(i)
+                break
     
     def rotate_icon(self, widget, angle):
         # Извлекаем изображение из иконки

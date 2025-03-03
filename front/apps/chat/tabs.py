@@ -179,7 +179,7 @@ class MainTabs(QWidget):
         layout.addWidget(self.link)
 
         if self.chat_model.chat_type == 'group':
-            self.online_label = QLabel('Online - 4')
+            self.online_label = QLabel(f'Online - {self.chat_model.users}')
             self.online_label.setStyleSheet('color: rgba(255,255,255, 0.4); font-size: 12px; padding-left: 2px;')
             layout.addWidget(self.online_label)
 
@@ -187,13 +187,13 @@ class MainTabs(QWidget):
             self.user_list.setSpacing(0)
             self.user_list.setContentsMargins(0,0,0,0)
 
-            for i in range(0,3):
+            for i in range(0, self.chat_model.users):
                 self.user = User()
                 self.user_list.addWidget(self.user)
 
             layout.addLayout(self.user_list)
 
-            self.online_label = QLabel('Offline - 4')
+            self.online_label = QLabel('Offline - 1')
             self.online_label.setStyleSheet('color: rgba(255,255,255, 0.4); font-size: 12px; padding-left: 2px;')
             layout.addWidget(self.online_label)
 
@@ -201,10 +201,9 @@ class MainTabs(QWidget):
             self.ofline_user_list.setSpacing(0)
             self.ofline_user_list.setContentsMargins(0,0,0,0)
 
-            for i in range(0,2):
-                self.ofline_user = User()
-                self.ofline_user.setEnabled(False)
-                self.ofline_user_list.addWidget(self.ofline_user)
+            self.ofline_user = User()
+            self.ofline_user.setEnabled(False)
+            self.ofline_user_list.addWidget(self.ofline_user)
 
             layout.addLayout(self.ofline_user_list)
         else:

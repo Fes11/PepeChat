@@ -7,6 +7,7 @@ from apps.chat.fields import UserWidget
 from apps.chat.style import MAIN_BOX_COLOR, MAIN_COLOR, HOVER_MAIN_COLOR
 from apps.chat.models import ProfileModel
 from apps.chat.dialog import SettingsDialog
+from apps.chat.fields import HoverButton, ImageChanger
 from image import get_rounded_image, scaled_image, darken_image
 
 
@@ -172,12 +173,14 @@ class MiniProfile(QWidget):
         self.user_layout.setContentsMargins(10,0,0,0)
         self.user_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
-        self.avatar = QPushButton()
-        self.avatar.setStyleSheet('border-radius: 35px; background-color: white;')
-        self.avatar.setFixedSize(73,73)
-        self.avatar.setIcon(QIcon('static/image/ava.png'))
-        self.avatar.setIconSize(QSize(70,70))
+        self.avatar = ImageChanger(size=70, rounded=100, path='static/image/ava.png', active=False)
+        self.avatar.setStyleSheet('border-radius: 35px; background-color: white; border: 5px solid white;')
         self.user_layout.addWidget(self.avatar)
+
+        self.change_avatar = ImageChanger(size=70, rounded=100, path='static/image/ava.png', active=True)
+        self.change_avatar.setStyleSheet('border-radius: 35px; background-color: white; border: 5px solid white;')
+        self.change_avatar.setVisible(False)
+        self.user_layout.addWidget(self.change_avatar)
 
         self.chang_btn = QPushButton(' Редактировать')
         self.chang_btn.setIcon(QIcon('static/image/pen.png'))
@@ -223,12 +226,17 @@ class MiniProfile(QWidget):
         self.chang_btn.clicked.connect(self.save_change_profile)
 
         self.change_bg_img_btn.setVisible(True)
+        self.avatar.setVisible(False)
+        self.change_avatar.setVisible(True)
     
     def save_change_profile(self):
         self.chang_btn.setText(' Редактировать')
         self.chang_btn.clicked.connect(self.start_change_profile)
 
+        self.avatar.set_avatar(self.change_avatar.path)
         self.change_bg_img_btn.setVisible(False)
+        self.avatar.setVisible(True)
+        self.change_avatar.setVisible(False)
 
     def open_file_dialog(self):
         dialog = QFileDialog(self)

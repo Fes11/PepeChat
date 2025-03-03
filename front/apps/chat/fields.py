@@ -52,13 +52,11 @@ class UserWidget(QWidget):
         self.setContentsMargins(0,0,0,0)
         self.setStyleSheet('background-color: rgba(0, 0, 0, 0); border: none;')
 
-        self.avatar = QPushButton()
+        self.avatar = ImageChanger(size=40, rounded=100, path='static/image/ava.png', active=False)
         self.avatar.setContentsMargins(0,0,0,0)
         self.avatar.setFixedSize(40, 40)
         self.avatar.setStyleSheet('''QPushButton {background-color: grey; border-radius: 20px;}''')
         self.avatar.setCursor(QCursor(Qt.PointingHandCursor))
-        self.avatar.setIcon(QIcon('static/image/ava.png'))
-        self.avatar.setIconSize(QSize(40, 40))
 
         profile_info_layout = QVBoxLayout()
         profile_info_layout.setSpacing(0)
@@ -99,11 +97,7 @@ class ImageChanger(QLabel):
         self.active = active  # Флаг активности
         
         self.current_pixmap = self.load_image(self.path)
-
-        if chat_model:
-            chat_model.avatar_changed.connect(self.set_avatar)
         
-        self.setPixmap(self.current_pixmap)
         self.setAcceptDrops(active)  # Drag & Drop только если активен
 
     def update_image_path(self, new_path):
@@ -113,6 +107,7 @@ class ImageChanger(QLabel):
         """Загружает изображение с указанного пути."""
         self.update_image_path(file_path)
         pixmap = QPixmap(file_path)
+        self.setPixmap(pixmap)
         return pixmap
 
     def paintEvent(self, event):
