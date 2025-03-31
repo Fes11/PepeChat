@@ -309,7 +309,7 @@ class SettingsTabs(QWidget):
 
         layout = QVBoxLayout()
 
-        text = QLabel('Это настройки...')
+        text = QLabel('Это настройки чата...')
         layout.addWidget(text)
 
         self.setLayout(layout)

@@ -159,13 +159,19 @@ class MessageBubble(QWidget):
                 layout.addWidget(self.widget)
             else:
                 text = self.message.text()
+
                 image_bubbl = ImageBubble(mes_time, self.path, text)
                 image_bubbl.clicked.connect(self.open_media_view)
+                original_pixmap = QPixmap(path)
+                image_bubbl_size = image_bubbl.calculate_target_size(original_pixmap)
                 message_buble_layout.addWidget(image_bubbl)
+
                 self.widget.setStyleSheet(f'''background-color: rgba(0,0,0,0)''')
 
+
                 if text:
-                    self.message.setFixedWidth(250)
+                    self.message.setWordWrap(True)
+                    self.message.setMaximumWidth(image_bubbl_size.width() - 68)
                     self.message_layout.addWidget(self.message)
                     self.message_layout.addLayout(mes_time_layout)
                     message_buble_layout.addLayout(self.message_layout)
@@ -180,7 +186,6 @@ class MessageBubble(QWidget):
                 self.widget.setLayout(message_buble_layout)
                 layout.addWidget(self.widget)
 
-            self.widget.setFixedWidth(300) # Нужно будет переделать так, что ширина ровняется ширине картинки
         else:            
             self.message_layout.addWidget(self.message)
             self.message_layout.addLayout(mes_time_layout)
@@ -276,7 +281,16 @@ class ImageBubble(QPushButton):
         self.setCursor(QCursor(Qt.PointingHandCursor))
         self.setStyleSheet('background-color: rgba(0, 0, 0, 0)')
         original_pixmap = QPixmap(path)
-        self.setIconSize(QSize(300, 300))
+
+        # Получаем точные размеры с учетом ограничений
+        target_size = self.calculate_target_size(original_pixmap)
+        
+        # Масштабируем изображение (может увеличивать маленькие изображения)
+
+        # Устанавливаем размер иконки по размеру масштабированного изображения
+        self.setIconSize(target_size)
+        self.setMaximumHeight(target_size.height())
+        self.setMaximumWidth(target_size.width())
 
         if self.text:
             self.setIcon(QIcon(get_top_rounded_image(original_pixmap, radius=20)))
@@ -285,11 +299,40 @@ class ImageBubble(QPushButton):
             time = QLabel(self.time.text())
             time.setFixedSize(50, 22)
             time.setStyleSheet('background-color: rgba(0,0,0,0.5); color: white; padding: 5px; border-radius: 10px; font-size: 12px; font-weight: bold;')
+            time.move(target_size.width() - 60, target_size.height() - 30)
+            time.setParent(self)
 
-            time_layout = QVBoxLayout()
-            time_layout.setAlignment(Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignRight)
-            time_layout.addWidget(time)
-            self.setLayout(time_layout)
+
+    def calculate_target_size(self, pixmap):
+        """Вычисляет целевой размер изображения с учетом минимальных/максимальных ограничений"""
+        original_size = pixmap.size()
+        max_size = QSize(400, 500)
+        min_size = QSize(200, 200)  # Минимальный размер для маленьких изображений
+        
+        # Если изображение меньше минимального - увеличиваем до минимального
+        if original_size.width() < min_size.width() or original_size.height() < min_size.height():
+            ratio = max(
+                min_size.width() / original_size.width(),
+                min_size.height() / original_size.height()
+            )
+            return QSize(
+                int(original_size.width() * ratio),
+                int(original_size.height() * ratio)
+            )
+        
+        # Если изображение больше максимального - уменьшаем
+        if original_size.width() > max_size.width() or original_size.height() > max_size.height():
+            ratio = min(
+                max_size.width() / original_size.width(),
+                max_size.height() / original_size.height()
+            )
+            return QSize(
+                int(original_size.width() * ratio),
+                int(original_size.height() * ratio)
+            )
+        
+        # Если изображение в допустимых пределах - оставляем как есть
+        return original_size
 
 
 class TextBubble(QPushButton):
