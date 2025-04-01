@@ -17,7 +17,6 @@ class Message(QHBoxLayout):
         self.text = text
         self.path = path
         self.index = i
-
         self.max_width = 480
 
         self.mes_avatar = Avatar(path='static/image/person.png')
@@ -93,25 +92,41 @@ class Message(QHBoxLayout):
                 self.me_avatar.setVisible(False)
                 self.me_left_avatar.setVisible(True)
                 
-                self.message_bubble.widget.setStyleSheet(f'''
-                            border-top-left-radius: 12px;
-                            border-top-right-radius: 12px;
-                            border-bottom-left-radius: 0px;
-                            border-bottom-right-radius: 12px;
-                            color: white;
-                            background-color: {MAIN_COLOR};''')
+                if self.message_bubble.type == 'image':
+                    self.message_bubble.widget.setStyleSheet(f'''
+                                border-top-left-radius: 12px;
+                                border-top-right-radius: 12px;
+                                border-bottom-left-radius: 0px;
+                                border-bottom-right-radius: 12px;
+                                color: white;''')
+                else:
+                    self.message_bubble.widget.setStyleSheet(f'''
+                                border-top-left-radius: 12px;
+                                border-top-right-radius: 12px;
+                                border-bottom-left-radius: 0px;
+                                border-bottom-right-radius: 12px;
+                                color: white;
+                                background-color: {MAIN_COLOR};''')
             else:
                 self.setAlignment(Qt.AlignmentFlag.AlignRight)
                 self.me_left_avatar.setVisible(False)
                 self.me_avatar.setVisible(True)
 
-                self.message_bubble.widget.setStyleSheet(f'''
-                            border-top-left-radius: 12px;
-                            border-top-right-radius: 12px;
-                            border-bottom-left-radius: 12px;
-                            border-bottom-right-radius: 0px;
-                            color: white;
-                            background-color: {MAIN_COLOR};''')
+                if self.message_bubble.type == 'image':
+                    self.message_bubble.widget.setStyleSheet(f'''
+                                border-top-left-radius: 12px;
+                                border-top-right-radius: 12px;
+                                border-bottom-left-radius: 12px;
+                                border-bottom-right-radius: 0px;
+                                color: white;''')
+                else:
+                    self.message_bubble.widget.setStyleSheet(f'''
+                                border-top-left-radius: 12px;
+                                border-top-right-radius: 12px;
+                                border-bottom-left-radius: 12px;
+                                border-bottom-right-radius: 0px;
+                                color: white;
+                                background-color: {MAIN_COLOR};''')
                 
             self.message_bubble.emoji_in_text()
 
@@ -126,6 +141,7 @@ class MessageBubble(QWidget):
         self.me = me
         self.message = message
         self.path = path
+        self.type = ''
 
         self.setContentsMargins(0,0,0,0)
         self.widget = QWidget()
@@ -161,6 +177,7 @@ class MessageBubble(QWidget):
                 text = self.message.text()
 
                 image_bubbl = ImageBubble(mes_time, self.path, text)
+                self.type = 'image'
                 image_bubbl.clicked.connect(self.open_media_view)
                 original_pixmap = QPixmap(path)
                 image_bubbl_size = image_bubbl.calculate_target_size(original_pixmap)
@@ -170,6 +187,7 @@ class MessageBubble(QWidget):
 
 
                 if text:
+                    self.type = 'image and text'
                     self.message.setWordWrap(True)
                     self.message.setMaximumWidth(image_bubbl_size.width() - 68)
                     self.message_layout.addWidget(self.message)
@@ -284,8 +302,6 @@ class ImageBubble(QPushButton):
 
         # Получаем точные размеры с учетом ограничений
         target_size = self.calculate_target_size(original_pixmap)
-        
-        # Масштабируем изображение (может увеличивать маленькие изображения)
 
         # Устанавливаем размер иконки по размеру масштабированного изображения
         self.setIconSize(target_size)

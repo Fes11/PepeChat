@@ -178,7 +178,6 @@ class MessagesList(QWidget):
             self.open_lable.setVisible(False)
         
         self.message = Message(text, i, path)
-
         self.messages.append(self.message) 
         self.chat_area_layout.addLayout(self.message)
         
