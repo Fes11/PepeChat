@@ -1,10 +1,9 @@
 import re
 import random
 from apps.chat.chat_area import MessagesList
-from apps.chat.style import MAIN_BOX_COLOR, MAIN_COLOR, TEXT_COLOR, HOVER_MAIN_COLOR
+from apps.chat.style import MAIN_BOX_COLOR, MAIN_COLOR, HOVER_MAIN_COLOR
 from apps.chat.chats import ChatWidget
 from apps.chat.models import ChatModel
-from datetime import datetime
 from PySide6.QtGui import QIcon, QCursor, QPixmap, QColor, QMouseEvent
 from PySide6.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve, Property
 from PySide6.QtWidgets import (QAbstractItemView, QScrollArea, QVBoxLayout, QLabel, QGraphicsDropShadowEffect,
@@ -252,7 +251,6 @@ class Sidebar(QWidget):
         self.chat_list.addItem(item)
         self.chat_list.setItemWidget(item, self.chat_widget)
         self.messages_list = MessagesList(self, self.main_window, self.orig_window, chat_model, self.tabs_bar_visible)
-
 
         self._messages_list.append(self.messages_list)
         self.main_window.stack.addWidget(self.messages_list)

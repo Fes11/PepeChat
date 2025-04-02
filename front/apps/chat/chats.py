@@ -1,5 +1,4 @@
 import re
-from apps.chat.chat_area import MessagesList
 from apps.chat.style import MAIN_BOX_COLOR, MAIN_COLOR, TEXT_COLOR, HOVER_MAIN_COLOR, context_menu_style
 from datetime import datetime
 from PySide6.QtGui import QIcon, QCursor, QPixmap, QColor, QMouseEvent

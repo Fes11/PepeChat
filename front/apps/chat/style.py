@@ -36,6 +36,9 @@ MAIN_BOX_COLOR = 'rgba(37, 37, 41, 1)'
 NOT_USER_BUBLS = 'rgba(255,255,255, 0.2)'
 TEXT_COLOR = 'white'
 
+first_chat_btn_style = f'''QPushButton {{background-color: {MAIN_COLOR}; border: none; color: white; 
+                                              font-weight: bold; border-radius: 10px;}} 
+                                              QPushButton:hover{{background-color: {HOVER_MAIN_COLOR}}}'''
 
 MAIN_COLOR_GRADIENT = 'qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #3D4E99, stop: 0.48 #5753C9, stop: 1 #6E7FF3);'
 
@@ -104,3 +107,29 @@ context_menu_style = f"""
                 color: #2E3440; /* Цвет текста при наведении */
             }}
         """
+
+message_left = '''border-top-left-radius: 12px;
+                 border-top-right-radius: 12px;
+                 border-bottom-left-radius: 0px;
+                 border-bottom-right-radius: 12px;
+                 color: white;'''
+
+message_right = '''border-top-left-radius: 12px;
+                   border-top-right-radius: 12px;
+                   border-bottom-left-radius: 12px;
+                   border-bottom-right-radius: 0px;
+                   color: white;'''
+
+combo_box_style = """
+            QComboBox {
+                background-color: rgba(0,0,0, 0); 
+                border-radius: 5px;
+                font-size: 14px; border: none;
+            }
+            QComboBox QAbstractItemView {
+                border-radius: 0;
+                background-color: rgba(255,255,255, 0); 
+            }
+            QComboBox QAbstractItemView::item:hover {
+                background-color: rgba(255,255,255,0.1); /* Цвет фона элемента при наведении */
+            }"""

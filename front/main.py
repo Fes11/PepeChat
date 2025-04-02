@@ -1,12 +1,7 @@
 import sys
 from PySide6.QtWidgets import QApplication
 from apps.chat.window import ChatScreen
-from apps.authorization.login import LoginScreen
-from apps.authorization.registration import RegScreen
-from apps.chat.dialog import SettingsDialog
 from window import Window
-from apps.chat.chat_area import MessagesList
-from utils.media_view import MediaView
 
 
 if __name__ == '__main__':

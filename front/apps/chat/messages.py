@@ -3,7 +3,7 @@ from datetime import datetime
 from PySide6.QtGui import QIcon, QPixmap, QMovie, QCursor, QAction, QFontMetrics
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (QVBoxLayout, QLabel, QHBoxLayout, QWidget, QPushButton, QMenu, QSizePolicy)
-from apps.chat.style import NOT_USER_BUBLS, TEXT_COLOR, MAIN_COLOR, MAIN_BOX_COLOR, context_menu_style
+from apps.chat.style import NOT_USER_BUBLS, TEXT_COLOR, MAIN_COLOR, MAIN_BOX_COLOR, context_menu_style, message_right, message_left
 from apps.profile.profile import Avatar
 from utils.media_view import MediaView
 from image import get_rounds_edges_image, get_top_rounded_image
@@ -93,40 +93,18 @@ class Message(QHBoxLayout):
                 self.me_left_avatar.setVisible(True)
                 
                 if self.message_bubble.type == 'image':
-                    self.message_bubble.widget.setStyleSheet(f'''
-                                border-top-left-radius: 12px;
-                                border-top-right-radius: 12px;
-                                border-bottom-left-radius: 0px;
-                                border-bottom-right-radius: 12px;
-                                color: white;''')
+                    self.message_bubble.widget.setStyleSheet(message_left)
                 else:
-                    self.message_bubble.widget.setStyleSheet(f'''
-                                border-top-left-radius: 12px;
-                                border-top-right-radius: 12px;
-                                border-bottom-left-radius: 0px;
-                                border-bottom-right-radius: 12px;
-                                color: white;
-                                background-color: {MAIN_COLOR};''')
+                    self.message_bubble.widget.setStyleSheet(message_left + f'background-color: {MAIN_COLOR};')
             else:
                 self.setAlignment(Qt.AlignmentFlag.AlignRight)
                 self.me_left_avatar.setVisible(False)
                 self.me_avatar.setVisible(True)
 
                 if self.message_bubble.type == 'image':
-                    self.message_bubble.widget.setStyleSheet(f'''
-                                border-top-left-radius: 12px;
-                                border-top-right-radius: 12px;
-                                border-bottom-left-radius: 12px;
-                                border-bottom-right-radius: 0px;
-                                color: white;''')
+                    self.message_bubble.widget.setStyleSheet(message_right)
                 else:
-                    self.message_bubble.widget.setStyleSheet(f'''
-                                border-top-left-radius: 12px;
-                                border-top-right-radius: 12px;
-                                border-bottom-left-radius: 12px;
-                                border-bottom-right-radius: 0px;
-                                color: white;
-                                background-color: {MAIN_COLOR};''')
+                    self.message_bubble.widget.setStyleSheet(message_right + f'background-color: {MAIN_COLOR};')
                 
             self.message_bubble.emoji_in_text()
 
@@ -184,7 +162,6 @@ class MessageBubble(QWidget):
                 message_buble_layout.addWidget(image_bubbl)
 
                 self.widget.setStyleSheet(f'''background-color: rgba(0,0,0,0)''')
-
 
                 if text:
                     self.type = 'image and text'

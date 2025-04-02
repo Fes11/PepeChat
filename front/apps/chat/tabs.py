@@ -6,7 +6,7 @@ from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QIcon, QCursor, QIcon, QCursor, QPixmap
 from PySide6.QtWidgets import (QVBoxLayout,QHBoxLayout, QWidget, QPushButton, QLabel, QTextEdit, QLineEdit, QScrollArea, QGridLayout, QComboBox)
 from image import get_rounds_edges_image
-from .style import MAIN_BOX_COLOR, MAIN_COLOR, HOVER_MAIN_COLOR
+from .style import MAIN_BOX_COLOR, MAIN_COLOR, HOVER_MAIN_COLOR, combo_box_style
 
 
 class TabsBar(QWidget):
@@ -163,22 +163,29 @@ class MainTabs(QWidget):
         self.name_chat.setFixedHeight(20)
         description_text_layout.addWidget(self.name_chat)
 
-        self.description = QTextEdit(self.chat_model.description)
-        self.description.setContentsMargins(0,0,0,0)
-        self.description.setFixedSize(150, 50)
-        self.description.setStyleSheet('color: rgba(255,255,255, 0.4); font-size: 13px;')
-        description_text_layout.addWidget(self.description)
+        if chat_model.chat_type != 'group':
+            self.description = QTextEdit(self.chat_model.description)
+            self.description.setContentsMargins(0,0,0,0)
+            self.description.setFixedSize(150, 50)
+            self.description.setStyleSheet('color: rgba(255,255,255, 0.4); font-size: 13px;')
+            description_text_layout.addWidget(self.description)
+        else:
+            self.user_login = QTextEdit('@user1251326')
+            self.user_login.setContentsMargins(0,0,0,0)
+            self.user_login.setFixedSize(150, 50)
+            self.user_login.setStyleSheet('color: rgba(255,255,255, 0.4); font-size: 13px;')
+            description_text_layout.addWidget(self.user_login)
 
         description_layout.addLayout(description_text_layout)
 
         description_widget.setLayout(description_layout)
         layout.addWidget(description_widget)
 
-        self.link = Links()
-        self.link.setStyleSheet('background-color: rgba(255,255,255, 0.1); border-radius: 20px;')
-        layout.addWidget(self.link)
-
         if self.chat_model.chat_type == 'group':
+            self.link = Links()
+            self.link.setStyleSheet('background-color: rgba(255,255,255, 0.1); border-radius: 20px;')
+            layout.addWidget(self.link)
+
             self.online_label = QLabel(f'Online - {self.chat_model.users}')
             self.online_label.setStyleSheet('color: rgba(255,255,255, 0.4); font-size: 12px; padding-left: 2px;')
             layout.addWidget(self.online_label)
@@ -225,29 +232,11 @@ class AttachmentsTabs(QWidget):
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
 
-        # Заголовок
-        # self.label = QLabel("Media")
-        # self.label.setFixedHeight(20)
-        # self.label.setStyleSheet('font-size: 14px;')
-        # self.layout.addWidget(self.label)
-
         # Выпадающий список
         self.combo_box = QComboBox()
         self.combo_box.setFixedSize(70, 30)
         self.combo_box.setCursor(Qt.PointingHandCursor)
-        self.combo_box.setStyleSheet("""
-            QComboBox {
-                background-color: rgba(0,0,0, 0); 
-                border-radius: 5px;
-                font-size: 14px; border: none;
-            }
-            QComboBox QAbstractItemView {
-                border-radius: 0;
-                background-color: rgba(255,255,255, 0); 
-            }
-            QComboBox QAbstractItemView::item:hover {
-                background-color: rgba(255,255,255,0.1); /* Цвет фона элемента при наведении */
-            }""")
+        self.combo_box.setStyleSheet(combo_box_style)
         self.combo_box.addItems(["Media", "File", "Links"])
         self.layout.addWidget(self.combo_box)
 

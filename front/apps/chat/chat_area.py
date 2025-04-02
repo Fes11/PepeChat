@@ -1,19 +1,15 @@
 import re
-from pathlib import Path
-from random import randrange
-from datetime import datetime
 from PySide6 import QtCore
-from PySide6.QtGui import QIcon, QCursor, QPixmap, QColor
+from PySide6.QtGui import QCursor, QColor
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (QApplication, QGraphicsDropShadowEffect, QScrollArea, QVBoxLayout, QLabel, QListWidget,
-                               QHBoxLayout, QWidget, QSizePolicy, QPushButton, QFileDialog)
+                               QHBoxLayout, QWidget, QSizePolicy)
 
 from apps.chat.fields import ImageChanger, HoverButton
-from apps.chat.style import MAIN_COLOR, MAIN_BOX_COLOR, BG_COLOR, TEXT_COLOR, HOVER_MAIN_COLOR
+from apps.chat.style import MAIN_COLOR, MAIN_BOX_COLOR, BG_COLOR
 from apps.chat.messages import Message
 from apps.chat.input_panel import InputPanel
 from apps.chat.tabs import TabsBar
-from image import get_rounds_edges_image
 
 class MessagesList(QWidget):
     def __init__(self, parent, main_window, orig_window, chat_model, tabs_bar_visible) -> None:
