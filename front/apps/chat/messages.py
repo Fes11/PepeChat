@@ -288,7 +288,7 @@ class ImageBubble(QPushButton):
         if self.text:
             self.setIcon(QIcon(get_top_rounded_image(original_pixmap, radius=20)))
         else:
-            self.setIcon(QIcon(get_rounds_edges_image(self, original_pixmap, rounded=20)))
+            self.setIcon(QIcon(get_rounds_edges_image(original_pixmap, rounded=20)))
             time = QLabel(self.time.text())
             time.setFixedSize(50, 22)
             time.setStyleSheet('background-color: rgba(0,0,0,0.5); color: white; padding: 5px; border-radius: 10px; font-size: 12px; font-weight: bold;')

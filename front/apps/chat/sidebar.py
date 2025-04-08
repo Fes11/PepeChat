@@ -1,13 +1,14 @@
+from functools import lru_cache
 import re
 import random
 from apps.chat.chat_area import MessagesList
-from apps.chat.style import MAIN_BOX_COLOR, MAIN_COLOR, HOVER_MAIN_COLOR
-from apps.chat.chats import ChatWidget
+from apps.chat.style import MAIN_BOX_COLOR, MAIN_COLOR, HOVER_MAIN_COLOR, TEXT_COLOR, MAIN_COLOR_HEX
+from apps.chat.chats import ChatDelegate
 from apps.chat.models import ChatModel
-from PySide6.QtGui import QIcon, QCursor, QPixmap, QColor, QMouseEvent
-from PySide6.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve, Property
-from PySide6.QtWidgets import (QAbstractItemView, QScrollArea, QVBoxLayout, QLabel, QGraphicsDropShadowEffect,
-                               QHBoxLayout, QWidget, QSizePolicy, QPushButton, QMenu, QListWidget, QListWidgetItem)
+from PySide6.QtGui import QIcon, QCursor, QPixmap, QColor, QMouseEvent, QFont
+from PySide6.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve, Property, QRect, QEvent
+from PySide6.QtWidgets import (QListView, QScrollArea, QVBoxLayout, QLabel, QGraphicsDropShadowEffect, QStyle,
+                               QHBoxLayout, QWidget, QSizePolicy, QPushButton, QMenu, QListWidget, QListWidgetItem, QStyledItemDelegate)
 from apps.profile.profile import Profile
 from apps.chat.serach import UsernameSearchWidget
 
@@ -46,10 +47,12 @@ class Sidebar(QWidget):
         self.chat_scroll.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.chat_scroll.setStyleSheet('''QWidget {border: none;}''')
 
-        self.chat_list = QListWidget()
-        self.chat_list.setSelectionMode(QAbstractItemView.NoSelection)
+        self.chat_list = QListView()
+        self.chat_list.setItemDelegate(ChatDelegate())
         self.chat_list.setContentsMargins(0, 0, 0, 0)
         self.chat_list.setSpacing(0)
+        self.chat_list.setModel(main_window.chats_model)
+        self.chat_list.clicked.connect(self.on_chat_clicked)
         self.chat_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.chat_list.customContextMenuRequested.connect(self.show_context_menu)
 
@@ -152,6 +155,9 @@ class Sidebar(QWidget):
         self.resize_margin = 8  # Чувствительная зона для изменения размера
 
         self.sidebar_hidden = True
+
+    def on_chat_clicked(self, index):
+        self.main_window.switch_chat(index.row())
     
     def show_context_menu(self, position):
         """Отображает контекстное меню для элемента списка."""
@@ -243,21 +249,14 @@ class Sidebar(QWidget):
         else:
             chat_name = chat_name
 
-        chat_model = ChatModel(chat_name=chat_name, users=user, avatar_path=avatar_path, description=description, chat_type=chat_type)
-        self.chat_widget = ChatWidget(self.main_window, self.num, chat_model)
+        chat_model = ChatModel(chat_name, user, avatar_path, description, chat_type)
+        self.main_window.chats_model.add_chat(chat_model)
+        self.main_window.chat_widgets.append(chat_model)
 
-        item = QListWidgetItem()
-        item.setSizeHint(self.chat_widget.sizeHint())
-        self.chat_list.addItem(item)
-        self.chat_list.setItemWidget(item, self.chat_widget)
         self.messages_list = MessagesList(self, self.main_window, self.orig_window, chat_model, self.tabs_bar_visible)
-
         self._messages_list.append(self.messages_list)
         self.main_window.stack.addWidget(self.messages_list)
-
-        # Добавляем виджет чата в список
-        self.main_window.chat_widgets.append(self.chat_widget)
-    
+        
     def toggle_tabs_bar(self):
         """Переключить видимость TabsBar для всех чатов."""
         self.tabs_bar_visible = not self.tabs_bar_visible
@@ -329,16 +328,7 @@ class Sidebar(QWidget):
         self.height_animation.setEndValue(end_height)
         self.height_animation.setEasingCurve(QEasingCurve.Type.InOutQuart)
 
-        # Анимация размера аватара
-        # self.avatar_animation = QPropertyAnimation(self, b"avatarSize")
-        # self.avatar_animation.setDuration(500)
-        # self.avatar_animation.setStartValue(self.avatarSize)
-        # self.avatar_animation.setEndValue(end_avatar_size)
-        # self.avatar_animation.setEasingCurve(QEasingCurve.Type.InOutQuart)
-
-        # Запуск обеих анимаций
         self.height_animation.start()
-        # self.avatar_animation.start()
 
     def animate_width(self, end_width):
         self.width_animation = QPropertyAnimation(self, b"animatedWidth")

@@ -1,6 +1,7 @@
 from apps.chat.fields import FirstNewChatButton
 from apps.chat.sidebar import Sidebar
 from apps.chat.dialog import CreateChatDialog, SettingsDialog
+from apps.chat.models import ChatListModel
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QVBoxLayout,QHBoxLayout, QWidget, QStackedWidget)
 from .style import MAIN_COLOR, HOVER_MAIN_COLOR, first_chat_btn_style
@@ -12,6 +13,7 @@ class ChatScreen(QWidget):
         super(ChatScreen, self).__init__()
 
         self.orig_window = window
+        self.chats_model = ChatListModel()
         self.setMinimumSize(700, 570)
 
         layout = QHBoxLayout()
@@ -58,18 +60,6 @@ class ChatScreen(QWidget):
         super().resizeEvent(event)
 
     def switch_chat(self, index):
-        # Сброс цвета фона предыдущего активного чата
-        if self.current_chat_index is not None:
-            prev_chat_widget = self.chat_widgets[self.current_chat_index]
-            prev_chat_widget.chat_widget.setStyleSheet(
-                '''QPushButton {border: none; background-color: none;} 
-                   QPushButton:hover {background-color: rgba(0,0,0, 0.2);}''')
-
-        # Установка цвета фона для текущего активного чата
-        current_chat_widget = self.chat_widgets[index]
-        current_chat_widget.chat_widget.setStyleSheet(
-            f'''QPushButton {{border-left: 5px solid {MAIN_COLOR}; border-radius: 0px; background-color: rgba(255, 255, 255, 0.1);}}
-                QPushButton:hover {{background-color: rgba(0,0,0, 0.2); border-radius: 0px;}}''')
-
-        self.stack.setCurrentIndex(index + 1)
         self.current_chat_index = index
+        self.stack.setCurrentIndex(index + 1)
+        self.sidebar.chat_list.viewport().update()

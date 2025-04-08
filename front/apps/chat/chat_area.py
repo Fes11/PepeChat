@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (QApplication, QGraphicsDropShadowEffect, QScrollA
                                QHBoxLayout, QWidget, QSizePolicy)
 
 from apps.chat.fields import ImageChanger, HoverButton
-from apps.chat.style import MAIN_COLOR, MAIN_BOX_COLOR, BG_COLOR
+from apps.chat.style import MAIN_COLOR, MAIN_BOX_COLOR, BG_COLOR, top_chat_panel_style
 from apps.chat.messages import Message
 from apps.chat.input_panel import InputPanel
 from apps.chat.tabs import TabsBar
@@ -40,20 +40,16 @@ class MessagesList(QWidget):
         # Верхняя панель чата
         top_chat_panel = QWidget()
         top_chat_panel.setMinimumHeight(60)
-        top_chat_panel.setStyleSheet(f'''background-color: {MAIN_BOX_COLOR}; border-bottom: 1px solid rgba(255,255,255, 0.1);
-                                         border-top-left-radius: 10px;
-                                         border-top-right-radius: 10px;
-                                         border-bottom-left-radius: 0px;
-                                         border-bottom-right-radius: 0px;''')
+        top_chat_panel.setStyleSheet(top_chat_panel_style)
 
         top_chat_panel_layout = QHBoxLayout()
         top_chat_panel_layout.setSpacing(10)
         top_chat_panel_layout.setContentsMargins(10,0,10,0)
 
         if self.chat_model.chat_type == 'group':
-            iamge_chat = ImageChanger(size=45, rounded=10, path=chat_model.avatar_path, active=False)
+            iamge_chat = ImageChanger(size=45, rounded=10, path=chat_model.avatar_path, chat_model=chat_model, active=False)
         else:
-            iamge_chat = ImageChanger(size=45, rounded=100, path=chat_model.avatar_path, active=False)
+            iamge_chat = ImageChanger(size=45, rounded=100, path=chat_model.avatar_path, chat_model=chat_model, active=False)
 
         iamge_chat.setStyleSheet('background-color: rgba(0,0,0,0); border: none;')
         top_chat_panel_layout.addWidget(iamge_chat)

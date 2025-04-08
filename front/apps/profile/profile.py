@@ -19,7 +19,7 @@ class Avatar(QPushButton):
         self.setFixedSize(30, 30)
         self.setCursor(QCursor(Qt.PointingHandCursor))
         self.original_pixmap = QPixmap(path)
-        self.setIcon(QIcon(get_rounded_image(self, self.original_pixmap)))
+        self.setIcon(QIcon(get_rounded_image(self.original_pixmap, 30)))
         self.setIconSize(QSize(30, 30))
 
 

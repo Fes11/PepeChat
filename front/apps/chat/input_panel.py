@@ -256,7 +256,7 @@ class ViewFile(QPushButton):
                               QPushButton:hover {background-color: rgba(255,255,255, 0.3);}''')
         self.setCursor(QCursor(Qt.PointingHandCursor))
         self.original_pixmap = QPixmap(path)
-        self.setIcon(QIcon(get_rounds_edges_image(self, self.original_pixmap)))
+        self.setIcon(QIcon(get_rounds_edges_image(self.original_pixmap)))
         self.setIconSize(QSize(80, 100))
 
         self.delete_btn = QPushButton()

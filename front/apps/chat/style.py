@@ -4,9 +4,12 @@ from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (QGraphicsDropShadowEffect)
 
 # Тестовые цвета
-MAIN_COLOR = 'rgba(227, 59, 59, 1);'
+MAIN_COLOR = 'rgb(227, 59, 59);'
 HOVER_MAIN_COLOR = 'rgba(181, 54, 54, 1);'
 MAIN_COLOR_NOT_ACTIVE = 'rgba(227, 59, 59, 0.5);'
+
+MAIN_COLOR_HEX = '#e33b3b'
+BLACK_COLOR_HOVER_HEX = '#545454'
 
 # PGV тема
 # MAIN_COLOR = 'rgba(57, 194, 54, 1);'
@@ -133,3 +136,9 @@ combo_box_style = """
             QComboBox QAbstractItemView::item:hover {
                 background-color: rgba(255,255,255,0.1); /* Цвет фона элемента при наведении */
             }"""
+
+top_chat_panel_style = f'''background-color: {MAIN_BOX_COLOR}; border-bottom: 1px solid rgba(255,255,255, 0.1);
+                           border-top-left-radius: 10px;
+                           border-top-right-radius: 10px;
+                           border-bottom-left-radius: 0px;
+                           border-bottom-right-radius: 0px;'''

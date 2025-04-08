@@ -1,11 +1,8 @@
-from apps.chat.fields import FirstNewChatButton
-from apps.chat.dialog import CreateChatDialog
 from apps.chat.fields import ImageChanger
 from apps.chat.user import User
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QIcon, QCursor, QIcon, QCursor, QPixmap
 from PySide6.QtWidgets import (QVBoxLayout,QHBoxLayout, QWidget, QPushButton, QLabel, QTextEdit, QLineEdit, QScrollArea, QGridLayout, QComboBox)
-from image import get_rounds_edges_image
 from .style import MAIN_BOX_COLOR, MAIN_COLOR, HOVER_MAIN_COLOR, combo_box_style
 
 
@@ -163,7 +160,7 @@ class MainTabs(QWidget):
         self.name_chat.setFixedHeight(20)
         description_text_layout.addWidget(self.name_chat)
 
-        if chat_model.chat_type != 'group':
+        if chat_model.chat_type == 'group':
             self.description = QTextEdit(self.chat_model.description)
             self.description.setContentsMargins(0,0,0,0)
             self.description.setFixedSize(150, 50)

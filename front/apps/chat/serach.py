@@ -3,7 +3,7 @@ from PySide6.QtCore import Qt, QPoint
 from PySide6.QtGui import QCursor
 import sys
 
-class DropDownList(QListWidget):
+class SearchList(QListWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         # Убираем Popup, но ставим флаг, чтобы виджет был поверх других
@@ -44,7 +44,7 @@ class UsernameSearchWidget(QWidget):
         self.usernames = self.load_usernames("usernames.txt")
 
         # Создаем выпадающий список
-        self.dropdown_list = DropDownList(self)
+        self.dropdown_list = SearchList(self)
         self.dropdown_list.setCursor(QCursor(Qt.PointingHandCursor))
         self.dropdown_list.setStyleSheet('''padding: 12px; font-size: 16px; color: rgba(255,255,255, 0.8);''')
         self.dropdown_list.setFixedWidth(220)

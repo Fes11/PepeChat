@@ -3,8 +3,7 @@ from PySide6.QtGui import QIcon, QCursor, QPixmap, QPainter, QColor, QPainterPat
 from PySide6.QtCore import Qt, QSize, QRectF, QRect
 from PySide6.QtWidgets import (QTextEdit, QVBoxLayout, QLabel, QFileDialog,
                                QHBoxLayout, QWidget, QPushButton, QGraphicsOpacityEffect)
-from PySide6.QtCore import Signal
-from image import get_rounds_edges_image
+
 
 class PlainTextEdit(QTextEdit):
     def __init__(self, parent=None):
@@ -92,6 +91,7 @@ class ImageChanger(QLabel):
         self.setFixedSize(size, size)
         self.setCursor(Qt.PointingHandCursor if active else Qt.ArrowCursor)
         self.path = path
+        self.chat_model = chat_model
 
         self.rounded = rounded  # Радиус скругления
         self.active = active  # Флаг активности
@@ -102,6 +102,8 @@ class ImageChanger(QLabel):
 
     def update_image_path(self, new_path):
         self.path = new_path
+        if self.chat_model:
+            self.chat_model.avatar_path = new_path
 
     def load_image(self, file_path):
         """Загружает изображение с указанного пути."""

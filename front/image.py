@@ -2,7 +2,7 @@ from PySide6.QtGui import QPainterPath, QPixmap, QPainter, QBrush
 from PySide6.QtCore import Qt, QRect
 from PIL import Image, ImageEnhance, ImageFilter
 
-def get_rounds_edges_image(self, pixmap, rounded=20):
+def get_rounds_edges_image(pixmap, rounded=20):
     '''Закругляет все края изоброжения.'''
     size = pixmap.size()
     rounded_pixmap = QPixmap(size)
@@ -51,30 +51,19 @@ def get_top_rounded_image(pixmap: QPixmap, radius: int) -> QPixmap:
 
     return rounded_pixmap
 
-def get_rounded_image(self, pixmap):
+def get_rounded_image(pixmap, size=10):
     '''Делает изображение круглым.'''
-    size = pixmap.size()
-    side = min(size.width(), size.height())  # Размер круга будет наименьшей стороной изображения
-
-    # Создаем квадратное изображение для маски с прозрачным фоном
-    rounded_pixmap = QPixmap(side, side)
-    rounded_pixmap.fill(Qt.transparent)  # Прозрачный фон
-
-    # Настраиваем QPainter для рисования
-    painter = QPainter(rounded_pixmap)
+    image = pixmap.scaled(size, size, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+    rounded = QPixmap(size, size)
+    rounded.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(rounded)
     painter.setRenderHint(QPainter.Antialiasing)
-
-    # Создаем эллипс (круг) для маски
     path = QPainterPath()
-    path.addEllipse(0, 0, side, side)
-
-    # Обрезаем изображение по форме круга
+    path.addEllipse(0, 0, size, size)
     painter.setClipPath(path)
-    painter.drawPixmap(0, 0, pixmap.scaled(side, side, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation))
-
+    painter.drawPixmap(0, 0, image)
     painter.end()
-
-    return rounded_pixmap
+    return rounded
 
 from PySide6.QtGui import QPixmap, QPainter, QPainterPath
 from PySide6.QtCore import QRectF, Qt
