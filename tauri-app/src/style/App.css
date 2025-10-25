@@ -8,9 +8,17 @@
   font-family: 'Inter';
 }
 
-:root {
+/* :root {
   --bg-color: #17181B;
   --box-bg-color: #252529;
+  --main-color: #7B61FF;
+  --main-hover-color: #8b74ff;
+  --border-color: #3A3A40;
+} */
+
+:root {
+  --bg-color: rgba(0,0,0, 0.35);
+  --box-bg-color: rgba(255,255,255,0.1);
   --main-color: #7B61FF;
   --main-hover-color: #8b74ff;
   --border-color: #3A3A40;

@@ -10,9 +10,10 @@
     "frontendDist": "../dist"
   },
   "app": {
+    "macOSPrivateApi": true,
     "windows": [
       {
-        "title": "tauri-app",
+        "title": "PepeChat",
         "width": 800,
         "height": 600,
         "transparent": true
