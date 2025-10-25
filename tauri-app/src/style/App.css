@@ -5,7 +5,7 @@
   transition: 0.2s all;
   color: whitesmoke;
   text-decoration: none;
-  font-family: 'Inter';
+  font-family: 'Inter', sans-serif;
 }
 
 :root {
@@ -78,10 +78,54 @@ a:hover {
 }
 
 .chat_description__content {
-  padding: 8px;
   text-align: left;
   display: flex;
   flex-direction: column;
+}
+
+.chat_description__buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 5px;
+  margin: 8px 0;
+  padding: 0 8px;
+}
+
+.chat_description__online {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  background: var(--box-bg-color);
+  position: relative;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 5px 8px;
+  border-radius: 5px;
+  padding: 5px 5px 5px 15px;
+  width: 45px;
+  border: none;
+}
+
+.chat_description__online:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.chat_description__online::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 10px;
+  transform: translateY(-50%) rotate(45deg);
+  width: 5px;
+  height: 5px;
+  border-right: 2px solid rgba(255, 255, 255, 0.35);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.35);
+  pointer-events: none;
+  transition: transform 0.2s ease;
 }
 
 .chat_list__list {
@@ -112,29 +156,6 @@ a:hover {
 
 .chat__list__scroll {
   height: 100%;
-}
-
-.chat__list_filter {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 5px 8px;
-  cursor: pointer;
-  border-radius: 5px;
-  padding: 5px;
-  max-width: 75px;
-}
-
-.chat__list_filter:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.chat__list_filter_choise {
-  margin-left: 5px;
-  text-align: left;
-  font-size: 12px;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.35)
 }
 
 .chat_list__btn:hover {
@@ -184,6 +205,9 @@ a:hover {
 
 .chat__message_list {
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
 }
 
 .chat__bottom {
@@ -206,7 +230,7 @@ a:hover {
 
 .chat__send_btn {
   min-width: 45px;
-  min-height: 45px;
+  height: 45px;
   border-radius: 10px;
   background-color: var(--main-color);
   cursor: pointer;
@@ -226,8 +250,8 @@ a:hover {
 
 
 .profile__avatar {
-  min-width: 44px;
-  min-height: 44px;
+  min-width: 40px;
+  min-height: 40px;
   border-radius: 50%;
   background-color: rgb(88, 88, 88);
 }
@@ -237,10 +261,11 @@ a:hover {
   border-radius: 10px;
   display: flex;
   justify-content: space-between;
+  align-items: center;
   background-color: var(--box-bg-color);
   margin-top: 8px;
-  max-height: 60px;
-  padding: 5px;
+  height: 60px;
+  padding: 0 8px;
 }
 
 .profile__info {
@@ -266,7 +291,8 @@ a:hover {
 .profile__settings_btn {
   border-radius: 10px;
   cursor: pointer;
-  padding: 10px 12px;
+  width: 20px;
+  height: 20px;
 }
 
 .profile__settings_btn:hover {
@@ -274,8 +300,8 @@ a:hover {
 }
 
 .chat_avatar {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border-radius: 10px;
   background-color: rgb(88, 88, 88);
 }
@@ -296,3 +322,27 @@ a:hover {
   font-size: 12px;
 }
 
+.participants_list {
+  margin: 2px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.participant {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  border-radius: 5px;
+  padding: 5px;
+}
+
+.participant:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.participant p {
+  color: var(--main-color);
+  font-size: 14px;
+}

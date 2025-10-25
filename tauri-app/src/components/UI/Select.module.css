@@ -1,0 +1,50 @@
+.select {
+  position: relative;
+  display: inline-block;
+}
+
+/* сам select */
+.select_choise {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  background: var(--box-bg-color);
+
+  display: flex;
+  margin: 5px 8px;
+  border-radius: 5px;
+  padding: 5px 15px 5px 20px;
+  border: none;
+}
+
+/* стиль для опций */
+.select_choise option {
+  background: var(--bg-color);
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* стрелка */
+.select::after {
+  content: "";
+  position: absolute;
+  left: 15px;
+  top: 15px;
+  transform: translateY(-50%) rotate(45deg);
+  width: 5px;
+  height: 5px;
+  border-right: 2px solid rgba(255, 255, 255, 0.35);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.35);
+  pointer-events: none;
+  transition: transform 0.2s ease;
+}
+
+/* hover эффект для самого select */
+.select_choise:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}

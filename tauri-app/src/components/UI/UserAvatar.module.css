@@ -1,0 +1,10 @@
+.user_avatar {
+    display: flex;
+    align-items: flex-end;
+    cursor: pointer;
+}
+
+.user_avatar img{
+    border-radius: 50%;
+    background-color: rgb(88, 88, 88);
+}

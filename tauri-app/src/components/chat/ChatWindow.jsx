@@ -1,6 +1,16 @@
 import React from "react";
+import Message from "./Message"
 
 const ChatWindow = () => {
+  const user = {
+    avatar: "/test_avatar2.jpg",
+    auth_user: true
+  }
+
+  const user2 = {
+    avatar: "/test_avatar3.jpg",
+  }
+
   return (
     <div className="chat">
       <div className="chat__header">
@@ -10,7 +20,11 @@ const ChatWindow = () => {
         </div>
       </div>
 
-      <div className="chat__message_list"></div>
+      <div className="chat__message_list">
+        <Message user={user} />
+        <Message user={user} />
+        <Message user={user2} />
+      </div>
 
      <div className="chat__bottom">
        <input className="chat__input" type="text" placeholder="Write a message..."/>

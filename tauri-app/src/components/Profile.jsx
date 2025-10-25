@@ -1,11 +1,11 @@
 import React from "react";
-
+import UserAvatar from "./UI/UserAvatar"
 
 const Profile = () => {
   
   return (
     <div className="profile">
-        <div className="profile__avatar"></div>
+        <UserAvatar src="./test_avatar2.jpg" width="40px" height="40px"/>
 
         <div className="profile__info">
             <p className="profile_username">username</p>

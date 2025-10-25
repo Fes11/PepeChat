@@ -2,18 +2,20 @@ import React from "react";
 import ChatListElement from "./ChatListElement.jsx";
 import Profile from "../Profile.jsx";
 import Search from "../UI/Input/Search.jsx";
+import Select from "../UI/Select.jsx";
 
 const ChatList = () => {
 
   return (
     <div className="chat_list">
         <div className="chat_list__list">
-            <Search />
+            <Search placeholder="Search..."/>
 
-            <div className="chat__list_filter">
-              <img src="/arrow.svg" alt="Arrow" />
-              <p className="chat__list_filter_choise">All Chats</p>
-            </div>
+            <Select>
+              <option value="">All chats</option>
+              <option value="Online">Online</option>
+              <option value="Offline">Offline</option>
+            </Select>
 
             <div className="chat__list__scroll">
               <ChatListElement />

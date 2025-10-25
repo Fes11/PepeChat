@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import classes from './Search.module.css';
 
-const Search = function () {
+const Search = function ({children, ...props}) {
 
     return (
-        <input className={classes.search} type="text" placeholder="Search..."/>
+        <input className={classes.search} type="text" {...props}/>
     )
 }
 
