@@ -1,13 +1,14 @@
 import React from "react";
 import ChatListElement from "./ChatListElement.jsx";
 import Profile from "../Profile.jsx";
+import Search from "../UI/Input/Search.jsx";
 
 const ChatList = () => {
 
   return (
     <div className="chat_list">
         <div className="chat_list__list">
-            <input className="chat_list__search" type="text" placeholder="Search..."/>
+            <Search />
 
             <div className="chat__list_filter">
               <img src="/arrow.svg" alt="Arrow" />

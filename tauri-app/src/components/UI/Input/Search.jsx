@@ -1,11 +1,10 @@
 import React, { useState } from "react";
-
+import classes from './Search.module.css';
 
 const Search = function () {
 
     return (
-        <div className="search">
-        </div>
+        <input className={classes.search} type="text" placeholder="Search..."/>
     )
 }
 

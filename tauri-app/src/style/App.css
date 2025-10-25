@@ -8,21 +8,21 @@
   font-family: 'Inter';
 }
 
-/* :root {
+:root {
   --bg-color: #17181B;
   --box-bg-color: #252529;
   --main-color: #7B61FF;
   --main-hover-color: #8b74ff;
   --border-color: #3A3A40;
-} */
+}
 
-:root {
+/* :root {
   --bg-color: rgba(0,0,0, 0.35);
   --box-bg-color: rgba(255,255,255,0.1);
   --main-color: #7B61FF;
   --main-hover-color: #8b74ff;
   --border-color: #3A3A40;
-}
+} */
 
 body {
   margin: auto;
@@ -91,17 +91,6 @@ a:hover {
   flex-direction: column;
   border-radius: 10px;
   padding: 8px 0;
-}
-
-.chat_list__search {
-  padding: 12px 38px;
-  margin-bottom: 8px;
-  margin-left: 5px;
-  margin-right: 5px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid var(--border-color);
-  background: url(./explorer.svg) no-repeat 10px 10px;
 }
 
 .chat_list__btn {
