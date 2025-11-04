@@ -7,7 +7,7 @@ function App() {
   
   return (
     <main className="container">
-      <Main />
+      <Login />
     </main>
   );
 }

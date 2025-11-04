@@ -1,14 +1,19 @@
-import React from "react";
+import React, {useState} from "react";
 import ChatListElement from "./ChatListElement.jsx";
 import Profile from "../Profile.jsx";
 import Search from "../UI/Input/Search.jsx";
 import Select from "../UI/Select.jsx";
+import MyModal from "../UI/MyModal/MyModal.jsx";
 
 const ChatList = () => {
 
+  const [modal, setModal] = useState()
+  
   return (
     <div className="chat_list">
         <div className="chat_list__list">
+            <MyModal visable={modal} setVisable={setModal}/>
+
             <Search placeholder="Search..."/>
 
             <Select>
@@ -24,9 +29,10 @@ const ChatList = () => {
               <ChatListElement />
             </div>
 
-            <button className="chat_list__btn">
+            <button onClick={() => setModal(true)} className="chat_list__btn">
               <img src="/plus.svg" alt="Plus" />
               Create chat</button>
+              
         </div>
 
         <Profile />

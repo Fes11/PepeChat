@@ -26,8 +26,6 @@
 
 body {
   margin: auto;
-  text-align: center;
-  align-items: center;
   background-color: var(--bg-color);
   height: 97vh;
 }
@@ -38,12 +36,22 @@ a:hover {
 
 #root, .container {
   height: 100%;
+  width: 100%;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
 }
 
 .main {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
   padding: 8px;
   gap: 8px;
   height: 100%;
