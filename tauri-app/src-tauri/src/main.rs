@@ -33,14 +33,14 @@ fn main() {
                 // Один из трёх вариантов (можешь выбрать любой):
 
                 // 💎 Acrylic (полупрозрачный blur)
-                apply_acrylic(&window, Some((0, 0, 0, 60))) // RGBA цвет подложки
-                    .expect("Failed to apply acrylic");
+                // apply_acrylic(&window, Some((0, 0, 0, 60))) // RGBA цвет подложки
+                //     .expect("Failed to apply acrylic");
 
                 // 🌫️ или Mica (матовый эффект, как в Win11)
-                // apply_mica(&window).expect("Failed to apply mica");
+                // apply_mica(&window, Some(true)).expect("Failed to apply mica");
 
                 // 🪟 или Tabbed (вариант Mica для вкладок)
-                // apply_tabbed(&window).expect("Failed to apply tabbed");
+                // apply_tabbed(&window, Some(true)).expect("Failed to apply tabbed");
             }
 
             Ok(())

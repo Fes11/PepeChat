@@ -4,6 +4,7 @@ import Profile from "../Profile.jsx";
 import Search from "../UI/Input/Search.jsx";
 import Select from "../UI/Select.jsx";
 import MyModal from "../UI/MyModal/MyModal.jsx";
+import CreateChatModal from "./CreateChatModal.jsx";
 
 const ChatList = () => {
 
@@ -12,7 +13,9 @@ const ChatList = () => {
   return (
     <div className="chat_list">
         <div className="chat_list__list">
-            <MyModal visable={modal} setVisable={setModal}/>
+            <MyModal visable={modal} setVisable={setModal}> 
+              <CreateChatModal />
+            </MyModal>
 
             <Search placeholder="Search..."/>
 

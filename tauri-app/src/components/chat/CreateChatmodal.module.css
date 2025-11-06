@@ -1,0 +1,64 @@
+.content {
+  padding: 15px 20px;  
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    
+}
+
+.close {
+    background: rgba(0,0,0,0);
+}
+
+.title {
+    
+}
+
+.description {
+    display: flex;
+    margin-top: 15px;
+}
+
+.avatar {
+    background: #252525;
+    width: 80px;
+    height: 80px;
+    border-radius: 10px;
+    margin-right: 10px;
+}
+
+.input_box {
+    display: flex;
+    flex-direction: column;
+}
+
+.search_user {
+    background: #252525;
+    padding: 10px 15px;
+    border-radius: 10px;
+}
+
+.input {
+    background: #252525;
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+}
+
+.partchipants__list {
+    margin-top: 15px;
+    height: 200px;
+}
+
+.create_chat_btn {
+    background: #252525;
+    padding: 10px 15px;
+    border-radius: 10px;
+    width: 100%;
+}
+
+.create_chat_btn:hover, .search_user:hover {
+    background: #1f1f1f;
+} 

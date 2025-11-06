@@ -1,3 +1,7 @@
+.login__link {
+    font-size: 13px;
+}
+
 .login {
     max-width: 950px;
     max-height: 525px;

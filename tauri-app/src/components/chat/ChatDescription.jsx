@@ -11,13 +11,13 @@ const ChatDescription = () => {
         <div className="chat_description__content">
           <div className="chat_description__buttons">
             <ChatDescriptionBtn disabled>Descriptions</ChatDescriptionBtn>
-            <ChatDescriptionBtn>Attachments</ChatDescriptionBtn>
+            <ChatDescriptionBtn>Attach</ChatDescriptionBtn>
           </div>
 
           <Search placeholder="Search..."/>
 
           <div className="chat_description__online">
-            Online
+            Online - 3
           </div>
 
           <div className="participants_list">
@@ -27,7 +27,7 @@ const ChatDescription = () => {
           </div>
 
           <div className="chat_description__online">
-            Offline
+            Offline - 3
           </div>
 
           <div className="participants_list">
