@@ -1,11 +1,11 @@
 import { createBrowserRouter } from "react-router-dom"
-import Home from "./views/Home"
 import Login from "./views/Login"
-import RequireAuth from "./components/RequireAuth"
+import Main from "./components/chat/Main.jsx";
 
 export const router = createBrowserRouter([
   {
     path: "/",
+    element: <Main />,
   },
   {
     path: "/login",

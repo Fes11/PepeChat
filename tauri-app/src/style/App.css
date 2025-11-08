@@ -360,3 +360,19 @@ a:hover {
   color: var(--main-color);
   font-size: 14px;
 }
+
+
+.logout {
+  padding: 5px 10px;
+  border-radius: 5px;
+  background: #b91515;
+  margin-right: 10px;
+}
+
+.logout:hover {
+  background: #d61919;
+}
+
+.logout:active {
+    transform: translateY(1px);
+}
