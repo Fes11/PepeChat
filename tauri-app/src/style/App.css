@@ -6,6 +6,8 @@
   color: whitesmoke;
   text-decoration: none;
   font-family: 'Inter', sans-serif;
+  scrollbar-color: #202020 rgba(0,0,0,0);
+  scrollbar-width: thin;
 }
 
 :root {

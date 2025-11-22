@@ -1,0 +1,64 @@
+.search_user_wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.search_user_btn {
+  padding: 10px 15px;
+  width: 100%;
+  background: #252525;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.search_user_input {
+  width: 100%;
+  padding: 10px 15px;
+  background: #252525;
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+
+.search_results {
+  position: absolute;
+  top: 28px;
+  width: 100%;
+  background: #252525;
+  border: 1px solid #505050;
+  border-radius: 6px;
+  max-height: 250px;
+  overflow-y: auto;
+  z-index: 200;
+}
+
+.search_result_item {
+  padding: 8px;
+  display: flex;
+  gap: 10px;
+  text-align: left;
+  align-items: flex-start;
+  cursor: pointer;
+}
+
+.search_result_item:hover {
+  background: #505050;
+}
+
+.search_result_avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.search_result_username {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.search_result_login {
+  font-size: 12px;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.4);
+}

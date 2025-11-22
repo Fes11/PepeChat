@@ -1,0 +1,33 @@
+.avatar_picker {
+  cursor: pointer;
+  margin-right: 10px;
+  position: relative;
+}
+
+.avatar_picker:hover {
+  opacity: 50%;
+}
+
+.avatar_picker_icon {
+  position: absolute;
+  top: 29px;
+  left: 29px;
+}
+
+.avatar_input {
+  display: none;
+}
+
+.avatar_placeholder {
+  cursor: pointer;
+  width: 100px;
+  height: 100px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.avatar_preview {
+  width: 100px;
+  height: 100px;
+  border-radius: 10px;
+}
