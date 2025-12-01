@@ -9,12 +9,13 @@ import ChatServices from "../../services/ChatService.jsx"; // путь к тво
 
 const ChatList = () => {
   const [modal, setModal] = useState();
+  const [chats, setChats] = useState([]);
 
   useEffect(() => {
-    // Функция для получения чатов и вывода их в консоль
     const fetchChats = async () => {
       try {
         const response = await ChatServices.getChats();
+        setChats(response.data.results);
         console.log("Чаты:", response.data); // выводим чаты в консоль
       } catch (error) {
         console.error("Ошибка при получении чатов:", error);
@@ -22,7 +23,7 @@ const ChatList = () => {
     };
 
     fetchChats();
-  }, []); // пустой массив зависимостей — вызов произойдет один раз при монтировании
+  }, []);
 
   return (
     <div className="chat_list">
@@ -40,10 +41,9 @@ const ChatList = () => {
         </Select>
 
         <div className="chat__list__scroll">
-          <ChatListElement />
-          <ChatListElement />
-          <ChatListElement />
-          <ChatListElement />
+          {chats.map((chat) => (
+            <ChatListElement key={chat.id} chat={chat} />
+          ))}
         </div>
 
         <button onClick={() => setModal(true)} className="chat_list__btn">
