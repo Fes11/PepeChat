@@ -62,3 +62,13 @@
   font-weight: 300;
   color: rgba(255, 255, 255, 0.4);
 }
+
+.participant__description {
+  text-align: left;
+}
+
+.participant__description_login {
+  color: #797979 !important;
+  font-size: 12px !important;
+  font-weight: 600;
+}

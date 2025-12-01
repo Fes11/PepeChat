@@ -4,4 +4,8 @@ export default class ChatServices {
   static async getChats() {
     return api.get("/api/chats/");
   }
+
+  static async createChat(data) {
+    return api.post("/api/chats/", data);
+  }
 }

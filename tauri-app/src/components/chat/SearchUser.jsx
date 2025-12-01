@@ -2,10 +2,11 @@ import React, { useState, useRef, useEffect } from "react";
 import "./SearchUser.css";
 import UserServices from "../../services/UserService";
 
-const SearchUser = () => {
+const SearchUser = ({ onSelectUser }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
+  const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -50,13 +51,23 @@ const SearchUser = () => {
           placeholder="Search users..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setTimeout(() => setIsFocused(false), 100)}
         />
       )}
 
-      {results.length > 0 && (
+      {isFocused && results.length > 0 && (
         <div className="search_results">
           {results.map((user) => (
-            <div key={user.id} className="search_result_item">
+            <div
+              key={user.id}
+              className="search_result_item"
+              onClick={() => {
+                onSelectUser(user);
+                setQuery("");
+                setIsEditing(false);
+              }}
+            >
               <img
                 src={user.avatar || "/default.jpg"}
                 alt="Avatar"

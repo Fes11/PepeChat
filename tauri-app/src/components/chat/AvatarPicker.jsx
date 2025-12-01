@@ -1,15 +1,14 @@
 import React, { useState } from "react";
 import "./AvatarPicker.css";
 
-const AvatarPicker = function () {
-  const [avatar, setAvatar] = useState(null); // файл для отправки
-  const [avatarPreview, setAvatarPreview] = useState(null); // превью для отображения
+const AvatarPicker = function ({ onSelectAvatar }) {
+  const [avatarPreview, setAvatarPreview] = useState(null);
 
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    setAvatar(file);
+    onSelectAvatar(file);
 
     const previewUrl = URL.createObjectURL(file);
     setAvatarPreview(previewUrl);
