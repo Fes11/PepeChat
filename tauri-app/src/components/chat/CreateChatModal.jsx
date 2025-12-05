@@ -5,25 +5,26 @@ import AvatarPicker from "./AvatarPicker.jsx";
 import Participant from "./Participant.jsx";
 import ChatService from "../../services/ChatService";
 
-const CreateChatModal = function () {
+const CreateChatModal = ({ onChatCreated, onClose }) => {
   const [title, setTitle] = useState("");
   const [participants, setParticipants] = useState([]);
   const [isPrivate, setPrivate] = useState(false);
   const [avatar, setAvatar] = useState(null);
+
   const isGroup = true;
 
   const addSelectUser = (user) => {
     const exists = participants.some((p) => p.id === user.id);
     if (exists) return;
-
     setParticipants((prev) => [...prev, user]);
   };
 
-  const createChat = (e) => {
+  const createChat = async (e) => {
     e.preventDefault();
-    const participantIds = participants.map((p) => p.id);
 
+    const participantIds = participants.map((p) => p.id);
     const formData = new FormData();
+
     formData.append("name", title);
     if (avatar) formData.append("avatar", avatar);
     formData.append("is_private", isPrivate);
@@ -33,28 +34,35 @@ const CreateChatModal = function () {
       formData.append("participants", id);
     });
 
-    ChatService.createChat(formData);
+    try {
+      const response = await ChatService.createChat(formData);
 
-    console.log({
-      title: title,
-      avatar: avatar,
-      participants: participants,
-      is_private: isPrivate,
-      is_group: isGroup,
-    });
+      const newChat = response.data;
+
+      onChatCreated(newChat);
+
+      setTitle("");
+      setParticipants([]);
+      setAvatar(null);
+      setPrivate(false);
+
+      onClose();
+    } catch (error) {
+      console.error("Ошибка при создании чата:", error);
+    }
   };
 
   return (
     <form className={classes.content}>
       <div className={classes.header}>
         <p className={classes.title}>Create new chat</p>
-        <button className={classes.close} type="button">
+        <button className={classes.close} type="button" onClick={onClose}>
           X
         </button>
       </div>
 
       <div className={classes.description}>
-        <AvatarPicker onSelectAvatar={setAvatar} />
+        <AvatarPicker avatar={avatar} onSelectAvatar={setAvatar} />
 
         <div className={classes.input_box}>
           <input
@@ -64,6 +72,7 @@ const CreateChatModal = function () {
             placeholder="Chat name"
             className={classes.input}
           />
+
           <SearchUser onSelectUser={addSelectUser} />
         </div>
       </div>
@@ -81,7 +90,7 @@ const CreateChatModal = function () {
           checked={isPrivate}
           onChange={(e) => setPrivate(e.target.checked)}
         />
-        Is privat chat
+        Is private chat
       </div>
 
       <button className={classes.create_chat_btn} onClick={createChat}>

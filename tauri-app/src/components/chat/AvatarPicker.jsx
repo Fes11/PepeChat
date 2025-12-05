@@ -1,8 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./AvatarPicker.css";
 
-const AvatarPicker = function ({ onSelectAvatar }) {
+const AvatarPicker = ({ avatar, onSelectAvatar }) => {
   const [avatarPreview, setAvatarPreview] = useState(null);
+
+  useEffect(() => {
+    if (!avatar) {
+      setAvatarPreview(null);
+    }
+  }, [avatar]);
 
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
@@ -17,6 +23,7 @@ const AvatarPicker = function ({ onSelectAvatar }) {
   return (
     <label className="avatar_picker">
       <img src="/photo.svg" alt="Photo" className="avatar_picker_icon" />
+
       {avatarPreview ? (
         <img
           src={avatarPreview}

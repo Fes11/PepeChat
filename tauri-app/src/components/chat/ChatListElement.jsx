@@ -1,9 +1,9 @@
 import React from "react";
 import ChatAvatar from "../UI/ChatAvatar";
 
-const ChatListElement = ({ chat }) => {
+const ChatListElement = ({ chat, onClick }) => {
   return (
-    <div className="chat_list_element">
+    <div className="chat_list_element" onClick={() => onClick(chat)}>
       <ChatAvatar src={chat.avatar} />
 
       <div className="chat_list_element__text_box">

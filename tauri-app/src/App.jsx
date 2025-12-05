@@ -1,6 +1,6 @@
 import { observer } from "mobx-react-lite";
 import "./style/App.css";
-import Main from "./components/chat/Main.jsx";
+import ChatPage from "./components/chat/ChatPage.jsx";
 import Login from "./components/auth/Login.jsx";
 import { useContext, useEffect } from "react";
 import { Context } from "./main";
@@ -15,9 +15,7 @@ const App = observer(() => {
   }, []);
 
   return (
-    <main className="container">
-      {store.isAuth ? <Main /> : <Login />}
-    </main>
+    <main className="container">{store.isAuth ? <ChatPage /> : <Login />}</main>
   );
 });
 

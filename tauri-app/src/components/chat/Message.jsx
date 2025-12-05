@@ -1,25 +1,22 @@
 import React, { useState } from "react";
-import classes from "./Message.module.css"
+import classes from "./Message.module.css";
 import UserAvatar from "../UI/UserAvatar";
 
-const Message = function (user) {
+const Message = function ({ user, text }) {
+  return (
+    <div className={classes.message}>
+      <UserAvatar src={user.avatar} />
 
-    if (user.user.auth_user) {
-        return (
-            <div className={classes.your_message}>
-                <UserAvatar src={user.user.avatar} width="28px" height="28px" />
+      <div className={classes.message__bubble}>{text}</div>
+    </div>
+  );
 
-                <div className={classes.your_message__bubble}>Lorem ipsum dolor sit amet, consectetur adipiscing elit</div>
-            </div>  
-        )     
-    }
-    
-    return (
-        <div className={classes.message}>
-            <div className={classes.message__bubble}>Lorem ipsum dolor sit amet, consectetur adipiscing elit</div>
-            <UserAvatar src={user.user.avatar} width="28px" height="28px" />
-        </div>
-    )
-}
+  // return (
+  //     <div className={classes.message}>
+  //         <div className={classes.message__bubble}>Lorem ipsum dolor sit amet, consectetur adipiscing elit</div>
+  //         <UserAvatar src={user.user.avatar} width="28px" height="28px" />
+  //     </div>
+  // )
+};
 
 export default Message;

@@ -5,10 +5,10 @@ import Search from "../UI/Input/Search.jsx";
 import Select from "../UI/Select.jsx";
 import MyModal from "../UI/MyModal/MyModal.jsx";
 import CreateChatModal from "./CreateChatModal.jsx";
-import ChatServices from "../../services/ChatService.jsx"; // путь к твоему файлу с ChatServices
+import ChatServices from "../../services/ChatService.jsx";
 
-const ChatList = () => {
-  const [modal, setModal] = useState();
+const ChatList = ({ onSelectChat }) => {
+  const [modal, setModal] = useState(false);
   const [chats, setChats] = useState([]);
 
   useEffect(() => {
@@ -16,7 +16,6 @@ const ChatList = () => {
       try {
         const response = await ChatServices.getChats();
         setChats(response.data.results);
-        console.log("Чаты:", response.data); // выводим чаты в консоль
       } catch (error) {
         console.error("Ошибка при получении чатов:", error);
       }
@@ -25,11 +24,18 @@ const ChatList = () => {
     fetchChats();
   }, []);
 
+  const handleChatCreated = (newChat) => {
+    setChats((prev) => [newChat, ...prev]);
+  };
+
   return (
     <div className="chat_list">
       <div className="chat_list__list">
         <MyModal visable={modal} setVisable={setModal}>
-          <CreateChatModal />
+          <CreateChatModal
+            onClose={() => setModal(false)}
+            onChatCreated={handleChatCreated}
+          />
         </MyModal>
 
         <Search placeholder="Search..." />
@@ -42,7 +48,7 @@ const ChatList = () => {
 
         <div className="chat__list__scroll">
           {chats.map((chat) => (
-            <ChatListElement key={chat.id} chat={chat} />
+            <ChatListElement key={chat.id} chat={chat} onClick={onSelectChat} />
           ))}
         </div>
 

@@ -5,17 +5,17 @@
   transition: 0.2s all;
   color: whitesmoke;
   text-decoration: none;
-  font-family: 'Inter', sans-serif;
-  scrollbar-color: #202020 rgba(0,0,0,0);
+  font-family: "Inter", sans-serif;
+  scrollbar-color: #202020 rgba(0, 0, 0, 0);
   scrollbar-width: thin;
 }
 
 :root {
-  --bg-color: #17181B;
+  --bg-color: #17181b;
   --box-bg-color: #252529;
-  --main-color: #7B61FF;
+  --main-color: #7b61ff;
   --main-hover-color: #8b74ff;
-  --border-color: #3A3A40;
+  --border-color: #3a3a40;
 }
 
 button {
@@ -38,10 +38,11 @@ body {
 }
 
 a:hover {
-    opacity: 80%;
+  opacity: 80%;
 }
 
-#root, .container {
+#root,
+.container {
   height: 100%;
   width: 100%;
 }
@@ -54,7 +55,7 @@ a:hover {
   justify-content: center;
 }
 
-.main {
+.chat_page {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -200,7 +201,6 @@ a:hover {
 
 .chat_list_element__title {
   font-size: 13px;
-  
 }
 
 .chat_list_element__last_message {
@@ -217,9 +217,21 @@ a:hover {
 .chat__header {
   height: 68px;
   border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
+}
+
+.chat__header_avatar img {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background-color: rgb(88, 88, 88);
+  margin-right: 10px;
 }
 
 .chat__message_list {
+  padding: 12px;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -236,7 +248,7 @@ a:hover {
 }
 
 .chat__input {
-  background: #3A3A40;
+  background: #3a3a40;
   border-radius: 10px;
   margin-right: 10px;
   padding: 0 15px;
@@ -264,14 +276,12 @@ a:hover {
   background-color: var(--main-hover-color);
 }
 
-
 .profile__avatar {
   min-width: 40px;
   min-height: 40px;
   border-radius: 50%;
   background-color: rgb(88, 88, 88);
 }
-
 
 .profile {
   border-radius: 10px;
@@ -324,8 +334,6 @@ a:hover {
 
 .chat__header_info {
   text-align: left;
-  padding-left: 20px;
-  padding-top: 12px;
 }
 
 .chat__header_name {
@@ -363,7 +371,6 @@ a:hover {
   font-size: 14px;
 }
 
-
 .logout {
   padding: 5px 10px;
   border-radius: 5px;
@@ -376,5 +383,13 @@ a:hover {
 }
 
 .logout:active {
-    transform: translateY(1px);
+  transform: translateY(1px);
+}
+
+.chat_empty {
+  padding: 15px 30px;
+  background: var(--main-color);
+  color: white;
+  border-radius: 8px;
+  font-weight: 600;
 }
