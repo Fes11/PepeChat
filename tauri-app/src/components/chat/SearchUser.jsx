@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import "./SearchUser.css";
 import UserServices from "../../services/UserService";
 
-const SearchUser = ({ onSelectUser }) => {
+const SearchUser = ({ onSelectUser, participants }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
@@ -61,19 +61,26 @@ const SearchUser = ({ onSelectUser }) => {
           {results.map((user) => (
             <div
               key={user.id}
-              className="search_result_item"
+              className={`search_result_item ${
+                participants.some((p) => p.id === user.id)
+                  ? "selected_user"
+                  : ""
+              }`}
               onClick={() => {
                 onSelectUser(user);
                 setQuery("");
                 setIsEditing(false);
               }}
             >
+              <div className="selected_user_check_mark">
+                <span>&#10003;</span>
+              </div>
               <img
                 src={user.avatar || "/default.jpg"}
                 alt="Avatar"
                 className="search_result_avatar"
               />
-              <div>
+              <div className="search_result_text">
                 <p className="search_result_username">{user.username}</p>
                 <p className="search_result_login">@{user.login}</p>
               </div>

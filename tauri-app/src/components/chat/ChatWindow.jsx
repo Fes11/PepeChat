@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import MessageService from "../../services/MessageService";
 import Message from "./Message";
 
 const ChatWindow = ({ chat }) => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
+  const bottomRef = useRef(null);
 
   useEffect(() => {
     const loadMessages = async () => {
@@ -18,6 +19,10 @@ const ChatWindow = ({ chat }) => {
 
     loadMessages();
   }, [chat.id]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const sendMessage = async (e) => {
     e.preventDefault();
@@ -48,9 +53,12 @@ const ChatWindow = ({ chat }) => {
       </div>
 
       <div className="chat__message_list">
+        <div className="spacer"></div>
         {messages.map((msg) => (
-          <Message key={msg.id} user={msg.author} text={msg.text} />
+          <Message key={msg.id} author={msg.author} text={msg.text} />
         ))}
+
+        <div ref={bottomRef}></div>
       </div>
 
       <div className="chat__bottom">

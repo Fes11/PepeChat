@@ -1,22 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import classes from "./Message.module.css";
 import UserAvatar from "../UI/UserAvatar";
+import { Context } from "../../main";
 
-const Message = function ({ user, text }) {
-  return (
-    <div className={classes.message}>
-      <UserAvatar src={user.avatar} />
+const Message = function ({ author, text }) {
+  const { store } = useContext(Context);
 
-      <div className={classes.message__bubble}>{text}</div>
-    </div>
-  );
+  if (author.user.id === store.user.id) {
+    return (
+      <div className={classes.message}>
+        <UserAvatar src={author.user.avatar} />
 
-  // return (
-  //     <div className={classes.message}>
-  //         <div className={classes.message__bubble}>Lorem ipsum dolor sit amet, consectetur adipiscing elit</div>
-  //         <UserAvatar src={user.user.avatar} width="28px" height="28px" />
-  //     </div>
-  // )
+        <div className={classes.message__bubble}>{text}</div>
+      </div>
+    );
+  } else {
+    return (
+      <div className={classes.other_message}>
+        <div className={classes.other_message__bubble}>{text}</div>
+        <UserAvatar src={author.user.avatar} />
+      </div>
+    );
+  }
 };
 
 export default Message;

@@ -73,7 +73,10 @@ const CreateChatModal = ({ onChatCreated, onClose }) => {
             className={classes.input}
           />
 
-          <SearchUser onSelectUser={addSelectUser} />
+          <SearchUser
+            onSelectUser={addSelectUser}
+            participants={participants}
+          />
         </div>
       </div>
 

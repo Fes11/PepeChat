@@ -14,17 +14,17 @@
   border-radius: 10px 10px 10px 0px;
 }
 
-/* .message {
+.other_message {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 15px;
   gap: 5px;
 }
 
-.message__bubble {
+.other_message__bubble {
   font-size: 12px;
   font-weight: 700;
   background: rgba(255, 255, 255, 0.1);
   padding: 10px;
   border-radius: 10px 10px 0px 10px;
-} */
+}

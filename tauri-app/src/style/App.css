@@ -230,12 +230,16 @@ a:hover {
   margin-right: 10px;
 }
 
+.spacer {
+  margin-top: auto;
+}
+
 .chat__message_list {
   padding: 12px;
   height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  overflow: scroll;
 }
 
 .chat__bottom {
@@ -388,8 +392,8 @@ a:hover {
 
 .chat_empty {
   padding: 15px 30px;
-  background: var(--main-color);
+  background: var(--box-bg-color);
   color: white;
   border-radius: 8px;
-  font-weight: 600;
+  font-size: 14px;
 }
