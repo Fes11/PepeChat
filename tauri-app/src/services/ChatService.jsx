@@ -8,4 +8,8 @@ export default class ChatServices {
   static async createChat(data) {
     return api.post("/api/chats/", data);
   }
+
+  static async getChatParticipants(id) {
+    return api.get(`/api/chats/${id}/participants`);
+  }
 }

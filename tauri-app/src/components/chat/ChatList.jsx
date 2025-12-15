@@ -6,6 +6,7 @@ import Select from "../UI/Select.jsx";
 import MyModal from "../UI/MyModal/MyModal.jsx";
 import CreateChatModal from "./CreateChatModal.jsx";
 import ChatServices from "../../services/ChatService.jsx";
+import classes from "./ChatList.module.css";
 
 const ChatList = ({ onSelectChat }) => {
   const [modal, setModal] = useState(false);
@@ -29,8 +30,8 @@ const ChatList = ({ onSelectChat }) => {
   };
 
   return (
-    <div className="chat_list">
-      <div className="chat_list__list">
+    <div className={classes.chat_list}>
+      <div className={classes.chat_list__content}>
         <MyModal visable={modal} setVisable={setModal}>
           <CreateChatModal
             onClose={() => setModal(false)}
@@ -46,13 +47,16 @@ const ChatList = ({ onSelectChat }) => {
           <option value="Offline">Offline</option>
         </Select>
 
-        <div className="chat__list__scroll">
+        <div className={classes.chat__list__scroll}>
           {chats.map((chat) => (
             <ChatListElement key={chat.id} chat={chat} onClick={onSelectChat} />
           ))}
         </div>
 
-        <button onClick={() => setModal(true)} className="chat_list__btn">
+        <button
+          onClick={() => setModal(true)}
+          className={classes.chat_list__btn}
+        >
           <img src="/plus.svg" alt="Plus" />
           Create chat
         </button>

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import MessageService from "../../services/MessageService";
 import Message from "./Message";
+import ChatDescription from "./ChatDescription.jsx";
 
 const ChatWindow = ({ chat }) => {
   const [messages, setMessages] = useState([]);
@@ -16,7 +17,6 @@ const ChatWindow = ({ chat }) => {
         console.error("Ошибка загрузки сообщений:", err);
       }
     };
-
     loadMessages();
   }, [chat.id]);
 
@@ -41,41 +41,45 @@ const ChatWindow = ({ chat }) => {
   };
 
   return (
-    <div className="chat">
-      <div className="chat__header">
-        <div className="chat__header_avatar">
-          <img src={chat.avatar} alt="Chat Avatar" />
+    <div className="chat_window">
+      <div className="chat">
+        <div className="chat__header">
+          <div className="chat__header_avatar">
+            <img src={chat.avatar} alt="Chat Avatar" />
+          </div>
+          <div className="chat__header_info">
+            <p className="chat__header_name">{chat.name}</p>
+            <p className="chat__header_description">online</p>
+          </div>
         </div>
-        <div className="chat__header_info">
-          <p className="chat__header_name">{chat.name}</p>
-          <p className="chat__header_description">online</p>
+
+        <div className="chat__message_list">
+          <div className="spacer"></div>
+          {messages.map((msg) => (
+            <Message key={msg.id} author={msg.author} text={msg.text} />
+          ))}
+
+          <div ref={bottomRef}></div>
+        </div>
+
+        <div className="chat__bottom">
+          <input
+            className="chat__input"
+            type="text"
+            placeholder="Write a message..."
+            value={inputMessage}
+            onChange={(e) => setInputMessage(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") sendMessage(e);
+            }}
+          />
+          <button className="chat__send_btn" onClick={sendMessage}>
+            <img src="/paperplane.svg" alt="Send" />
+          </button>
         </div>
       </div>
 
-      <div className="chat__message_list">
-        <div className="spacer"></div>
-        {messages.map((msg) => (
-          <Message key={msg.id} author={msg.author} text={msg.text} />
-        ))}
-
-        <div ref={bottomRef}></div>
-      </div>
-
-      <div className="chat__bottom">
-        <input
-          className="chat__input"
-          type="text"
-          placeholder="Write a message..."
-          value={inputMessage}
-          onChange={(e) => setInputMessage(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") sendMessage(e);
-          }}
-        />
-        <button className="chat__send_btn" onClick={sendMessage}>
-          <img src="/paperplane.svg" alt="Send" />
-        </button>
-      </div>
+      <ChatDescription chat={chat} />
     </div>
   );
 };

@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import ChatList from "./ChatList.jsx";
 import ChatWindow from "./ChatWindow.jsx";
-import ChatDescription from "./ChatDescription.jsx";
 
 const ChatPage = () => {
   const [selectedChat, setSelectedChat] = useState(null);
@@ -13,9 +12,10 @@ const ChatPage = () => {
       {selectedChat ? (
         <ChatWindow chat={selectedChat} />
       ) : (
-        <div className="chat_empty">Выберите чат</div>
+        <div className="chat_empty">
+          <p>Выберите чат</p>
+        </div>
       )}
-      <ChatDescription />
     </div>
   );
 };
