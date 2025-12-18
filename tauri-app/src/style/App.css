@@ -81,12 +81,12 @@ a:hover {
   flex-direction: column;
   background-color: var(--box-bg-color);
   min-width: 500px;
+  position: relative;
 }
 
 .chat_description {
   width: 100%;
   height: 100%;
-  overflow: hidden;
   border-radius: 10px;
   background-color: var(--box-bg-color);
   max-width: 210px;
@@ -205,35 +205,49 @@ a:hover {
   flex: 1;
   overflow-y: auto;
   min-height: 0;
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .chat__bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
   height: 68px;
-  border-top: 1px solid var(--border-color);
+  width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 0 10px;
+  background: transparent;
+  box-sizing: border-box;
 }
 
 .chat__input {
-  background: #3a3a40;
-  border-radius: 10px;
+  background: linear-gradient(to right, #3a3a4059, #7b61ff23);
+  border-radius: 30px;
   margin-right: 10px;
   padding: 0 15px;
+  backdrop-filter: blur(20px);
   height: 45px;
   width: 95%;
+  box-shadow: -1px -1px 0 rgba(255, 255, 255, 0.1), 1px 1px 0 rgba(185, 185, 185, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .chat__send_btn {
   min-width: 45px;
   height: 45px;
   border-radius: 10px;
-  background-color: var(--main-color);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: -1px -1px 0 rgba(255, 255, 255, 0.1), 1px 1px 0 rgba(185, 185, 185, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background-color: #7b61ff44;
+  backdrop-filter: blur(20px);
 }
 
 .chat__send_btn img {
@@ -242,7 +256,7 @@ a:hover {
 }
 
 .chat__send_btn:hover {
-  background-color: var(--main-hover-color);
+  background-color: #7b61ff96;
 }
 
 .profile__avatar {
@@ -329,6 +343,7 @@ a:hover {
   cursor: pointer;
   border-radius: 5px;
   padding: 5px;
+  position: relative;
 }
 
 .participant:hover {
@@ -415,4 +430,35 @@ a:hover {
   100% {
     transform: translateX(100%);
   }
+}
+
+.participant_profile {
+  width: 200px;
+  height: 300px;
+  background: #22222280;
+  backdrop-filter: blur(20px);
+  border-radius: 15px;
+  position: absolute;
+  top: -10px;
+  left: -205px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(68, 68, 68, 0.5);
+  z-index: 2;
+  padding: 15px;
+  box-sizing: border-box;
+}
+
+.participant_profile_header {
+  width: 100%;
+  display: flex;
+  gap: 10px;
+}
+
+.participant_profile_description {
+  width: 100%;
+  height: 100%;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 10px 0;
 }

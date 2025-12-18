@@ -35,7 +35,7 @@ const ChatDescription = ({ chat }) => {
 
         <div className="participants_list">
           {participants.map((participant) => (
-            <Participant key={participant.user.id} user={participant.user} />
+            <Participant key={participant.user.id} user={participant.user} haveProfile={true} />
           ))}
         </div>
 

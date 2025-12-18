@@ -83,7 +83,7 @@ const CreateChatModal = ({ onChatCreated, onClose }) => {
       <p className={classes.partchipants__list_title}>Participants chat: </p>
       <div className={classes.partchipants__list}>
         {participants.map((user) => (
-          <Participant key={user.id} user={user} />
+          <Participant key={user.id} user={user} haveProfile={false} />
         ))}
       </div>
 
