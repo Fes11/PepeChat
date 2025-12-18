@@ -1,8 +1,8 @@
 import api from "../http";
 
 export default class ChatServices {
-  static async getChats() {
-    return api.get("/api/chats/");
+  static async getChats(page) {
+    return api.get(`/api/chats?page=${page}`);
   }
 
   static async createChat(data) {

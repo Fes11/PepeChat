@@ -6,7 +6,19 @@ import ChatDescription from "./ChatDescription.jsx";
 const ChatWindow = ({ chat }) => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
-  const bottomRef = useRef(null);
+  const [initialLoad, setInitialLoad] = useState(true);
+  const listRef = useRef(null);
+
+  useEffect(() => {
+    setInitialLoad(true);
+  }, [chat.id]);
+
+  useEffect(() => {
+    if (!listRef.current || !initialLoad) return;
+
+    listRef.current.scrollTop = listRef.current.scrollHeight;
+    setInitialLoad(false);
+  }, [messages]);
 
   useEffect(() => {
     const loadMessages = async () => {
@@ -19,10 +31,6 @@ const ChatWindow = ({ chat }) => {
     };
     loadMessages();
   }, [chat.id]);
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
 
   const sendMessage = async (e) => {
     e.preventDefault();
@@ -58,8 +66,6 @@ const ChatWindow = ({ chat }) => {
           {messages.map((msg) => (
             <Message key={msg.id} author={msg.author} text={msg.text} />
           ))}
-
-          <div ref={bottomRef}></div>
         </div>
 
         <div className="chat__bottom">

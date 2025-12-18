@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import ChatListElement from "./ChatListElement.jsx";
 import Profile from "../Profile.jsx";
 import Search from "../UI/Input/Search.jsx";
@@ -7,27 +7,64 @@ import MyModal from "../UI/MyModal/MyModal.jsx";
 import CreateChatModal from "./CreateChatModal.jsx";
 import ChatServices from "../../services/ChatService.jsx";
 import classes from "./ChatList.module.css";
+import ChatElementLoader from "../UI/ChatElementLoader.jsx";
 
 const ChatList = ({ onSelectChat }) => {
   const [modal, setModal] = useState(false);
   const [chats, setChats] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+
+  const loadingRef = useRef();
+  const pageRef = useRef(1);
+  const loadingRefState = useRef(false);
+
+  const fetchChats = async () => {
+    if (loadingRefState.current || !hasMore) return;
+
+    loadingRefState.current = true;
+    setLoading(true);
+
+    try {
+      const response = await ChatServices.getChats(pageRef.current);
+
+      setChats((prev) => {
+        const map = new Map(prev.map((c) => [c.id, c]));
+        response.data.results.forEach((c) => map.set(c.id, c));
+        return Array.from(map.values());
+      });
+
+      setHasMore(!!response.data.next);
+      pageRef.current += 1;
+    } catch (e) {
+      console.error(e);
+    } finally {
+      loadingRefState.current = false;
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchChats = async () => {
-      try {
-        const response = await ChatServices.getChats();
-        setChats(response.data.results);
-      } catch (error) {
-        console.error("Ошибка при получении чатов:", error);
-      }
-    };
-
     fetchChats();
   }, []);
 
   const handleChatCreated = (newChat) => {
     setChats((prev) => [newChat, ...prev]);
   };
+
+  useEffect(() => {
+    const observerInstance = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && hasMore) {
+        fetchChats();
+      }
+    });
+
+    if (loadingRef.current) {
+      observerInstance.observe(loadingRef.current);
+    }
+
+    return () => observerInstance.disconnect();
+  }, [hasMore]);
 
   return (
     <div className={classes.chat_list}>
@@ -51,6 +88,8 @@ const ChatList = ({ onSelectChat }) => {
           {chats.map((chat) => (
             <ChatListElement key={chat.id} chat={chat} onClick={onSelectChat} />
           ))}
+
+          <div ref={loadingRef}>{loading && <ChatElementLoader />}</div>
         </div>
 
         <button
