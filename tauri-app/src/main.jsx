@@ -10,10 +10,17 @@ export const Context = createContext({
   store,
 });
 
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <Context.Provider value={{ store }}>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
-  </Context.Provider>
+const container = document.getElementById("root");
+if (!window._root) {
+  window._root = ReactDOM.createRoot(container);
+}
+
+window._root.render(
+  <React.StrictMode>
+    <Context.Provider value={{ store }}>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </Context.Provider>
+  </React.StrictMode>
 );

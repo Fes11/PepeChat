@@ -6,6 +6,7 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  position: relative;
 }
 
 .chat_list__content {
@@ -14,9 +15,9 @@
   display: flex;
   flex-direction: column;
   border-radius: 10px;
-  padding: 8px 0;
   flex: 1;
   min-height: 0;
+  position: relative;
 }
 
 .chat_list__btn {
@@ -26,12 +27,16 @@
   padding: 8px;
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.05);
-  background-color: #7b61ff44;
-  backdrop-filter: blur(20px);
+  background: #7b61ff50;
+  backdrop-filter: blur(15px);
   cursor: pointer;
   font-size: 12px;
   font-weight: 800;
   margin: 0 8px;
+  position: absolute;
+  width: 95%;
+  bottom: 10px;
+  left: auto;
 }
 
 .chat_list__btn img {
@@ -39,7 +44,7 @@
 }
 
 .chat_list__btn:hover {
-  background-color: #7b61ff96;
+  background-color: #7b61ff2a;
 }
 
 .chat__list__scroll {

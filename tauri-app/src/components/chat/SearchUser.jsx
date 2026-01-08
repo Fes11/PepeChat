@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import "./SearchUser.css";
 import UserServices from "../../services/UserService";
+import UserAvatar from "../UI/UserAvatar.jsx";
 
 const SearchUser = ({ onSelectUser, participants }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -75,11 +76,8 @@ const SearchUser = ({ onSelectUser, participants }) => {
               <div className="selected_user_check_mark">
                 <span>&#10003;</span>
               </div>
-              <img
-                src={user.avatar || "/default.jpg"}
-                alt="Avatar"
-                className="search_result_avatar"
-              />
+
+              <UserAvatar src={user.avatar} width="28px" height="28px" />
               <div className="search_result_text">
                 <p className="search_result_username">{user.username}</p>
                 <p className="search_result_login">@{user.login}</p>

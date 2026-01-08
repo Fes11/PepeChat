@@ -7,7 +7,7 @@ const ChatPage = () => {
 
   return (
     <div className="chat_page">
-      <ChatList onSelectChat={setSelectedChat} />
+      <ChatList onSelectChat={setSelectedChat} selectedChat={selectedChat} />
 
       {selectedChat ? (
         <ChatWindow chat={selectedChat} />

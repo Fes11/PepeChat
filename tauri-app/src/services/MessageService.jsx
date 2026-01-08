@@ -5,6 +5,10 @@ export default class MessageService {
     return api.get(`/api/chats/${id}/messages/`);
   }
 
+  static async getMessagesByUrl(url) {
+    return api.get(url);
+  }
+
   static async sendMessage(id, data) {
     return api.post(`/api/chats/${id}/messages/`, data);
   }

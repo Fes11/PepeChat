@@ -44,14 +44,20 @@
 }
 
 .create_chat_btn {
-  background: #252525;
+  background: var(--main-color);
   padding: 10px 15px;
   border-radius: 10px;
   width: 100%;
 }
 
+.create_chat_btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #252525;
+}
+
 .create_chat_btn:hover {
-  background: #1f1f1f;
+  opacity: 50%;
 }
 
 .create_chat_private {

@@ -10,6 +10,7 @@ const CreateChatModal = ({ onChatCreated, onClose }) => {
   const [participants, setParticipants] = useState([]);
   const [isPrivate, setPrivate] = useState(false);
   const [avatar, setAvatar] = useState(null);
+  const isCreateDisabled = participants.length === 0;
 
   const isGroup = true;
 
@@ -52,6 +53,10 @@ const CreateChatModal = ({ onChatCreated, onClose }) => {
     }
   };
 
+  const removeParticipant = (userId) => {
+    setParticipants((prev) => prev.filter((p) => p.id !== userId));
+  };
+
   return (
     <form className={classes.content}>
       <div className={classes.header}>
@@ -83,7 +88,11 @@ const CreateChatModal = ({ onChatCreated, onClose }) => {
       <p className={classes.partchipants__list_title}>Participants chat: </p>
       <div className={classes.partchipants__list}>
         {participants.map((user) => (
-          <Participant key={user.id} user={user} haveProfile={false} />
+          <Participant
+            key={user.id}
+            user={user}
+            onRemove={() => removeParticipant(user.id)}
+          />
         ))}
       </div>
 
@@ -96,7 +105,11 @@ const CreateChatModal = ({ onChatCreated, onClose }) => {
         Is private chat
       </div>
 
-      <button className={classes.create_chat_btn} onClick={createChat}>
+      <button
+        className={classes.create_chat_btn}
+        onClick={createChat}
+        disabled={isCreateDisabled}
+      >
         Create chat
       </button>
     </form>

@@ -12,6 +12,8 @@
   background: var(--main-color);
   padding: 10px;
   border-radius: 10px 10px 10px 0px;
+  display: flex;
+  align-items: center;
 }
 
 .other_message {
@@ -27,4 +29,12 @@
   background: rgba(255, 255, 255, 0.1);
   padding: 10px;
   border-radius: 10px 10px 0px 10px;
+}
+
+.message__time {
+  font-size: 10px;
+  color: #ffffffa6;
+  text-align: right;
+  align-self: flex-end;
+  margin-left: 8px;
 }

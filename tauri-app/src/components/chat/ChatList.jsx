@@ -9,7 +9,7 @@ import ChatServices from "../../services/ChatService.jsx";
 import classes from "./ChatList.module.css";
 import ChatElementLoader from "../UI/ChatElementLoader.jsx";
 
-const ChatList = ({ onSelectChat }) => {
+const ChatList = ({ onSelectChat, selectedChat }) => {
   const [modal, setModal] = useState(false);
   const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -35,7 +35,7 @@ const ChatList = ({ onSelectChat }) => {
       });
 
       setHasMore(!!response.data.next);
-      pageRef.current += 1;
+      pageRef.current++;
     } catch (e) {
       console.error(e);
     } finally {
@@ -85,8 +85,14 @@ const ChatList = ({ onSelectChat }) => {
         </Select>
 
         <div className={classes.chat__list__scroll}>
-          {chats.map((chat) => (
-            <ChatListElement key={chat.id} chat={chat} onClick={onSelectChat} />
+          {chats.map((chat, idx) => (
+            <ChatListElement
+              key={chat.id}
+              chat={chat}
+              onClick={onSelectChat}
+              isSelected={chat.id === selectedChat?.id}
+              isLast={idx === chats.length - 1}
+            />
           ))}
 
           <div ref={loadingRef}>{loading && <ChatElementLoader />}</div>
