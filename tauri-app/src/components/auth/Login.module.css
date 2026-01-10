@@ -1,83 +1,83 @@
 .login__link {
-    font-size: 13px;
+  font-size: 13px;
 }
 
 .login {
-    max-width: 950px;
-    max-height: 525px;
-    border-radius: 10px;
-    padding: 8px;
-    display: flex;
+  max-width: 950px;
+  max-height: 525px;
+  border-radius: 10px;
+  padding: 8px;
+  display: flex;
 }
 
-.login__img {
-    opacity: 90%;
+.auth_img {
+  opacity: 90%;
 }
 
 .login__main {
-    padding: 0 80px;
-    margin: auto;
-    width: 100%;
+  padding: 0 80px;
+  margin: auto;
+  width: 100%;
 }
 
 .login__form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
 .login__form_input {
-    background-color: rgba(255, 255, 255, 0.05);
-    padding: 15px;
-    border-radius: 10px;
-    font-weight: bolder;
-    border: 1px solid rgb(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 15px;
+  border-radius: 10px;
+  font-weight: bolder;
+  border: 1px solid rgb(255, 255, 255, 0.1);
 }
 
 .login__form_btn {
-    background: rgba(255, 255, 255, 0.4);
-    padding: 16px 0;
-    font-size: 16px;
-    font-weight: bolder;
-    border-radius: 10px;
-    cursor: pointer;
+  background: rgba(255, 255, 255, 0.4);
+  padding: 16px 0;
+  font-size: 16px;
+  font-weight: bolder;
+  border-radius: 10px;
+  cursor: pointer;
 }
 
 .login__form_btn:hover {
-    background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .login__form_btn2 {
-    background: #7B61FF;
-    padding: 16px 0;
-    font-size: 16px;
-    font-weight: bolder;
-    border-radius: 10px;
-    cursor: pointer;
+  background: #7b61ff;
+  padding: 16px 0;
+  font-size: 16px;
+  font-weight: bolder;
+  border-radius: 10px;
+  cursor: pointer;
 }
 
 .login__form_btn2:hover {
-    background: #7B61FF90;
+  background: #7b61ff90;
 }
 
 .login__form_title {
-    margin: auto;
-    text-align: center;
-    margin-bottom: 32px;
+  margin: auto;
+  text-align: center;
+  margin-bottom: 32px;
 }
 
 .login__form_title p {
-    width: 250px;
-    margin-top: 16px;
+  width: 250px;
+  margin-top: 16px;
 }
 
 .login__form_bottom {
-    display: flex;
-    flex-direction: column;
-    text-align: center;
-    gap: 16px;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  gap: 16px;
 }
 
 .login__form_bottom p {
-    color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.4);
 }

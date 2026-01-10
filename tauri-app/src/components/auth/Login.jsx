@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Context } from "../../main";
 import classes from "./Login.module.css";
 import { observer } from "mobx-react-lite";
+import { Link } from "react-router-dom";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -22,7 +23,7 @@ const Login = () => {
 
   return (
     <div className={classes.login}>
-      <div className={classes.login__img}>
+      <div className="auth_img">
         <img src="login.png" alt="login" />
       </div>
 
@@ -57,10 +58,14 @@ const Login = () => {
           </button>
 
           <div className={classes.login__form_bottom}>
-            <a href="#" className={classes.login__link}>
+            <Link to="/registration" className={classes.login__link}>
               Don’t have an account?
-            </a>
-            <button type="button" className={classes.login__form_btn2}>
+            </Link>
+            <button
+              type="button"
+              className={classes.login__form_btn2}
+              onClick={() => navigate("/registration")}
+            >
               Sign up
             </button>
             <p>By registering, you accept the User Agreement</p>

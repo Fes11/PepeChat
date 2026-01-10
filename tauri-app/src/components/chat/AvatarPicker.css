@@ -2,6 +2,9 @@
   cursor: pointer;
   margin-right: 10px;
   position: relative;
+  display: flex;
+  width: 100px;
+  height: 105px;
 }
 
 .avatar_picker:hover {
@@ -10,8 +13,8 @@
 
 .avatar_picker_icon {
   position: absolute;
-  top: 29px;
-  left: 29px;
+  top: 29%;
+  left: 29%;
 }
 
 .avatar_input {
@@ -20,14 +23,14 @@
 
 .avatar_placeholder {
   cursor: pointer;
-  width: 100px;
-  height: 100px;
+  height: 100%;
+  width: 100%;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.1);
 }
 
 .avatar_preview {
-  width: 100px;
-  height: 100px;
+  width: 100%;
+  height: 100%;
   border-radius: 10px;
 }

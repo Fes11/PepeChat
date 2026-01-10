@@ -1,9 +1,13 @@
+import { Routes, Route, Navigate } from "react-router-dom";
 import { observer } from "mobx-react-lite";
-import "./style/App.css";
-import ChatPage from "./components/chat/ChatPage.jsx";
-import Login from "./components/auth/Login.jsx";
 import { useContext, useEffect } from "react";
 import { Context } from "./main";
+import "./style/App.css";
+import Spinner from "./components/UI/Spiner";
+
+import Login from "./components/auth/Login";
+import Registration from "./components/auth/Registration";
+import ChatPage from "./components/chat/ChatPage";
 
 const App = observer(() => {
   const { store } = useContext(Context);
@@ -14,8 +18,29 @@ const App = observer(() => {
     }
   }, []);
 
+  if (store.isLoading) {
+    return <Spinner />;
+  }
+
   return (
-    <main className="container">{store.isAuth ? <ChatPage /> : <Login />}</main>
+    <main className="container">
+      <Routes>
+        <Route
+          path="/login"
+          element={!store.isAuth ? <Login /> : <Navigate to="/" />}
+        />
+
+        <Route
+          path="/registration"
+          element={!store.isAuth ? <Registration /> : <Navigate to="/" />}
+        />
+
+        <Route
+          path="/"
+          element={store.isAuth ? <ChatPage /> : <Navigate to="/login" />}
+        />
+      </Routes>
+    </main>
   );
 });
 

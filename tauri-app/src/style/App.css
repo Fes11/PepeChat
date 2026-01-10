@@ -51,6 +51,9 @@ a:hover {
 .container {
   height: 100%;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .container {
@@ -390,6 +393,7 @@ a:hover {
   margin-left: auto;
   padding: 5px 8px;
   border-radius: 50%;
+  background: transparent;
 }
 
 .participant__remove:hover {

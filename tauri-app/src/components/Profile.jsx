@@ -1,19 +1,21 @@
 import React, { useContext } from "react";
 import UserAvatar from "./UI/UserAvatar";
 import { Context } from "../main";
-import { toJS } from "mobx";
 import { observer } from "mobx-react-lite";
 
 const Profile = () => {
   const { store } = useContext(Context);
+  const login = store.user.login;
+  const username = store.user.username;
+  const avatar = store.user.avatar;
 
   return (
     <div className="profile">
-      <UserAvatar src="./test_avatar2.jpg" width="40px" height="40px" />
+      <UserAvatar src={avatar} width="40px" height="40px" />
 
       <div className="profile__info">
-        <p className="profile_username">{toJS(store.user.login)}</p>
-        <p className="profile__status">offline</p>
+        <p className="profile_username">@{login}</p>
+        <p className="profile__status">{username}</p>
       </div>
 
       <button onClick={() => store.logout()} className="logout">
