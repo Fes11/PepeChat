@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useContext } from "react";
 import ChatAvatar from "../UI/ChatAvatar";
 import { format, parseISO } from "date-fns";
+import { Context } from "../../main.jsx";
 
-const ChatListElement = ({ chat, onClick, isSelected, isLast }) => {
+const ChatListElement = ({ chat, isSelected, isLast }) => {
+  const { chatStore } = useContext(Context);
   const lastMessageCreatedAt = chat?.last_message?.created_at;
   const last_message_time = lastMessageCreatedAt
     ? format(parseISO(lastMessageCreatedAt), "HH:mm")
@@ -15,7 +17,7 @@ const ChatListElement = ({ chat, onClick, isSelected, isLast }) => {
 
   return (
     <div
-      onClick={() => onClick(chat)}
+      onClick={() => chatStore.openChat(chat)}
       className={"chat_list_element" + (isSelected ? " chat_active" : "")}
       style={{ marginBottom: isLast ? "50px" : undefined }}
     >

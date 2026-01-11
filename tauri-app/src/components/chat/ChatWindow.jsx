@@ -4,8 +4,11 @@ import Message from "./Message";
 import ChatDescription from "./ChatDescription.jsx";
 import Spinner from "../UI/Spiner.jsx";
 import ChatAvatar from "../UI/ChatAvatar.jsx";
+import UserAvatar from "../UI/UserAvatar.jsx";
+import { parseISO, isSameDay } from "date-fns";
+import DateDivider from "../UI/DateDivider.jsx";
 
-const ChatWindow = ({ chat }) => {
+const ChatWindow = ({ chat, type }) => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -14,6 +17,7 @@ const ChatWindow = ({ chat }) => {
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState(null);
   const listRef = useRef(null);
+  const activeChatId = useRef(chat.id);
 
   const isFirstLoad = useRef(true);
 
@@ -32,16 +36,20 @@ const ChatWindow = ({ chat }) => {
   }, [messages]);
 
   useEffect(() => {
+    activeChatId.current = chat.id;
+
     const loadMessages = async () => {
       setIsLoading(true);
 
       try {
         const res = await MessageService.getMessages(chat.id);
+        if (activeChatId.current !== chat.id) return;
         setMessages(res.data.results);
         setNextCursor(res.data.next);
         setHasMore(Boolean(res.data.next));
       } catch (e) {
         console.error(e);
+        setError(e);
       } finally {
         setIsLoading(false);
       }
@@ -117,16 +125,30 @@ const ChatWindow = ({ chat }) => {
     <div className="chat_window">
       <div className="chat">
         <div className="chat__header">
-          <ChatAvatar src={chat.avatar} />
+          {type === "chat" ? (
+            <ChatAvatar src={chat.avatar} />
+          ) : (
+            <UserAvatar src={chat.avatar} />
+          )}
 
           <div className="chat__header_info">
-            <p className="chat__header_name">{chat.name}</p>
+            {type === "chat" ? (
+              <p className="chat__header_name">{chat.name}</p>
+            ) : (
+              <p className="chat__header_name">{chat.username}</p>
+            )}
             <p className="chat__header_description">online</p>
           </div>
         </div>
 
         <div className="chat__message_list" ref={listRef}>
           <div className="spacer" />
+
+          {!isLoading && error && (
+            <div className="chat__empty">
+              <p>{error}</p>
+            </div>
+          )}
 
           {isLoading && (
             <div className="chat__loader">
@@ -147,7 +169,22 @@ const ChatWindow = ({ chat }) => {
           )}
 
           {!isLoading &&
-            messages.map((msg) => <Message key={msg.id} message={msg} />)}
+            messages.map((msg, index) => {
+              const currentDate = parseISO(msg.created_at);
+              const prevMessage = messages[index - 1];
+              const prevDate = prevMessage
+                ? parseISO(prevMessage.created_at)
+                : null;
+
+              const showDate = !prevDate || !isSameDay(currentDate, prevDate);
+
+              return (
+                <React.Fragment key={msg.id}>
+                  {showDate && <DateDivider date={currentDate} />}
+                  <Message message={msg} />
+                </React.Fragment>
+              );
+            })}
         </div>
 
         <div className="chat__bottom">
@@ -167,7 +204,7 @@ const ChatWindow = ({ chat }) => {
         </div>
       </div>
 
-      <ChatDescription chat={chat} />
+      {type === "chat" && <ChatDescription key={chat.id} chat={chat} />}
     </div>
   );
 };

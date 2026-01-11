@@ -215,7 +215,7 @@ a:hover {
 
 .chat_list_element__time {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.35);
+  color: rgb(88, 88, 88);
 }
 
 .chat__header {
@@ -383,7 +383,6 @@ a:hover {
   display: flex;
   align-items: center;
   gap: 6px;
-  cursor: pointer;
   border-radius: 5px;
   padding: 5px;
   position: relative;
@@ -398,10 +397,6 @@ a:hover {
 
 .participant__remove:hover {
   background: rgba(255, 255, 255, 0.2);
-}
-
-.participant:hover {
-  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .participant p {
@@ -488,7 +483,7 @@ a:hover {
 
 .participant_profile {
   width: 200px;
-  background: #22222280;
+  background: #222222;
   backdrop-filter: blur(20px);
   border-radius: 15px;
   position: absolute;

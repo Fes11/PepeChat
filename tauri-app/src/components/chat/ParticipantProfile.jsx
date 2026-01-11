@@ -1,7 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import UserAvatar from "../UI/UserAvatar.jsx";
+import { Context } from "../../main";
 
 const ParticipantProfile = ({ user, ref }) => {
+  const { store } = useContext(Context);
+  const { chatStore } = useContext(Context);
+
   return (
     <div className="participant_profile" ref={ref}>
       <div className="participant_profile_header">
@@ -15,7 +19,15 @@ const ParticipantProfile = ({ user, ref }) => {
           )}
         </div>
       </div>
-      <button className="participant_profile_send_mes">Send message</button>
+
+      {store.user.id !== user.id && (
+        <button
+          className="participant_profile_send_mes"
+          onClick={() => chatStore.openPrivateChat(user)}
+        >
+          Send message
+        </button>
+      )}
     </div>
   );
 };

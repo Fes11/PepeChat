@@ -1,16 +1,23 @@
-import React, { useState } from "react";
+import React, { useContext } from "react";
 import ChatList from "./ChatList.jsx";
 import ChatWindow from "./ChatWindow.jsx";
+import { Context } from "../../main.jsx";
+import { observer } from "mobx-react-lite";
 
-const ChatPage = () => {
-  const [selectedChat, setSelectedChat] = useState(null);
+const ChatPage = observer(() => {
+  const { chatStore } = useContext(Context);
+  const selectedChat = chatStore?.selectedChat;
 
   return (
     <div className="chat_page">
-      <ChatList onSelectChat={setSelectedChat} selectedChat={selectedChat} />
+      <ChatList />
 
       {selectedChat ? (
-        <ChatWindow chat={selectedChat} />
+        <ChatWindow
+          key={selectedChat.id}
+          chat={selectedChat.data}
+          type={selectedChat.type}
+        />
       ) : (
         <div className="chat_empty">
           <p>Выберите чат</p>
@@ -18,6 +25,6 @@ const ChatPage = () => {
       )}
     </div>
   );
-};
+});
 
 export default ChatPage;

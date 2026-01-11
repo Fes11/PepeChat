@@ -14,7 +14,7 @@ const Message = function ({ message }) {
         <UserAvatar src={message.author?.user?.avatar} />
 
         <div className={classes.message__bubble}>
-          {message.text}
+          {message?.text}
           <div className={classes.message__time}>{date}</div>
         </div>
       </div>
@@ -22,7 +22,7 @@ const Message = function ({ message }) {
   } else {
     return (
       <div className={classes.other_message}>
-        <div className={classes.other_message__bubble}>{text}</div>
+        <div className={classes.other_message__bubble}>{message?.text}</div>
         <UserAvatar src={message.author?.user?.avatar} />
       </div>
     );

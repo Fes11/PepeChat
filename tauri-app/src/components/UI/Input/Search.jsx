@@ -1,11 +1,15 @@
-import React, { useState, useRef, useEffect } from "react";
-import UserServices from "../../../services/UserService";
-import UserAvatar from "../UserAvatar.jsx";
+import React, { useState, useEffect } from "react";
 import classes from "./Search.module.css";
+import ChatServices from "../../../services/ChatService.jsx";
+import SearchUserElement from "../SearchUserElement.jsx";
+import SearchChatElement from "../SearchChatElement.jsx";
 
 const Search = function ({ children, ...props }) {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState({
+    my_chats: [],
+    global: [],
+  });
   const [isFocused, setIsFocused] = useState(false);
 
   useEffect(() => {
@@ -16,8 +20,9 @@ const Search = function ({ children, ...props }) {
 
     const timeout = setTimeout(async () => {
       try {
-        const res = await UserServices.searchUser(query);
+        const res = await ChatServices.globalSearch(query);
         setResults(res.data);
+        console.log("Search results:", res.data);
       } catch (err) {
         console.log("Search error:", err);
       }
@@ -38,27 +43,31 @@ const Search = function ({ children, ...props }) {
         onBlur={() => setTimeout(() => setIsFocused(false), 100)}
       />
 
-      {isFocused && results.length > 0 && (
-        <div className={classes.search_results}>
-          <div className={classes.serach_local}>
+      {isFocused &&
+        (results?.my_chats?.length > 0 || results?.global?.length > 0) && (
+          <div className={classes.search_results}>
             <p className={classes.search_result_text}>Local results</p>
+
+            {results?.my_chats?.map((result) =>
+              result?.type === "user" ? (
+                <SearchUserElement key={result.id} user={result} />
+              ) : (
+                <SearchChatElement key={result.id} chat={result} />
+              )
+            )}
+
+            <p className={classes.search_result_text}>Global results</p>
+
+            {results.global?.length > 0 &&
+              results.global?.map((result) =>
+                result?.type === "user" ? (
+                  <SearchUserElement key={result.id} user={result} />
+                ) : (
+                  <SearchChatElement key={result.id} chat={result} />
+                )
+              )}
           </div>
-
-          <p className={classes.search_result_text}>Global results</p>
-          {results.map((user) => (
-            <div key={user.id} className={classes.search_result_item}>
-              <UserAvatar src={user.avatar} width="28px" height="28px" />
-
-              <div className={classes.search_result_info}>
-                <p className={classes.search_result_username}>
-                  {user.username}
-                </p>
-                <p className={classes.search_result_login}>@{user.login}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+        )}
     </div>
   );
 };

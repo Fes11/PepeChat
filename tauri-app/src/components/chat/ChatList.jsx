@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import ChatListElement from "./ChatListElement.jsx";
 import Profile from "../Profile.jsx";
 import Search from "../UI/Input/Search.jsx";
@@ -8,8 +8,10 @@ import CreateChatModal from "./CreateChatModal.jsx";
 import ChatServices from "../../services/ChatService.jsx";
 import classes from "./ChatList.module.css";
 import ChatElementLoader from "../UI/ChatElementLoader.jsx";
+import { Context } from "../../main.jsx";
 
-const ChatList = ({ onSelectChat, selectedChat }) => {
+const ChatList = () => {
+  const { chatStore } = useContext(Context);
   const [modal, setModal] = useState(false);
   const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -89,8 +91,7 @@ const ChatList = ({ onSelectChat, selectedChat }) => {
             <ChatListElement
               key={chat.id}
               chat={chat}
-              onClick={onSelectChat}
-              isSelected={chat.id === selectedChat?.id}
+              isSelected={chat.id === chatStore.selectedChat?.id}
               isLast={idx === chats.length - 1}
             />
           ))}
