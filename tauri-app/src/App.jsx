@@ -10,11 +10,14 @@ import Registration from "./components/auth/Registration";
 import ChatPage from "./components/chat/ChatPage";
 
 const App = observer(() => {
-  const { store } = useContext(Context);
+  const { chatStore, store } = useContext(Context);
 
   useEffect(() => {
-    if (localStorage.getItem("token")) {
-      store.checkAuth();
+    store.checkAuth();
+
+    const token = localStorage.getItem("token");
+    if (token) {
+      chatStore.connect(token);
     }
   }, []);
 

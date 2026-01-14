@@ -9,8 +9,9 @@ import ChatServices from "../../services/ChatService.jsx";
 import classes from "./ChatList.module.css";
 import ChatElementLoader from "../UI/ChatElementLoader.jsx";
 import { Context } from "../../main.jsx";
+import { observer } from "mobx-react-lite";
 
-const ChatList = () => {
+const ChatList = observer(() => {
   const { chatStore } = useContext(Context);
   const [modal, setModal] = useState(false);
   const [chats, setChats] = useState([]);
@@ -30,11 +31,7 @@ const ChatList = () => {
     try {
       const response = await ChatServices.getChats(pageRef.current);
 
-      setChats((prev) => {
-        const map = new Map(prev.map((c) => [c.id, c]));
-        response.data.results.forEach((c) => map.set(c.id, c));
-        return Array.from(map.values());
-      });
+      chatStore.setChats([...chatStore.chats, ...response.data.results]);
 
       setHasMore(!!response.data.next);
       pageRef.current++;
@@ -87,12 +84,12 @@ const ChatList = () => {
         </Select>
 
         <div className={classes.chat__list__scroll}>
-          {chats.map((chat, idx) => (
+          {chatStore.sortedChats.map((chat, idx) => (
             <ChatListElement
               key={chat.id}
               chat={chat}
-              isSelected={chat.id === chatStore.selectedChat?.id}
-              isLast={idx === chats.length - 1}
+              isSelected={chat.id === chatStore.selectedChat?.data.id}
+              isLast={idx === chatStore.sortedChats.length - 1}
             />
           ))}
 
@@ -111,6 +108,6 @@ const ChatList = () => {
       <Profile />
     </div>
   );
-};
+});
 
 export default ChatList;

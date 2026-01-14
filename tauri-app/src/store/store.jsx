@@ -35,6 +35,8 @@ export default class Store {
       this.setAuth(true);
       this.setUser(response.data.user);
       console.log(response.data);
+
+      this.chatStore.connect(response.data.access);
     } catch (e) {
       console.log(e.response?.data?.message || e.message);
     }
@@ -58,18 +60,27 @@ export default class Store {
   async logout() {
     try {
       await AuthServices.logout();
-      localStorage.removeItem("token");
-      this.setAuth(false);
-      this.setUser({});
     } catch (e) {
       console.log(e.response?.data?.message || e.message);
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("refresh");
+      this.setAuth(false);
+      this.setUser({});
+      this.chatStore.disconnect();
     }
   }
 
   async checkAuth() {
     try {
       const refresh = localStorage.getItem("refresh");
-      if (!refresh) return;
+
+      if (!refresh) {
+        this.setAuth(false);
+        this.setUser({});
+        this.setLoading(false);
+        return;
+      }
 
       const response = await axios.post(
         `${BASE_URL}/api/users/token/refresh/`,
@@ -84,6 +95,8 @@ export default class Store {
       this.setUser(userResponse.data);
     } catch (e) {
       console.log(e);
+      this.setAuth(false);
+      this.setUser({});
     } finally {
       this.setLoading(false);
     }

@@ -8,6 +8,8 @@ import ChatStore from "./store/chatStore";
 const store = new Store();
 const chatStore = new ChatStore();
 
+store.chatStore = chatStore;
+
 export const Context = createContext({
   store,
   chatStore,

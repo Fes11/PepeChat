@@ -12,7 +12,7 @@ const SearchUserElement = function ({ user }) {
       className={classes.search_result_item}
       onClick={() => chatStore.openPrivateChat(user)}
     >
-      <UserAvatar src={user.avatar} width="28px" height="28px" />
+      <UserAvatar user={user} width="28px" height="28px" />
 
       <div className={classes.search_result_info}>
         <p className={classes.search_result_username}>{user.username}</p>

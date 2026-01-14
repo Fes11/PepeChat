@@ -7,11 +7,11 @@ const Profile = () => {
   const { store } = useContext(Context);
   const login = store.user.login;
   const username = store.user.username;
-  const avatar = store.user.avatar;
+  const user = store.user;
 
   return (
     <div className="profile">
-      <UserAvatar src={avatar} width="40px" height="40px" />
+      <UserAvatar user={user} width="40px" height="40px" />
 
       <div className="profile__info">
         <p className="profile_username">@{login}</p>

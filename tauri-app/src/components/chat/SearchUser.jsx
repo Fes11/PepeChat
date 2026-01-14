@@ -77,7 +77,7 @@ const SearchUser = ({ onSelectUser, participants }) => {
                 <span>&#10003;</span>
               </div>
 
-              <UserAvatar src={user.avatar} width="28px" height="28px" />
+              <UserAvatar user={user} width="28px" height="28px" />
               <div className="search_result_text">
                 <p className="search_result_username">{user.username}</p>
                 <p className="search_result_login">@{user.login}</p>

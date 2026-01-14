@@ -1,15 +1,26 @@
-import React, { useEffect, useState, useRef, useLayoutEffect } from "react";
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useLayoutEffect,
+  useContext,
+} from "react";
+import { Context } from "../../main.jsx";
 import MessageService from "../../services/MessageService";
 import Message from "./Message";
 import ChatDescription from "./ChatDescription.jsx";
 import Spinner from "../UI/Spiner.jsx";
 import ChatAvatar from "../UI/ChatAvatar.jsx";
 import UserAvatar from "../UI/UserAvatar.jsx";
-import { parseISO, isSameDay } from "date-fns";
+import { parseISO, isSameDay, formatDistanceToNow } from "date-fns";
+import { enUS } from "date-fns/locale";
 import DateDivider from "../UI/DateDivider.jsx";
+import { observer } from "mobx-react-lite";
 
-const ChatWindow = ({ chat, type }) => {
-  const [messages, setMessages] = useState([]);
+const ChatWindow = observer(({ chat, type }) => {
+  // const [messages, setMessages] = useState([]);
+  const { chatStore } = useContext(Context);
+  const messages = chatStore.getMessages(chat.id);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [nextCursor, setNextCursor] = useState(null);
@@ -18,6 +29,19 @@ const ChatWindow = ({ chat, type }) => {
   const [error, setError] = useState(null);
   const listRef = useRef(null);
   const activeChatId = useRef(chat.id);
+
+  const getLastOnlineStatus = (last_online) => {
+    if (!last_online) return null;
+
+    const date = parseISO(last_online);
+
+    return formatDistanceToNow(date, {
+      addSuffix: true,
+      locale: enUS,
+    });
+  };
+
+  const lastOnlineStatus = getLastOnlineStatus(chat.last_online);
 
   const isFirstLoad = useRef(true);
 
@@ -44,7 +68,7 @@ const ChatWindow = ({ chat, type }) => {
       try {
         const res = await MessageService.getMessages(chat.id);
         if (activeChatId.current !== chat.id) return;
-        setMessages(res.data.results);
+        chatStore.setMessages(chat.id, res.data.results.slice().reverse());
         setNextCursor(res.data.next);
         setHasMore(Boolean(res.data.next));
       } catch (e) {
@@ -69,7 +93,9 @@ const ChatWindow = ({ chat, type }) => {
     try {
       const res = await MessageService.getMessagesByUrl(nextCursor);
 
-      setMessages((prev) => [...res.data.results, ...prev]);
+      const oldMessages = chatStore.getMessages(chat.id);
+
+      chatStore.setMessages(chat.id, [...res.data.results, ...oldMessages]);
 
       setNextCursor(res.data.next);
       setHasMore(Boolean(res.data.next));
@@ -84,6 +110,11 @@ const ChatWindow = ({ chat, type }) => {
       setIsLoadingMore(false);
     }
   };
+
+  useLayoutEffect(() => {
+    if (!listRef.current) return;
+    listRef.current.scrollTop = listRef.current.scrollHeight;
+  }, [messages.length]);
 
   useEffect(() => {
     const container = listRef.current;
@@ -100,22 +131,15 @@ const ChatWindow = ({ chat, type }) => {
   }, [hasMore, nextCursor]);
 
   const sendMessage = async (e) => {
-    e.preventDefault();
-    if (!inputMessage.trim()) return;
-
     try {
-      const res = await MessageService.sendMessage(chat.id, {
+      e.preventDefault();
+      if (!inputMessage.trim()) return;
+
+      chatStore.sendMessage(chat.id, {
         text: inputMessage,
       });
 
-      setMessages((prevMessages) => [...prevMessages, res.data]);
       setInputMessage("");
-
-      requestAnimationFrame(() => {
-        if (listRef.current) {
-          listRef.current.scrollTop = listRef.current.scrollHeight;
-        }
-      });
     } catch (err) {
       console.error("Ошибка отправки сообщения:", err);
     }
@@ -128,16 +152,20 @@ const ChatWindow = ({ chat, type }) => {
           {type === "chat" ? (
             <ChatAvatar src={chat.avatar} />
           ) : (
-            <UserAvatar src={chat.avatar} />
+            <UserAvatar user={chat} />
           )}
 
           <div className="chat__header_info">
             {type === "chat" ? (
               <p className="chat__header_name">{chat.name}</p>
             ) : (
-              <p className="chat__header_name">{chat.username}</p>
+              <p className="chat__header_name">{chat.username || chat.login}</p>
             )}
-            <p className="chat__header_description">online</p>
+            <p className="chat__header_description">
+              {chat.status === "online"
+                ? "online"
+                : lastOnlineStatus ?? "offline"}
+            </p>
           </div>
         </div>
 
@@ -146,7 +174,7 @@ const ChatWindow = ({ chat, type }) => {
 
           {!isLoading && error && (
             <div className="chat__empty">
-              <p>{error}</p>
+              <p>{error.message || "Ошибка загрузки сообщений"}</p>
             </div>
           )}
 
@@ -207,6 +235,6 @@ const ChatWindow = ({ chat, type }) => {
       {type === "chat" && <ChatDescription key={chat.id} chat={chat} />}
     </div>
   );
-};
+});
 
 export default ChatWindow;

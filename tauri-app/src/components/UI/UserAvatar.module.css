@@ -2,10 +2,22 @@
   display: flex;
   align-items: flex-end;
   cursor: pointer;
+  position: relative;
 }
 
 .user_avatar img {
   width: 35px;
   height: 35px;
   border-radius: 50%;
+}
+
+.status {
+  position: absolute;
+  top: 23px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  background: #4caf50;
+  border-radius: 50%;
+  border: 2px solid rgb(87, 87, 87);
 }

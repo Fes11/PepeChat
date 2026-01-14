@@ -14,6 +14,18 @@
   border-radius: 10px 10px 10px 0px;
   display: flex;
   align-items: center;
+  position: relative;
+  padding-right: 40px;
+}
+
+.message__time {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: right;
+  align-self: flex-end;
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
 }
 
 .other_message {
@@ -24,17 +36,13 @@
 }
 
 .other_message__bubble {
+  position: relative;
   font-size: 12px;
   font-weight: 700;
   background: rgba(255, 255, 255, 0.1);
   padding: 10px;
   border-radius: 10px 10px 0px 10px;
-}
-
-.message__time {
-  font-size: 10px;
-  color: #ffffffa6;
-  text-align: right;
-  align-self: flex-end;
-  margin-left: 8px;
+  display: flex;
+  align-items: center;
+  padding-right: 40px;
 }
