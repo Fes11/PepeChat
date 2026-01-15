@@ -9,7 +9,12 @@ const ParticipantProfile = ({ user, ref }) => {
   return (
     <div className="participant_profile" ref={ref}>
       <div className="participant_profile_header">
-        <UserAvatar user={user} width="50px" height="50px" />
+        <UserAvatar
+          src={user.avatar}
+          status={user.status}
+          width="50px"
+          height="50px"
+        />
         <div className="participant_profile_header_box">
           {user.username && (
             <p className="participant__description">{user.username}</p>

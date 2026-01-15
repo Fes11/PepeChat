@@ -10,12 +10,12 @@
   font-size: 13px;
   font-weight: 700;
   background: var(--main-color);
-  padding: 10px;
+  padding: 0px 10px;
   border-radius: 10px 10px 10px 0px;
   display: flex;
   align-items: center;
   position: relative;
-  padding-right: 40px;
+  padding-right: 50px;
 }
 
 .message__time {
@@ -24,8 +24,11 @@
   text-align: right;
   align-self: flex-end;
   position: absolute;
+  font-weight: 200;
   bottom: 5px;
   right: 5px;
+  display: flex;
+  gap: 5px;
 }
 
 .other_message {
@@ -40,9 +43,10 @@
   font-size: 12px;
   font-weight: 700;
   background: rgba(255, 255, 255, 0.1);
-  padding: 10px;
+  padding: 0px 10px;
   border-radius: 10px 10px 0px 10px;
   display: flex;
   align-items: center;
-  padding-right: 40px;
+  padding-right: 50px;
+  text-align: left;
 }

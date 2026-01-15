@@ -36,6 +36,8 @@ const ChatListElement = observer(({ chat, isSelected, isLast }) => {
         {last_message_time
           ? format(parseISO(last_message_time), "HH:mm")
           : chat_created_time}
+
+        <div className="new_messages_count">2</div>
       </p>
     </div>
   );

@@ -152,7 +152,7 @@ const ChatWindow = observer(({ chat, type }) => {
           {type === "chat" ? (
             <ChatAvatar src={chat.avatar} />
           ) : (
-            <UserAvatar user={chat} />
+            <UserAvatar src={chat.avatar} />
           )}
 
           <div className="chat__header_info">

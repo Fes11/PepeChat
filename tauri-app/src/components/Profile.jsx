@@ -1,27 +1,43 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import UserAvatar from "./UI/UserAvatar";
 import { Context } from "../main";
 import { observer } from "mobx-react-lite";
+import MyModal from "./UI/MyModal/MyModal.jsx";
+import SettingsModal from "./SettingsModal";
 
 const Profile = () => {
   const { store } = useContext(Context);
+  const [modal, setModal] = useState(false);
   const login = store.user.login;
   const username = store.user.username;
   const user = store.user;
 
   return (
     <div className="profile">
-      <UserAvatar user={user} width="40px" height="40px" />
+      <UserAvatar
+        src={user.avatar}
+        status={user.status}
+        width="40px"
+        height="40px"
+      />
 
       <div className="profile__info">
-        <p className="profile_username">@{login}</p>
+        {login && <p className="profile_username">@{login}</p>}
         <p className="profile__status">{username}</p>
       </div>
 
       <button onClick={() => store.logout()} className="logout">
         Logout
       </button>
-      <img src="/settings.svg" className="profile__settings_btn"></img>
+      <img
+        src="/settings.svg"
+        className="profile__settings_btn"
+        onClick={() => setModal(true)}
+      ></img>
+
+      <MyModal visable={modal} setVisable={setModal}>
+        <SettingsModal onClose={() => setModal(false)} />
+      </MyModal>
     </div>
   );
 };
