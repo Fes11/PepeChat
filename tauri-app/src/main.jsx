@@ -2,17 +2,20 @@ import React, { createContext } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
-import Store from "./store/store";
-import ChatStore from "./store/chatStore";
+import authStore from "./store/authStore";
+import chatStore from "./store/chatStore";
+import messagesStore from "./store/messagesStore";
 
-const store = new Store();
-const chatStore = new ChatStore();
+const AuthStore = new authStore();
+const ChatStore = new chatStore();
+ChatStore.setCurrentUser(AuthStore.user);
+const MessagesStore = new messagesStore();
 
-store.chatStore = chatStore;
+authStore.chatStore = ChatStore;
 
 export const Context = createContext({
-  store,
-  chatStore,
+  AuthStore,
+  ChatStore,
 });
 
 const container = document.getElementById("root");
@@ -22,10 +25,10 @@ if (!window._root) {
 
 window._root.render(
   <React.StrictMode>
-    <Context.Provider value={{ store, chatStore }}>
+    <Context.Provider value={{ AuthStore, ChatStore }}>
       <BrowserRouter>
         <App />
       </BrowserRouter>
     </Context.Provider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

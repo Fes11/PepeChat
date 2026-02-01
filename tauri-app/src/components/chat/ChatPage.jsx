@@ -5,8 +5,8 @@ import { Context } from "../../main.jsx";
 import { observer } from "mobx-react-lite";
 
 const ChatPage = observer(() => {
-  const { chatStore } = useContext(Context);
-  const selectedChat = chatStore?.selectedChat;
+  const { ChatStore } = useContext(Context);
+  const selectedChat = ChatStore?.selectedChat;
 
   return (
     <div className="chat_page">

@@ -10,18 +10,18 @@ import Registration from "./components/auth/Registration";
 import ChatPage from "./components/chat/ChatPage";
 
 const App = observer(() => {
-  const { chatStore, store } = useContext(Context);
+  const { ChatStore, AuthStore } = useContext(Context);
 
   useEffect(() => {
-    store.checkAuth();
+    AuthStore.checkAuth();
 
     const token = localStorage.getItem("token");
     if (token) {
-      chatStore.connect(token);
+      ChatStore.connect(token);
     }
   }, []);
 
-  if (store.isLoading) {
+  if (AuthStore.isLoading) {
     return <Spinner />;
   }
 
@@ -30,17 +30,17 @@ const App = observer(() => {
       <Routes>
         <Route
           path="/login"
-          element={!store.isAuth ? <Login /> : <Navigate to="/" />}
+          element={!AuthStore.isAuth ? <Login /> : <Navigate to="/" />}
         />
 
         <Route
           path="/registration"
-          element={!store.isAuth ? <Registration /> : <Navigate to="/" />}
+          element={!AuthStore.isAuth ? <Registration /> : <Navigate to="/" />}
         />
 
         <Route
-          path="/"
-          element={store.isAuth ? <ChatPage /> : <Navigate to="/login" />}
+          path="/chat/"
+          element={AuthStore.isAuth ? <ChatPage /> : <Navigate to="/login" />}
         />
       </Routes>
     </main>

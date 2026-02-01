@@ -1,17 +1,11 @@
 import React, { useState } from "react";
 
-const ReadMessageCheck = function () {
-  const read = false;
-
+const ReadMessageCheck = ({ isRead }) => {
   return (
-    <div className="read_message_check">
-      {!read ? (
-        <img src="./message-read.svg" className="message_read" />
-      ) : (
-        <img src="./message-read-f.png" className="message_read" />
-      )}
-      {/* <img src="./message-read.svg" className="message_read"></img> */}
-    </div>
+    <img
+      src={isRead ? "/message-read-f.svg" : "/message-read.svg"}
+      className="message_read"
+    />
   );
 };
 

@@ -4,13 +4,13 @@ import classes from "./Input/Search.module.css";
 import { Context } from "../../main.jsx";
 
 const SearchUserElement = function ({ user }) {
-  const { chatStore } = useContext(Context);
+  const { ChatStore } = useContext(Context);
 
   return (
     <div
       key={user.id}
       className={classes.search_result_item}
-      onClick={() => chatStore.openPrivateChat(user)}
+      onClick={() => ChatStore.openPrivateChat(user)}
     >
       <UserAvatar
         src={user.avatar}

@@ -8,6 +8,14 @@ import ChatServices from "../../services/ChatService.jsx";
 const ChatDescription = ({ chat }) => {
   const [participants, setParticipants] = useState([]);
 
+  const onlineParticipants = participants.filter(
+    (p) => p.user.status === "online",
+  );
+
+  const offlineParticipants = participants.filter(
+    (p) => p.user.status === "offline",
+  );
+
   useEffect(() => {
     const fetchParticipants = async () => {
       try {
@@ -31,17 +39,25 @@ const ChatDescription = ({ chat }) => {
 
         <Search placeholder="Search..." /> */}
 
-        <div className="chat_description__online">Online - 3</div>
+        <div className="chat_description__online">
+          Online – {onlineParticipants.length}
+        </div>
 
         <div className="participants_list">
-          {participants.map((participant) => (
+          {onlineParticipants.map((participant) => (
             <Participant key={participant.user.id} user={participant.user} />
           ))}
         </div>
 
-        <div className="chat_description__online">Offline - 3</div>
+        <div className="chat_description__online">
+          Offline – {offlineParticipants.length}
+        </div>
 
-        <div className="participants_list"></div>
+        <div className="participants_list">
+          {offlineParticipants.map((participant) => (
+            <Participant key={participant.user.id} user={participant.user} />
+          ))}
+        </div>
       </div>
     </div>
   );

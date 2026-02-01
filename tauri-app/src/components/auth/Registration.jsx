@@ -6,7 +6,7 @@ import { Context } from "../../main";
 
 const Registration = function () {
   const navigate = useNavigate();
-  const { store } = useContext(Context);
+  const { AuthStore } = useContext(Context);
 
   const [avatar, setAvatar] = useState(null);
   const [login, setLogin] = useState("");
@@ -29,10 +29,10 @@ const Registration = function () {
       formData.append("avatar", avatar);
     }
 
-    await store.registration(formData);
+    await AuthStore.registration(formData);
 
-    if (store.isAuth) {
-      navigate("/");
+    if (AuthStore.isAuth) {
+      navigate("/chat/");
     }
   };
 

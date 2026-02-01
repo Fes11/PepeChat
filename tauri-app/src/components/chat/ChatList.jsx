@@ -12,7 +12,7 @@ import { Context } from "../../main.jsx";
 import { observer } from "mobx-react-lite";
 
 const ChatList = observer(() => {
-  const { chatStore } = useContext(Context);
+  const { ChatStore } = useContext(Context);
   const [modal, setModal] = useState(false);
   const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -30,8 +30,7 @@ const ChatList = observer(() => {
 
     try {
       const response = await ChatServices.getChats(pageRef.current);
-
-      chatStore.setChats([...chatStore.chats, ...response.data.results]);
+      ChatStore.setChats([...ChatStore.chats, ...response.data.results]);
 
       setHasMore(!!response.data.next);
       pageRef.current++;
@@ -77,19 +76,19 @@ const ChatList = observer(() => {
 
         <Search placeholder="Search..." />
 
-        <Select>
+        {/* <Select>
           <option value="">All chats</option>
           <option value="Online">Online</option>
           <option value="Offline">Offline</option>
-        </Select>
+        </Select> */}
 
         <div className={classes.chat__list__scroll}>
-          {chatStore.sortedChats.map((chat, idx) => (
+          {ChatStore.sortedChats.map((chat, idx) => (
             <ChatListElement
               key={chat.id}
               chat={chat}
-              isSelected={chat.id === chatStore.selectedChat?.data.id}
-              isLast={idx === chatStore.sortedChats.length - 1}
+              isSelected={chat.id === ChatStore.selectedChat?.data.id}
+              isLast={idx === ChatStore.sortedChats.length - 1}
             />
           ))}
 

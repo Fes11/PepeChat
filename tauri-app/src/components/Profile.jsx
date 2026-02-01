@@ -6,11 +6,11 @@ import MyModal from "./UI/MyModal/MyModal.jsx";
 import SettingsModal from "./SettingsModal";
 
 const Profile = () => {
-  const { store } = useContext(Context);
+  const { AuthStore } = useContext(Context);
   const [modal, setModal] = useState(false);
-  const login = store.user.login;
-  const username = store.user.username;
-  const user = store.user;
+  const login = AuthStore.user.login;
+  const username = AuthStore.user.username;
+  const user = AuthStore.user;
 
   return (
     <div className="profile">
@@ -26,9 +26,6 @@ const Profile = () => {
         <p className="profile__status">{username}</p>
       </div>
 
-      <button onClick={() => store.logout()} className="logout">
-        Logout
-      </button>
       <img
         src="/settings.svg"
         className="profile__settings_btn"

@@ -1,4 +1,5 @@
 .settings_modal {
+  height: 500px;
 }
 
 .settings_header {
@@ -13,6 +14,7 @@
 .settings_body {
   padding: 10px;
   text-align: left;
+  margin-bottom: 20px;
 }
 
 .settings_page {

@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { store } = useContext(Context);
+  const { AuthStore } = useContext(Context);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -15,9 +15,9 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     console.log("Trying login with:", email, password);
-    await store.login(email, password);
-    if (store.isAuth) {
-      navigate("/"); // переход после успешного входа
+    await AuthStore.login(email, password);
+    if (AuthStore.isAuth) {
+      navigate("/chat/"); // переход после успешного входа
     }
   };
 

@@ -17,10 +17,10 @@ import { enUS } from "date-fns/locale";
 import DateDivider from "../UI/DateDivider.jsx";
 import { observer } from "mobx-react-lite";
 
-const ChatWindow = observer(({ chat, type }) => {
+const ChatWindow = observer(({ chat }) => {
   // const [messages, setMessages] = useState([]);
-  const { chatStore } = useContext(Context);
-  const messages = chatStore.getMessages(chat.id);
+  const { ChatStore } = useContext(Context);
+  const messages = ChatStore.getMessages(chat.id);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [nextCursor, setNextCursor] = useState(null);
@@ -68,7 +68,7 @@ const ChatWindow = observer(({ chat, type }) => {
       try {
         const res = await MessageService.getMessages(chat.id);
         if (activeChatId.current !== chat.id) return;
-        chatStore.setMessages(chat.id, res.data.results.slice().reverse());
+        ChatStore.setMessages(chat.id, res.data.results.slice().reverse());
         setNextCursor(res.data.next);
         setHasMore(Boolean(res.data.next));
       } catch (e) {
@@ -93,9 +93,9 @@ const ChatWindow = observer(({ chat, type }) => {
     try {
       const res = await MessageService.getMessagesByUrl(nextCursor);
 
-      const oldMessages = chatStore.getMessages(chat.id);
+      const oldMessages = ChatStore.getMessages(chat.id);
 
-      chatStore.setMessages(chat.id, [...res.data.results, ...oldMessages]);
+      ChatStore.setMessages(chat.id, [...res.data.results, ...oldMessages]);
 
       setNextCursor(res.data.next);
       setHasMore(Boolean(res.data.next));
@@ -135,7 +135,7 @@ const ChatWindow = observer(({ chat, type }) => {
       e.preventDefault();
       if (!inputMessage.trim()) return;
 
-      chatStore.sendMessage(chat.id, {
+      ChatStore.sendMessage(chat.id, {
         text: inputMessage,
       });
 
@@ -145,28 +145,64 @@ const ChatWindow = observer(({ chat, type }) => {
     }
   };
 
+  useEffect(() => {
+    if (!messages.length) return;
+
+    const lastMessage = messages[messages.length - 1];
+    if (!lastMessage) return;
+
+    const sendRead = () => {
+      ChatStore.sendWS({
+        action: "read_messages",
+        chat_id: chat.id,
+        last_message_id: lastMessage.id,
+      });
+    };
+
+    sendRead();
+    const container = listRef.current;
+
+    const onScroll = () => {
+      const isAtBottom =
+        container.scrollHeight - container.scrollTop - container.clientHeight <
+        50;
+
+      if (!isAtBottom) return;
+      sendRead();
+    };
+
+    container.addEventListener("scroll", onScroll);
+    return () => container.removeEventListener("scroll", onScroll);
+  }, [messages, chat.id]);
+
   return (
     <div className="chat_window">
       <div className="chat">
         <div className="chat__header">
-          {type === "chat" ? (
-            <ChatAvatar src={chat.avatar} />
-          ) : (
-            <UserAvatar src={chat.avatar} />
-          )}
-
-          <div className="chat__header_info">
-            {type === "chat" ? (
-              <p className="chat__header_name">{chat.name}</p>
+          <div className="chat_header_box">
+            {chat.is_group ? (
+              <ChatAvatar src={chat.avatar} />
             ) : (
-              <p className="chat__header_name">{chat.username || chat.login}</p>
+              <UserAvatar src={chat.other_user.avatar} />
             )}
-            <p className="chat__header_description">
-              {chat.status === "online"
-                ? "online"
-                : lastOnlineStatus ?? "offline"}
-            </p>
+
+            <div className="chat__header_info">
+              {chat.is_group ? (
+                <p className="chat__header_name">{chat.name}</p>
+              ) : (
+                <p className="chat__header_name">
+                  {chat.other_user.username || chat.other_user.login}
+                </p>
+              )}
+              <p className="chat__header_description">
+                {chat.status === "online"
+                  ? "online"
+                  : (lastOnlineStatus ?? "offline")}
+              </p>
+            </div>
           </div>
+
+          <img src="/voice_chat.png" className="voice_chat_btn" />
         </div>
 
         <div className="chat__message_list" ref={listRef}>
@@ -232,7 +268,7 @@ const ChatWindow = observer(({ chat, type }) => {
         </div>
       </div>
 
-      {type === "chat" && <ChatDescription key={chat.id} chat={chat} />}
+      {chat.is_group && <ChatDescription key={chat.id} chat={chat} />}
     </div>
   );
 });

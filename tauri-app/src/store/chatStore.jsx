@@ -1,4 +1,5 @@
-import { makeAutoObservable } from "mobx";
+import { makeAutoObservable, runInAction } from "mobx";
+import ChatService from "../services/ChatService";
 
 export default class ChatStore {
   selectedChat = null;
@@ -8,9 +9,19 @@ export default class ChatStore {
   chats = [];
   messagesByChat = {};
   lastMessageByChat = {};
+  currentUser = null;
+
+  setCurrentUser(user) {
+    this.currentUser = user;
+  }
 
   constructor() {
     makeAutoObservable(this);
+  }
+
+  sendWS(data) {
+    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) return;
+    this.socket.send(JSON.stringify(data));
   }
 
   get sortedChats() {
@@ -49,6 +60,10 @@ export default class ChatStore {
       if (data.type === "message") {
         this.addMessage(data.chat_id, data.payload);
         this.setLastMessage(data.chat_id, data.payload);
+      }
+
+      if (data.type === "messages_read") {
+        this.handleMessagesRead(data);
       }
     };
 
@@ -93,7 +108,7 @@ export default class ChatStore {
         action: "send_message",
         chat_id: chatId,
         message,
-      })
+      }),
     );
   }
 
@@ -106,16 +121,52 @@ export default class ChatStore {
   }
 
   openChat(data) {
-    this.selectedChat = {
-      type: "chat",
-      data,
-    };
+    runInAction(() => {
+      this.selectedChat = { data };
+    });
   }
 
-  openPrivateChat(data) {
-    this.selectedChat = {
-      type: "private",
-      data,
-    };
+  async openPrivateChat(user) {
+    const res = await ChatService.openPrivateChat(user.id);
+
+    runInAction(() => {
+      this.selectedChat = { data: res.data };
+      // Добавляем временно пустой чат в список, если его там нет
+      if (!this.chats.find((c) => c.id === res.data.id)) {
+        this.chats.unshift(res.data);
+      }
+    });
+  }
+
+  removeChat(chatId) {
+    runInAction(() => {
+      this.chats = this.chats.filter((c) => c.id !== chatId);
+    });
+  }
+
+  reset() {
+    this.selectedChat = null;
+    this.isOpening = false;
+    this.isConnected = false;
+    this.chats = [];
+    this.messagesByChat = {};
+    this.lastMessageByChat = {};
+  }
+
+  handleMessagesRead(data) {
+    const { chat_id, last_message_id } = data;
+    const messages = this.messagesByChat[chat_id];
+    if (!messages) return;
+
+    runInAction(() => {
+      messages.forEach((msg) => {
+        if (
+          msg.id <= last_message_id &&
+          msg.author?.user?.id === this.currentUser.id
+        ) {
+          msg.is_read = true;
+        }
+      });
+    });
   }
 }

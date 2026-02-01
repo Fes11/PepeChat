@@ -3,8 +3,8 @@ import UserAvatar from "../UI/UserAvatar.jsx";
 import { Context } from "../../main";
 
 const ParticipantProfile = ({ user, ref }) => {
-  const { store } = useContext(Context);
-  const { chatStore } = useContext(Context);
+  const { AuthStore } = useContext(Context);
+  const { ChatStore } = useContext(Context);
 
   return (
     <div className="participant_profile" ref={ref}>
@@ -25,10 +25,10 @@ const ParticipantProfile = ({ user, ref }) => {
         </div>
       </div>
 
-      {store.user.id !== user.id && (
+      {AuthStore.user.id !== user.id && (
         <button
           className="participant_profile_send_mes"
-          onClick={() => chatStore.openPrivateChat(user)}
+          onClick={() => ChatStore.openPrivateChat(user)}
         >
           Send message
         </button>

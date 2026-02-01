@@ -5,14 +5,14 @@ import { Context } from "../main";
 
 const SettingsModal = function ({ onClose }) {
   const [avatar, setAvatar] = useState(null);
-  const { store } = useContext(Context);
-  const login = store.user.login || "Login";
+  const { AuthStore } = useContext(Context);
+  const login = AuthStore.user.login || "Login";
 
   return (
     <div className={classes.settings_modal}>
       <div className={classes.settings_header}>
         <button onClick={onClose} className={classes.close}>
-          <img src="./back.png" />
+          <img src="/back.png" />
         </button>
 
         <div className={classes.settings_page}>Profile</div>
@@ -53,6 +53,9 @@ const SettingsModal = function ({ onClose }) {
           />
         </div>
       </div>
+      <button onClick={() => AuthStore.logout()} className="logout">
+        Logout
+      </button>
     </div>
   );
 };

@@ -4,7 +4,7 @@ import UserServices from "../services/UserService";
 import axios from "axios";
 import { BASE_URL } from "../http";
 
-export default class Store {
+export default class authStore {
   user = {};
   isAuth = false;
   isLoading = true;
@@ -36,7 +36,7 @@ export default class Store {
       this.setUser(response.data.user);
       console.log(response.data);
 
-      this.chatStore.connect(response.data.access);
+      this.ChatStore.connect(response.data.access);
     } catch (e) {
       console.log(e.response?.data?.message || e.message);
     }
@@ -67,7 +67,8 @@ export default class Store {
       localStorage.removeItem("refresh");
       this.setAuth(false);
       this.setUser({});
-      this.chatStore.disconnect();
+      this.ChatStore.disconnect();
+      this.ChatStore.reset();
     }
   }
 
@@ -85,7 +86,7 @@ export default class Store {
       const response = await axios.post(
         `${BASE_URL}/api/users/token/refresh/`,
         { refresh },
-        { withCredentials: true }
+        { withCredentials: true },
       );
 
       localStorage.setItem("token", response.data.access);

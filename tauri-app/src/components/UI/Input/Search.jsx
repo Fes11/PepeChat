@@ -22,7 +22,6 @@ const Search = function ({ children, ...props }) {
       try {
         const res = await ChatServices.globalSearch(query);
         setResults(res.data);
-        console.log("Search results:", res.data);
       } catch (err) {
         console.log("Search error:", err);
       }
@@ -35,7 +34,7 @@ const Search = function ({ children, ...props }) {
     <div className={classes.search_wrapper}>
       <input
         className={classes.search}
-        type="text"
+        type="search"
         {...props}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
@@ -43,7 +42,7 @@ const Search = function ({ children, ...props }) {
         onBlur={() => setTimeout(() => setIsFocused(false), 100)}
       />
 
-      {isFocused &&
+      {query &&
         (results?.my_chats?.length > 0 || results?.global?.length > 0) && (
           <div className={classes.search_results}>
             <p className={classes.search_result_text}>Local results</p>
@@ -53,7 +52,7 @@ const Search = function ({ children, ...props }) {
                 <SearchUserElement key={result.id} user={result} />
               ) : (
                 <SearchChatElement key={result.id} chat={result} />
-              )
+              ),
             )}
 
             <p className={classes.search_result_text}>Global results</p>
@@ -64,7 +63,7 @@ const Search = function ({ children, ...props }) {
                   <SearchUserElement key={result.id} user={result} />
                 ) : (
                   <SearchChatElement key={result.id} chat={result} />
-                )
+                ),
               )}
           </div>
         )}

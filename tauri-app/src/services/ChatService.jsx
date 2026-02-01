@@ -5,6 +5,10 @@ export default class ChatServices {
     return api.get(`/api/chats?page=${page}`);
   }
 
+  static async openPrivateChat(userId) {
+    return api.post("/api/chats/private/", { user_id: userId });
+  }
+
   static async createChat(data) {
     return api.post("/api/chats/", data);
   }
