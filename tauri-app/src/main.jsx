@@ -6,16 +6,13 @@ import authStore from "./store/authStore";
 import chatStore from "./store/chatStore";
 import messagesStore from "./store/messagesStore";
 
-const AuthStore = new authStore();
 const ChatStore = new chatStore();
-ChatStore.setCurrentUser(AuthStore.user);
+const AuthStore = new authStore(ChatStore);
 const MessagesStore = new messagesStore();
 
-authStore.chatStore = ChatStore;
-
 export const Context = createContext({
-  AuthStore,
-  ChatStore,
+  ChatStore: chatStore,
+  AuthStore: authStore,
 });
 
 const container = document.getElementById("root");

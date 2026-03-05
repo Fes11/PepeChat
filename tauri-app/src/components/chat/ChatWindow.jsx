@@ -16,6 +16,7 @@ import { parseISO, isSameDay, formatDistanceToNow } from "date-fns";
 import { enUS } from "date-fns/locale";
 import DateDivider from "../UI/DateDivider.jsx";
 import { observer } from "mobx-react-lite";
+import Room from "./Room.jsx";
 
 const ChatWindow = observer(({ chat }) => {
   // const [messages, setMessages] = useState([]);
@@ -29,6 +30,8 @@ const ChatWindow = observer(({ chat }) => {
   const [error, setError] = useState(null);
   const listRef = useRef(null);
   const activeChatId = useRef(chat.id);
+  const [loadMessage, setLoadMessage] = useState(false);
+  const [viewRoom, setViewRoom] = useState(false);
 
   const getLastOnlineStatus = (last_online) => {
     if (!last_online) return null;
@@ -48,18 +51,7 @@ const ChatWindow = observer(({ chat }) => {
   useEffect(() => {
     setIsLoading(true);
     isFirstLoad.current = true;
-  }, [chat.id]);
 
-  useLayoutEffect(() => {
-    if (!listRef.current) return;
-
-    if (isFirstLoad.current) {
-      listRef.current.scrollTop = listRef.current.scrollHeight;
-      isFirstLoad.current = false;
-    }
-  }, [messages]);
-
-  useEffect(() => {
     activeChatId.current = chat.id;
 
     const loadMessages = async () => {
@@ -81,6 +73,15 @@ const ChatWindow = observer(({ chat }) => {
 
     loadMessages();
   }, [chat.id]);
+
+  useLayoutEffect(() => {
+    if (!listRef.current) return;
+
+    if (isFirstLoad.current) {
+      listRef.current.scrollTop = listRef.current.scrollHeight;
+      isFirstLoad.current = false;
+    }
+  }, [messages]);
 
   const loadMoreMessages = async () => {
     if (!nextCursor || isLoadingMore) return;
@@ -131,6 +132,8 @@ const ChatWindow = observer(({ chat }) => {
   }, [hasMore, nextCursor]);
 
   const sendMessage = async (e) => {
+    setLoadMessage(true);
+
     try {
       e.preventDefault();
       if (!inputMessage.trim()) return;
@@ -142,69 +145,63 @@ const ChatWindow = observer(({ chat }) => {
       setInputMessage("");
     } catch (err) {
       console.error("Ошибка отправки сообщения:", err);
+    } finally {
+      setLoadMessage(false);
     }
   };
 
   useEffect(() => {
     if (!messages.length) return;
 
-    const lastMessage = messages[messages.length - 1];
-    if (!lastMessage) return;
-
     const sendRead = () => {
       ChatStore.sendWS({
         action: "read_messages",
         chat_id: chat.id,
-        last_message_id: lastMessage.id,
       });
     };
 
     sendRead();
-    const container = listRef.current;
-
-    const onScroll = () => {
-      const isAtBottom =
-        container.scrollHeight - container.scrollTop - container.clientHeight <
-        50;
-
-      if (!isAtBottom) return;
-      sendRead();
-    };
-
-    container.addEventListener("scroll", onScroll);
-    return () => container.removeEventListener("scroll", onScroll);
   }, [messages, chat.id]);
 
   return (
     <div className="chat_window">
       <div className="chat">
+        {viewRoom && <Room setViewRoom={setViewRoom} chatId={chat.id} />}
+
         <div className="chat__header">
           <div className="chat_header_box">
             {chat.is_group ? (
-              <ChatAvatar src={chat.avatar} />
+              <ChatAvatar src={chat?.avatar} />
             ) : (
-              <UserAvatar src={chat.other_user.avatar} />
+              <UserAvatar src={chat?.other_user?.avatar} />
             )}
 
             <div className="chat__header_info">
               {chat.is_group ? (
-                <p className="chat__header_name">{chat.name}</p>
+                <p className="chat__header_name">{chat?.name}</p>
               ) : (
                 <p className="chat__header_name">
-                  {chat.other_user.username || chat.other_user.login}
+                  {chat.other_user?.username || chat.other_user?.login}
                 </p>
               )}
-              <p className="chat__header_description">
-                {chat.status === "online"
-                  ? "online"
-                  : (lastOnlineStatus ?? "offline")}
-              </p>
+              {!chat.is_group ? (
+                <p className="chat__header_description">
+                  {chat.status === "online"
+                    ? "online"
+                    : (lastOnlineStatus ?? "offline")}
+                </p>
+              ) : (
+                ""
+              )}
             </div>
           </div>
 
-          <img src="/voice_chat.png" className="voice_chat_btn" />
+          <img
+            src="/voice_chat.png"
+            className="voice_chat_btn"
+            onClick={() => setViewRoom(true)}
+          />
         </div>
-
         <div className="chat__message_list" ref={listRef}>
           <div className="spacer" />
 
@@ -245,12 +242,11 @@ const ChatWindow = observer(({ chat }) => {
               return (
                 <React.Fragment key={msg.id}>
                   {showDate && <DateDivider date={currentDate} />}
-                  <Message message={msg} />
+                  <Message message={msg} load={loadMessage} />
                 </React.Fragment>
               );
             })}
         </div>
-
         <div className="chat__bottom">
           <input
             className="chat__input"

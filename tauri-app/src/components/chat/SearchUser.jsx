@@ -49,7 +49,10 @@ const SearchUser = ({ onSelectUser, participants }) => {
           ref={inputRef}
           className="search_user_input"
           type="text"
-          placeholder="Search users..."
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setIsFocused(true)}

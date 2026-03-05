@@ -1,0 +1,32 @@
+.room_user {
+  width: 260px;
+  height: 160px;
+  background: #ffffff10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 15px;
+  position: relative;
+}
+
+.room_user_avatar {
+  cursor: default;
+  width: 50px !important;
+  height: 50px !important;
+}
+
+.room_user_name {
+  font-size: 14px;
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  padding: 4px 10px;
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.speaking {
+  border: 2px solid #4caf50;
+  box-shadow: 0 0 8px #4caf50;
+}

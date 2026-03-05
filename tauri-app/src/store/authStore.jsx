@@ -2,15 +2,17 @@ import { makeAutoObservable } from "mobx";
 import AuthServices from "../services/AuthService";
 import UserServices from "../services/UserService";
 import axios from "axios";
-import { BASE_URL } from "../http";
+import { BASE_URL, api } from "../api";
 
 export default class authStore {
   user = {};
   isAuth = false;
   isLoading = true;
+  ChatStore;
 
-  constructor() {
+  constructor(ChatStore) {
     makeAutoObservable(this);
+    this.ChatStore = ChatStore;
   }
 
   setAuth(bool) {
@@ -19,6 +21,7 @@ export default class authStore {
 
   setUser(user) {
     this.user = user;
+    this.ChatStore?.setCurrentUser(user);
   }
 
   setLoading(bool) {
@@ -28,6 +31,8 @@ export default class authStore {
   async login(email, password) {
     try {
       localStorage.removeItem("token");
+      this.ChatStore.disconnect();
+      this.ChatStore.reset();
 
       const response = await AuthServices.login(email, password);
       localStorage.setItem("token", response.data.access);
@@ -45,6 +50,8 @@ export default class authStore {
   async registration(data) {
     try {
       localStorage.removeItem("token");
+      this.ChatStore.disconnect();
+      this.ChatStore.reset();
 
       const response = await AuthServices.registrationHttp(data);
       localStorage.setItem("token", response.data.access);

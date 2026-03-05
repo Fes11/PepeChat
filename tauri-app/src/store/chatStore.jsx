@@ -120,17 +120,27 @@ export default class ChatStore {
     return this.lastMessageByChat[chatId] || null;
   }
 
-  openChat(data) {
+  openChat(chat) {
     runInAction(() => {
-      this.selectedChat = { data };
+      this.selectedChat = {
+        id: chat.id,
+        data: chat,
+      };
     });
+
+    if (!this.chats.find((c) => c.id === chat.id)) {
+      this.chats.unshift(chat);
+    }
   }
 
   async openPrivateChat(user) {
     const res = await ChatService.openPrivateChat(user.id);
 
     runInAction(() => {
-      this.selectedChat = { data: res.data };
+      this.selectedChat = {
+        id: res.data.id,
+        data: res.data,
+      };
       // Добавляем временно пустой чат в список, если его там нет
       if (!this.chats.find((c) => c.id === res.data.id)) {
         this.chats.unshift(res.data);
@@ -151,19 +161,18 @@ export default class ChatStore {
     this.chats = [];
     this.messagesByChat = {};
     this.lastMessageByChat = {};
+    // this.disconnect();
   }
 
   handleMessagesRead(data) {
-    const { chat_id, last_message_id } = data;
+    const { chat_id, user_id } = data;
+
     const messages = this.messagesByChat[chat_id];
     if (!messages) return;
 
     runInAction(() => {
       messages.forEach((msg) => {
-        if (
-          msg.id <= last_message_id &&
-          msg.author?.user?.id === this.currentUser.id
-        ) {
+        if (msg.author?.user?.id === this.currentUser.id) {
           msg.is_read = true;
         }
       });

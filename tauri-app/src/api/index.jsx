@@ -2,7 +2,7 @@ import axios from "axios";
 
 export const BASE_URL = "http://localhost:8000";
 
-const api = axios.create({
+export const api = axios.create({
   baseURL: BASE_URL,
   withCredentials: true,
 });
@@ -45,7 +45,6 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       if (isRefreshing) {
-        // ждём завершения refresh
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         }).then((token) => {
@@ -59,8 +58,8 @@ api.interceptors.response.use(
       try {
         const refresh = localStorage.getItem("refresh");
 
-        const response = await axios.post(
-          `${BASE_URL}/api/users/token/refresh/`,
+        const response = await api.post(
+          `/api/users/token/refresh/`,
           { refresh },
           { withCredentials: true },
         );
@@ -77,7 +76,6 @@ api.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError, null);
 
-        // ❗ здесь НЕТ AuthStore
         localStorage.removeItem("token");
         localStorage.removeItem("refresh");
 

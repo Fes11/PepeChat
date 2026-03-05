@@ -398,6 +398,10 @@ a:hover {
 .chat__header_info {
   text-align: left;
   margin-left: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .chat__header_name {
@@ -590,5 +594,37 @@ a:hover {
 .message_read {
   width: 10px;
   height: 10px;
-  opacity: 60%;
+  opacity: 50%;
+}
+
+.message_read_f {
+  width: 10px;
+  height: 10px;
+  opacity: 50%;
+  position: absolute;
+  top: 2px;
+}
+
+.message_read_double {
+  display: flex;
+  overflow: hidden;
+  width: 12px;
+}
+
+.message_read_double .message_read_f:first-child {
+  right: 3px;
+}
+
+.message_read_double .message_read_f:last-child {
+  right: -1px;
+}
+
+.not_found {
+  padding: 10px 15px;
+  background: #242424;
+  border-radius: 5px;
+}
+
+.not_found h3 {
+  color: #5a5a5a;
 }

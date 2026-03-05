@@ -1,4 +1,4 @@
-import api from "../http";
+import api from "../api";
 
 export default class MessageService {
   static async getMessages(id) {

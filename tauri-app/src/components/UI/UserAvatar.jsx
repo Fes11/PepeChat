@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import classes from "./UserAvatar.module.css";
 
-const UserAvatar = ({ src, status }) => {
+const UserAvatar = ({ src, status, className }) => {
   // console.log("UserAvatar render", user.status);
 
   return (
     <div className={classes.user_avatar}>
-      <img src={src || "/default.jpg"} alt="avatar" />
+      <img src={src || "/default.jpg"} alt="avatar" className={className} />
 
       {status && status === "online" && <div className={classes.status}></div>}
     </div>
