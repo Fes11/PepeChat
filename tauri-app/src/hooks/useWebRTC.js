@@ -37,9 +37,13 @@ const useWebRTC = () => {
     };
 
     pc.ontrack = (event) => {
-      const audio = new Audio();
-      audio.srcObject = event.streams[0];
-      audio.play();
+      const remoteStream = event.streams[0];
+
+      setClient((clients) => {
+        if (clients.find((c) => c.id === userId)) return clients;
+
+        return [...clients, { id: userId, stream: remoteStream }];
+      });
     };
 
     peerConnections.current[userId] = pc;
