@@ -39,7 +39,7 @@ const Registration = function () {
   return (
     <div className={classes.registration}>
       <div className="auth_img">
-        <img src="login.png" alt="login" />
+        <img src="/login.png" alt="login" />
       </div>
 
       <div className={classes.registration_main}>

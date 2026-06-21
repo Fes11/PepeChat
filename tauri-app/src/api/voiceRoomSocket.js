@@ -40,9 +40,12 @@ export class VoiceRoomSocket {
   }
 
   disconnect() {
-    if (this.ws) {
+    if (!this.ws) return;
+
+    if (this.ws.readyState === WebSocket.OPEN) {
       this.ws.close();
-      this.ws = null;
     }
+
+    this.ws = null;
   }
 }

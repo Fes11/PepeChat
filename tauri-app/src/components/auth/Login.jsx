@@ -24,7 +24,7 @@ const Login = () => {
   return (
     <div className={classes.login}>
       <div className="auth_img">
-        <img src="login.png" alt="login" />
+        <img src="/login.png" alt="login" />
       </div>
 
       <div className={classes.login__main}>

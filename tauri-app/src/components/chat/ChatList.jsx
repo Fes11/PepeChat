@@ -7,7 +7,6 @@ import MyModal from "../UI/MyModal/MyModal.jsx";
 import CreateChatModal from "./CreateChatModal.jsx";
 import ChatServices from "../../services/ChatService.jsx";
 import classes from "./ChatList.module.css";
-import ChatElementLoader from "../UI/ChatElementLoader.jsx";
 import { Context } from "../../main.jsx";
 import { observer } from "mobx-react-lite";
 
@@ -91,8 +90,6 @@ const ChatList = observer(() => {
               isLast={idx === ChatStore.sortedChats.length - 1}
             />
           ))}
-
-          <div ref={loadingRef}>{loading && <ChatElementLoader />}</div>
         </div>
 
         <button

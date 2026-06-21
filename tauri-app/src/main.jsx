@@ -5,15 +5,14 @@ import App from "./App";
 import authStore from "./store/authStore";
 import chatStore from "./store/chatStore";
 import messagesStore from "./store/messagesStore";
+import mediaStore from "./store/mediaStore";
 
 const ChatStore = new chatStore();
 const AuthStore = new authStore(ChatStore);
 const MessagesStore = new messagesStore();
+const MediaStore = new mediaStore();
 
-export const Context = createContext({
-  ChatStore: chatStore,
-  AuthStore: authStore,
-});
+export const Context = createContext({});
 
 const container = document.getElementById("root");
 if (!window._root) {
@@ -22,7 +21,9 @@ if (!window._root) {
 
 window._root.render(
   <React.StrictMode>
-    <Context.Provider value={{ AuthStore, ChatStore }}>
+    <Context.Provider
+      value={{ AuthStore, ChatStore, MessagesStore, MediaStore }}
+    >
       <BrowserRouter>
         <App />
       </BrowserRouter>

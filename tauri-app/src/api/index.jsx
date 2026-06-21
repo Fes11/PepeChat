@@ -7,7 +7,7 @@ export const api = axios.create({
   withCredentials: true,
 });
 
-// ===== REQUEST =====
+// Request interceptor
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) {
@@ -16,78 +16,77 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// ===== REFRESH LOGIC =====
-let isRefreshing = false;
-let failedQueue = [];
+let refreshPromise = null;
 
-const processQueue = (error, token = null) => {
-  failedQueue.forEach((promise) => {
-    if (error) {
-      promise.reject(error);
-    } else {
-      promise.resolve(token);
-    }
-  });
-  failedQueue = [];
-};
-
-// ===== RESPONSE =====
+// Response interceptor
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-
-    if (
-      error.response?.status === 401 &&
-      !originalRequest._retry &&
-      localStorage.getItem("refresh")
-    ) {
+    
+    // Если 401 и не повторная попытка
+    if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        }).then((token) => {
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          return api(originalRequest);
-        });
+      
+      const refreshToken = localStorage.getItem("refresh");
+      
+      // Нет refresh токена - редирект
+      if (!refreshToken) {
+        redirectToLogin();
+        return Promise.reject(error);
       }
-
-      isRefreshing = true;
-
+      
+      // Если уже идет обновление, ждем его
+      if (!refreshPromise) {
+        refreshPromise = refreshTokenRequest(refreshToken);
+      }
+      
       try {
-        const refresh = localStorage.getItem("refresh");
-
-        const response = await api.post(
-          `/api/users/token/refresh/`,
-          { refresh },
-          { withCredentials: true },
-        );
-
-        const newAccess = response.data.access;
-        localStorage.setItem("token", newAccess);
-
-        api.defaults.headers.Authorization = `Bearer ${newAccess}`;
-        processQueue(null, newAccess);
-
-        originalRequest.headers.Authorization = `Bearer ${newAccess}`;
-        console.log("Refresh Token");
+        const newToken = await refreshPromise;
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return api(originalRequest);
       } catch (refreshError) {
-        processQueue(refreshError, null);
-
-        localStorage.removeItem("token");
-        localStorage.removeItem("refresh");
-
-        window.location.href = "/login";
+        redirectToLogin();
         return Promise.reject(refreshError);
       } finally {
-        isRefreshing = false;
+        refreshPromise = null;
       }
     }
-
+    
     return Promise.reject(error);
-  },
+  }
 );
+
+// Функция обновления токена
+async function refreshTokenRequest(refreshToken) {
+  try {
+    const response = await axios.post(`${BASE_URL}/api/users/token/refresh/`, {
+      refresh: refreshToken,
+    });
+    
+    const newToken = response.data.access;
+    localStorage.setItem("token", newToken);
+    api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+    
+    console.log("Token refreshed");
+    return newToken;
+  } catch (error) {
+    console.error("Refresh failed:", error);
+    throw error;
+  }
+}
+
+// Функция редиректа на логин
+function redirectToLogin() {
+  console.log("Redirecting to login page");
+  localStorage.removeItem("token");
+  localStorage.removeItem("refresh");
+  delete api.defaults.headers.common['Authorization'];
+  
+  // Проверяем, что мы не уже на странице логина
+  if (!window.location.pathname.includes('/login')) {
+    window.location.href = "/login";
+  }
+}
 
 export default api;

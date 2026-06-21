@@ -90,11 +90,9 @@ export default class authStore {
         return;
       }
 
-      const response = await axios.post(
-        `${BASE_URL}/api/users/token/refresh/`,
-        { refresh },
-        { withCredentials: true },
-      );
+      const response = await api.post("/api/users/token/refresh/", {
+        refresh,
+      });
 
       localStorage.setItem("token", response.data.access);
       this.setAuth(true);
