@@ -83,45 +83,28 @@
 
 ```
 PepeChat/
-├── tauri-app/                    # Tauri + React frontend
-│   ├── src/
-│   │   ├── api/                  # API клиенты и WebSocket соединения
-│   │   │   ├── index.jsx         # Axios конфигурация с интерцепторами
-│   │   │   └── voiceRoomSocket.js # WebSocket для голосовых комнат
-│   │   ├── components/           # React компоненты
-│   │   │   ├── chat/             # Компоненты чатов и голосовых комнат
-│   │   │   ├── message/          # Компоненты сообщений
-│   │   │   ├── auth/             # Компоненты аутентификации
-│   │   │   └── UI/               # Переиспользуемые UI компоненты
-│   │   ├── hooks/                # Кастомные React хуки
-│   │   │   ├── useWebRTC.js      # Логика WebRTC соединений
-│   │   │   ├── useVoiceRoom.js   # Управление голосовыми комнатами
-│   │   │   └── useMedia.jsx      # Работа с медиаустройствами
-│   │   ├── store/                # MobX хранилища
-│   │   │   ├── authStore.jsx     # Состояние аутентификации
-│   │   │   ├── chatStore.jsx     # Состояние чатов
-│   │   │   └── messagesStore.jsx # Состояние сообщений
-│   │   ├── services/             # Сервисы для работы с API
-│   │   │   ├── AuthService.jsx
-│   │   │   ├── ChatService.jsx
-│   │   │   ├── MessageService.jsx
-│   │   │   └── UserService.jsx
-│   │   ├── App.jsx               # Корневой компонент
-│   │   └── main.jsx              # Точка входа
-│   ├── src-tauri/                # Tauri backend на Rust
-│   │   ├── src/                  # Rust исходный код
-│   │   ├── Cargo.toml            # Rust зависимости
-│   │   └── tauri.conf.json       # Tauri конфигурация
-│   └── package.json              # Node.js зависимости
-├── v1/                           # Legacy версия (Python + PyQt6)
-└── screenshot/                   # Скриншоты интерфейса
+├── src/
+│   ├── api/                      # API клиенты и WebSocket соединения
+│   ├── components/               # React компоненты
+│   ├── hooks/                    # Бизнес-логика и кастомные хуки
+│   ├── services/                 # Сервисы для работы с API
+│   ├── store/                    # MobX хранилища
+│   ├── style/                    # Глобальные стили
+│   ├── App.jsx                   # Корневой компонент
+│   └── main.jsx                  # Точка входа
+├── src-tauri/                    # Tauri backend на Rust
+│   ├── src/                      # Rust исходный код
+│   ├── Cargo.toml                # Rust зависимости
+│   └── tauri.conf.json           # Tauri конфигурация
+├── public/                       # Статические ресурсы
+├── screenshot/                   # Скриншоты интерфейса
+└── package.json                  # Node.js зависимости
 ```
 
 ### Быстрый старт (Quick Start)
 
 ```bash
 # Установка зависимостей
-cd tauri-app
 npm install
 
 # Запуск в режиме разработки

@@ -5,7 +5,7 @@
 ### 1. Frontend (Tauri + React)
 
 ```
-tauri-app/src/
+src/
 ├── api/                    # Сетевой слой
 ├── components/             # UI компоненты
 ├── hooks/                  # Бизнес-логика и кастомные хуки
@@ -399,7 +399,6 @@ tauri-app/src/
 ### Сборка
 
 ```bash
-cd tauri-app
 npm install
 npm run tauri build
 ```
