@@ -13,7 +13,6 @@ import { observer } from "mobx-react-lite";
 const ChatList = observer(() => {
   const { ChatStore } = useContext(Context);
   const [modal, setModal] = useState(false);
-  const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
@@ -46,7 +45,7 @@ const ChatList = observer(() => {
   }, []);
 
   const handleChatCreated = (newChat) => {
-    setChats((prev) => [newChat, ...prev]);
+    ChatStore.openChat(newChat);
   };
 
   useEffect(() => {

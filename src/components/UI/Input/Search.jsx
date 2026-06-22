@@ -45,24 +45,33 @@ const Search = function ({ children, ...props }) {
       {query &&
         (results?.my_chats?.length > 0 || results?.global?.length > 0) && (
           <div className={classes.search_results}>
-            <p className={classes.search_result_text}>Local results</p>
-
-            {results?.my_chats?.map((result) =>
-              result?.type === "user" ? (
-                <SearchUserElement key={result.id} user={result} />
-              ) : (
-                <SearchChatElement key={result.id} chat={result} />
-              ),
+            {results.my_chats?.length > 0 && (
+              <p className={classes.search_result_text}>Local results</p>
             )}
 
-            <p className={classes.search_result_text}>Global results</p>
+            {results?.my_chats.length > 0 &&
+              results?.my_chats.map((result) =>
+                result?.type === "user" ? (
+                  <SearchUserElement key={result.id} user={result} />
+                ) : (
+                  <SearchChatElement key={result.id} chat={result} />
+                ),
+            )}
+
+            {results.global?.length > 0 && (
+              <p className={classes.search_result_text}>Global results</p>
+            )}
 
             {results.global?.length > 0 &&
               results.global?.map((result) =>
                 result?.type === "user" ? (
                   <SearchUserElement key={result.id} user={result} />
                 ) : (
-                  <SearchChatElement key={result.id} chat={result} />
+                  <SearchChatElement
+                    key={result.id}
+                    chat={result}
+                    requiresJoin
+                  />
                 ),
               )}
           </div>

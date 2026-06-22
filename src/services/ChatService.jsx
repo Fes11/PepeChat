@@ -13,6 +13,14 @@ export default class ChatServices {
     return api.post("/api/chats/", data);
   }
 
+  static async getChat(id) {
+    return api.get(`/api/chats/${id}/`);
+  }
+
+  static async joinChat(id) {
+    return api.post(`/api/chats/${id}/join-by-link/`);
+  }
+
   static async getChatParticipants(id) {
     return api.get(`/api/chats/${id}/participants`);
   }

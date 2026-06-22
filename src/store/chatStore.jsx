@@ -10,6 +10,10 @@ export default class ChatStore {
   messagesByChat = {};
   lastMessageByChat = {};
   currentUser = null;
+  loadingChatIds = new Set();
+  socketToken = null;
+  reconnectTimer = null;
+  shouldReconnect = false;
 
   setCurrentUser(user) {
     this.currentUser = user;
@@ -20,8 +24,9 @@ export default class ChatStore {
   }
 
   sendWS(data) {
-    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) return;
+    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) return false;
     this.socket.send(JSON.stringify(data));
+    return true;
   }
 
   get sortedChats() {
@@ -45,6 +50,9 @@ export default class ChatStore {
   connect(token) {
     if (this.socket || !token) return;
 
+    this.socketToken = token;
+    this.shouldReconnect = true;
+
     const wsUrl = `ws://localhost:8000/ws/?token=${token}`;
     this.socket = new WebSocket(wsUrl);
 
@@ -60,6 +68,7 @@ export default class ChatStore {
       if (data.type === "message") {
         this.addMessage(data.chat_id, data.payload);
         this.setLastMessage(data.chat_id, data.payload);
+        this.ensureChatLoaded(data.chat_id);
       }
 
       if (data.type === "messages_read") {
@@ -71,6 +80,13 @@ export default class ChatStore {
       console.log("❌ WebSocket disconnected");
       this.isConnected = false;
       this.socket = null;
+
+      if (this.shouldReconnect && !this.reconnectTimer) {
+        this.reconnectTimer = setTimeout(() => {
+          this.reconnectTimer = null;
+          this.connect(this.socketToken);
+        }, 1000);
+      }
     };
 
     this.socket.onerror = (err) => {
@@ -79,6 +95,14 @@ export default class ChatStore {
   }
 
   disconnect() {
+    this.shouldReconnect = false;
+    this.socketToken = null;
+
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+
     if (this.socket) {
       this.socket.close();
       this.socket = null;
@@ -101,15 +125,11 @@ export default class ChatStore {
   }
 
   sendMessage(chatId, message) {
-    if (!this.socket) return;
-
-    this.socket.send(
-      JSON.stringify({
-        action: "send_message",
-        chat_id: chatId,
-        message,
-      }),
-    );
+    return this.sendWS({
+      action: "send_message",
+      chat_id: chatId,
+      message,
+    });
   }
 
   setLastMessage(chatId, message) {
@@ -118,6 +138,34 @@ export default class ChatStore {
 
   getLastMessage(chatId) {
     return this.lastMessageByChat[chatId] || null;
+  }
+
+  async ensureChatLoaded(chatId) {
+    if (
+      this.chats.some((chat) => chat.id === chatId) ||
+      this.loadingChatIds.has(chatId)
+    ) {
+      return;
+    }
+
+    this.loadingChatIds.add(chatId);
+
+    try {
+      const response = await ChatService.getChats(1);
+      const chat = response.data.results.find((item) => item.id === chatId);
+
+      if (chat && !this.chats.some((item) => item.id === chat.id)) {
+        runInAction(() => {
+          this.chats.unshift(chat);
+        });
+      }
+    } catch (error) {
+      console.error("Failed to load new chat:", error);
+    } finally {
+      runInAction(() => {
+        this.loadingChatIds.delete(chatId);
+      });
+    }
   }
 
   openChat(chat) {
@@ -148,6 +196,22 @@ export default class ChatStore {
     });
   }
 
+  async joinAndOpenChat(chatId) {
+    if (this.isOpening) return;
+
+    this.isOpening = true;
+
+    try {
+      await ChatService.joinChat(chatId);
+      const response = await ChatService.getChat(chatId);
+      this.openChat(response.data);
+    } finally {
+      runInAction(() => {
+        this.isOpening = false;
+      });
+    }
+  }
+
   removeChat(chatId) {
     runInAction(() => {
       this.chats = this.chats.filter((c) => c.id !== chatId);
@@ -161,6 +225,7 @@ export default class ChatStore {
     this.chats = [];
     this.messagesByChat = {};
     this.lastMessageByChat = {};
+    this.loadingChatIds.clear();
     // this.disconnect();
   }
 

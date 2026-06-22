@@ -138,9 +138,13 @@ const ChatWindow = observer(({ chat }) => {
       e.preventDefault();
       if (!inputMessage.trim()) return;
 
-      ChatStore.sendMessage(chat.id, {
+      const isSent = ChatStore.sendMessage(chat.id, {
         text: inputMessage,
       });
+
+      if (!isSent) {
+        throw new Error("WebSocket is not connected");
+      }
 
       setInputMessage("");
     } catch (err) {
