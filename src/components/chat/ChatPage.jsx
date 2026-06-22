@@ -17,7 +17,7 @@ const ChatPage = observer(() => {
         ChatStore.openChat(chat);
       }
     }
-  }, [id, ChatStore.chats]);
+  }, [id, ChatStore, ChatStore.chats.length]);
 
   return (
     <div className="chat_page">

@@ -59,6 +59,7 @@ export default class authStore {
       this.setAuth(true);
       this.setUser(response.data.user);
       console.log(response.data);
+      this.ChatStore.connect(response.data.access);
     } catch (e) {
       console.log(e.response?.data?.message || e.message);
     }

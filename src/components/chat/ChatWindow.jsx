@@ -60,7 +60,7 @@ const ChatWindow = observer(({ chat }) => {
       try {
         const res = await MessageService.getMessages(chat.id);
         if (activeChatId.current !== chat.id) return;
-        ChatStore.setMessages(chat.id, res.data.results.slice().reverse());
+        ChatStore.mergeMessages(chat.id, res.data.results.slice().reverse());
         setNextCursor(res.data.next);
         setHasMore(Boolean(res.data.next));
       } catch (e) {
@@ -94,9 +94,7 @@ const ChatWindow = observer(({ chat }) => {
     try {
       const res = await MessageService.getMessagesByUrl(nextCursor);
 
-      const oldMessages = ChatStore.getMessages(chat.id);
-
-      ChatStore.setMessages(chat.id, [...res.data.results, ...oldMessages]);
+      ChatStore.mergeMessages(chat.id, res.data.results);
 
       setNextCursor(res.data.next);
       setHasMore(Boolean(res.data.next));
@@ -153,19 +151,6 @@ const ChatWindow = observer(({ chat }) => {
       setLoadMessage(false);
     }
   };
-
-  useEffect(() => {
-    if (!messages.length) return;
-
-    const sendRead = () => {
-      ChatStore.sendWS({
-        action: "read_messages",
-        chat_id: chat.id,
-      });
-    };
-
-    sendRead();
-  }, [messages, chat.id]);
 
   return (
     <div className="chat_window">
