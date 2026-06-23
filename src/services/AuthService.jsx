@@ -10,6 +10,8 @@ export default class AuthServices {
   }
 
   static async logout() {
-    return api.post("/api/users/logout/");
+    return api.post("/api/users/logout/", {
+      refresh_token: localStorage.getItem("refresh"),
+    });
   }
 }

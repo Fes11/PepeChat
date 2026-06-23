@@ -13,6 +13,14 @@ export default class authStore {
   constructor(ChatStore) {
     makeAutoObservable(this);
     this.ChatStore = ChatStore;
+    this.ChatStore.setPresenceListener((event) => {
+      if (this.user.id !== event.user_id) return;
+      this.setUser({
+        ...this.user,
+        status: event.status,
+        last_online: event.last_seen,
+      });
+    });
   }
 
   setAuth(bool) {

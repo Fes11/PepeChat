@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
+import { observer } from "mobx-react-lite";
+import { Context } from "../../main.jsx";
 import Search from "../UI/Input/Search";
 import ChatDescriptionBtn from "../UI/Button/ChatDescriptionBtn";
 import Select from "../UI/Select";
@@ -6,13 +8,19 @@ import Participant from "./Participant";
 import ChatServices from "../../services/ChatService.jsx";
 
 const ChatDescription = ({ chat }) => {
+  const { ChatStore } = useContext(Context);
   const [participants, setParticipants] = useState([]);
 
-  const onlineParticipants = participants.filter(
+  const participantsWithPresence = participants.map((participant) => ({
+    ...participant,
+    user: ChatStore.getUserPresence(participant.user),
+  }));
+
+  const onlineParticipants = participantsWithPresence.filter(
     (p) => p.user.status === "online",
   );
 
-  const offlineParticipants = participants.filter(
+  const offlineParticipants = participantsWithPresence.filter(
     (p) => p.user.status === "offline",
   );
 
@@ -63,4 +71,4 @@ const ChatDescription = ({ chat }) => {
   );
 };
 
-export default ChatDescription;
+export default observer(ChatDescription);

@@ -12,7 +12,18 @@ export class VoiceRoomSocket {
   connect() {
     if (this.ws) return;
 
-    this.ws = new WebSocket(`ws://localhost:8000/ws/room/${this.chatId}/`);
+    const token = localStorage.getItem("token");
+    if (!token) {
+      this.onError?.(new Error("Access token is missing"));
+      return;
+    }
+
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsHost = import.meta.env.VITE_WS_HOST || "localhost:8000";
+    this.ws = new WebSocket(
+      `${protocol}//${wsHost}/ws/room/${this.chatId}/`,
+      ["access-token", token],
+    );
 
     this.ws.onopen = () => {
       this.onOpen?.();

@@ -38,7 +38,7 @@ api.interceptors.response.use(
       
       // Если уже идет обновление, ждем его
       if (!refreshPromise) {
-        refreshPromise = refreshTokenRequest(refreshToken);
+        refreshPromise = refreshAccessToken(refreshToken);
       }
       
       try {
@@ -58,7 +58,13 @@ api.interceptors.response.use(
 );
 
 // Функция обновления токена
-async function refreshTokenRequest(refreshToken) {
+export async function refreshAccessToken(
+  refreshToken = localStorage.getItem("refresh"),
+) {
+  if (!refreshToken) {
+    throw new Error("Refresh token is missing");
+  }
+
   try {
     const response = await axios.post(`${BASE_URL}/api/users/token/refresh/`, {
       refresh: refreshToken,
@@ -77,7 +83,7 @@ async function refreshTokenRequest(refreshToken) {
 }
 
 // Функция редиректа на логин
-function redirectToLogin() {
+export function redirectToLogin() {
   console.log("Redirecting to login page");
   localStorage.removeItem("token");
   localStorage.removeItem("refresh");

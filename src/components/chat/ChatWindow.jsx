@@ -44,7 +44,8 @@ const ChatWindow = observer(({ chat }) => {
     });
   };
 
-  const lastOnlineStatus = getLastOnlineStatus(chat.last_online);
+  const otherUser = ChatStore.getUserPresence(chat.other_user);
+  const lastOnlineStatus = getLastOnlineStatus(otherUser?.last_online);
 
   const isFirstLoad = useRef(true);
 
@@ -162,7 +163,10 @@ const ChatWindow = observer(({ chat }) => {
             {chat.is_group ? (
               <ChatAvatar src={chat?.avatar} />
             ) : (
-              <UserAvatar src={chat?.other_user?.avatar} />
+              <UserAvatar
+                src={otherUser?.avatar}
+                status={otherUser?.status}
+              />
             )}
 
             <div className="chat__header_info">
@@ -170,12 +174,12 @@ const ChatWindow = observer(({ chat }) => {
                 <p className="chat__header_name">{chat?.name}</p>
               ) : (
                 <p className="chat__header_name">
-                  {chat.other_user?.username || chat.other_user?.login}
+                  {otherUser?.username || otherUser?.login}
                 </p>
               )}
               {!chat.is_group ? (
                 <p className="chat__header_description">
-                  {chat.status === "online"
+                  {otherUser?.status === "online"
                     ? "online"
                     : (lastOnlineStatus ?? "offline")}
                 </p>

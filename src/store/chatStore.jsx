@@ -1,5 +1,8 @@
 import { makeAutoObservable, runInAction } from "mobx";
 import ChatService from "../services/ChatService";
+import { refreshAccessToken, redirectToLogin } from "../api";
+
+const HEARTBEAT_INTERVAL = 20_000;
 
 export default class ChatStore {
   selectedChat = null;
@@ -16,9 +19,16 @@ export default class ChatStore {
   shouldReconnect = false;
   pendingReadsByChat = new Map();
   lastReadRequestByChat = {};
+  presenceByUserId = {};
+  presenceListener = null;
+  heartbeatTimer = null;
 
   setCurrentUser(user) {
     this.currentUser = user;
+  }
+
+  setPresenceListener(listener) {
+    this.presenceListener = listener;
   }
 
   constructor() {
@@ -76,12 +86,16 @@ export default class ChatStore {
     this.socketToken = token;
     this.shouldReconnect = true;
 
-    const wsUrl = `ws://localhost:8000/ws/?token=${token}`;
-    this.socket = new WebSocket(wsUrl);
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsHost = import.meta.env.VITE_WS_HOST || "localhost:8000";
+    const wsUrl = `${protocol}//${wsHost}/ws/`;
+    this.socket = new WebSocket(wsUrl, ["access-token", token]);
 
     this.socket.onopen = () => {
       console.log("✅ WebSocket connected");
       this.isConnected = true;
+      this.startHeartbeat();
+      this.sendPresenceHeartbeat();
       this.flushPendingReads();
     };
 
@@ -100,18 +114,20 @@ export default class ChatStore {
       if (data.type === "messages_read") {
         this.handleMessagesRead(data);
       }
+
+      if (data.type === "presence.changed") {
+        this.handlePresenceChanged(data);
+      }
     };
 
-    this.socket.onclose = () => {
+    this.socket.onclose = (event) => {
       console.log("❌ WebSocket disconnected");
       this.isConnected = false;
       this.socket = null;
+      this.stopHeartbeat();
 
       if (this.shouldReconnect && !this.reconnectTimer) {
-        this.reconnectTimer = setTimeout(() => {
-          this.reconnectTimer = null;
-          this.connect(this.socketToken);
-        }, 1000);
+        this.scheduleReconnect(event.code);
       }
     };
 
@@ -129,10 +145,48 @@ export default class ChatStore {
       this.reconnectTimer = null;
     }
 
+    this.stopHeartbeat();
+
     if (this.socket) {
       this.socket.close();
       this.socket = null;
     }
+  }
+
+  async scheduleReconnect(closeCode) {
+    if (closeCode === 4401) {
+      try {
+        this.socketToken = await refreshAccessToken();
+      } catch (error) {
+        this.shouldReconnect = false;
+        redirectToLogin();
+        return;
+      }
+    }
+
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      this.connect(this.socketToken);
+    }, 1000);
+  }
+
+  startHeartbeat() {
+    this.stopHeartbeat();
+    this.heartbeatTimer = setInterval(
+      () => this.sendPresenceHeartbeat(),
+      HEARTBEAT_INTERVAL,
+    );
+  }
+
+  stopHeartbeat() {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
+  }
+
+  sendPresenceHeartbeat() {
+    return this.sendWS({ action: "presence.heartbeat" });
   }
 
   addMessage(chatId, message) {
@@ -410,6 +464,7 @@ export default class ChatStore {
     this.loadingChatIds.clear();
     this.pendingReadsByChat.clear();
     this.lastReadRequestByChat = {};
+    this.presenceByUserId = {};
     // this.disconnect();
   }
 
@@ -435,5 +490,45 @@ export default class ChatStore {
         ? { ...msg, is_read: true }
         : msg,
     );
+  }
+
+  handlePresenceChanged(data) {
+    const { user_id: userId, status, last_seen: lastSeen } = data;
+    const presence = { status, last_online: lastSeen };
+
+    this.presenceByUserId[userId] = presence;
+
+    if (this.currentUser?.id === userId) {
+      this.currentUser = { ...this.currentUser, ...presence };
+    }
+
+    this.chats = this.chats.map((chat) => {
+      if (chat.other_user?.id !== userId) return chat;
+      return {
+        ...chat,
+        other_user: { ...chat.other_user, ...presence },
+      };
+    });
+
+    if (this.selectedChat?.data?.other_user?.id === userId) {
+      this.selectedChat = {
+        ...this.selectedChat,
+        data: {
+          ...this.selectedChat.data,
+          other_user: {
+            ...this.selectedChat.data.other_user,
+            ...presence,
+          },
+        },
+      };
+    }
+
+    this.presenceListener?.(data);
+  }
+
+  getUserPresence(user) {
+    if (!user) return user;
+    const presence = this.presenceByUserId[user.id];
+    return presence ? { ...user, ...presence } : user;
   }
 }
