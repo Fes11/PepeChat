@@ -1,8 +1,39 @@
 import { makeAutoObservable } from "mobx";
 import AuthServices from "../services/AuthService";
 import UserServices from "../services/UserService";
-import axios from "axios";
-import { BASE_URL, api } from "../api";
+import { api } from "../api";
+
+const normalizeAuthErrors = (error) => {
+  const data = error.response?.data;
+
+  if (!data) {
+    return { non_field_errors: [error.message] };
+  }
+
+  if (typeof data === "string") {
+    return { non_field_errors: [data] };
+  }
+
+  if (data.error) {
+    if (typeof data.error === "string") {
+      return { non_field_errors: [data.error] };
+    }
+
+    if (data.error.message) {
+      return { non_field_errors: [data.error.message] };
+    }
+  }
+
+  if (data.detail) {
+    return { non_field_errors: [data.detail] };
+  }
+
+  if (data.message) {
+    return { non_field_errors: [data.message] };
+  }
+
+  return data;
+};
 
 export default class authStore {
   user = {};
@@ -36,13 +67,13 @@ export default class authStore {
     this.isLoading = bool;
   }
 
-  async login(email, password) {
+  async login(login, password) {
     try {
       localStorage.removeItem("token");
       this.ChatStore.disconnect();
       this.ChatStore.reset();
 
-      const response = await AuthServices.login(email, password);
+      const response = await AuthServices.login(login, password);
       localStorage.setItem("token", response.data.access);
       localStorage.setItem("refresh", response.data.refresh);
       this.setAuth(true);
@@ -50,8 +81,10 @@ export default class authStore {
       console.log(response.data);
 
       this.ChatStore.connect(response.data.access);
+      return { ok: true, errors: {} };
     } catch (e) {
       console.log(e.response?.data?.message || e.message);
+      return { ok: false, errors: normalizeAuthErrors(e) };
     }
   }
 
@@ -68,8 +101,10 @@ export default class authStore {
       this.setUser(response.data.user);
       console.log(response.data);
       this.ChatStore.connect(response.data.access);
+      return { ok: true, errors: {} };
     } catch (e) {
       console.log(e.response?.data?.message || e.message);
+      return { ok: false, errors: normalizeAuthErrors(e) };
     }
   }
 
