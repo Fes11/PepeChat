@@ -41,7 +41,7 @@ const Room = function ({ setViewRoom, chatId }) {
           onClick={toggleMic}
           title={muted ? "Unmute" : "Mute"}
         >
-          <img src={muted ? "/mic-off.svg" : "/mic.svg"} alt="mic" />
+          <img src={muted ? "/mic-off.png" : "/mic.svg"} alt="mic" />
         </button>
 
         <button
