@@ -19,6 +19,8 @@ import DateDivider from "../UI/DateDivider.jsx";
 import { observer } from "mobx-react-lite";
 import Room from "./Room.jsx";
 
+const ACTIVE_VOICE_ROOM_CHAT_ID_KEY = "activeVoiceRoomChatId";
+
 const ChatWindow = observer(({ chat }) => {
   // const [messages, setMessages] = useState([]);
   const { ChatStore } = useContext(Context);
@@ -32,7 +34,9 @@ const ChatWindow = observer(({ chat }) => {
   const listRef = useRef(null);
   const activeChatId = useRef(chat.id);
   const [loadMessage, setLoadMessage] = useState(false);
-  const [viewRoom, setViewRoom] = useState(false);
+  const [viewRoom, setViewRoom] = useState(() => {
+    return sessionStorage.getItem(ACTIVE_VOICE_ROOM_CHAT_ID_KEY) === String(chat.id);
+  });
   const [participants, setParticipants] = useState([]);
 
   const getLastOnlineStatus = (last_online) => {
@@ -54,6 +58,22 @@ const ChatWindow = observer(({ chat }) => {
   }).length;
 
   const isFirstLoad = useRef(true);
+
+  useEffect(() => {
+    setViewRoom(
+      sessionStorage.getItem(ACTIVE_VOICE_ROOM_CHAT_ID_KEY) === String(chat.id),
+    );
+  }, [chat.id]);
+
+  const openVoiceRoom = () => {
+    sessionStorage.setItem(ACTIVE_VOICE_ROOM_CHAT_ID_KEY, String(chat.id));
+    setViewRoom(true);
+  };
+
+  const closeVoiceRoom = () => {
+    sessionStorage.removeItem(ACTIVE_VOICE_ROOM_CHAT_ID_KEY);
+    setViewRoom(false);
+  };
 
   useEffect(() => {
     if (!chat.is_group) {
@@ -188,7 +208,13 @@ const ChatWindow = observer(({ chat }) => {
   return (
     <div className="chat_window">
       <div className="chat">
-        {viewRoom && <Room setViewRoom={setViewRoom} chatId={chat.id} />}
+        {viewRoom && (
+          <Room
+            setViewRoom={setViewRoom}
+            onLeaveRoom={closeVoiceRoom}
+            chatId={chat.id}
+          />
+        )}
 
         <div className="chat__header">
           <div className="chat_header_box">
@@ -226,7 +252,7 @@ const ChatWindow = observer(({ chat }) => {
           <img
             src="/voice_chat.png"
             className="voice_chat_btn"
-            onClick={() => setViewRoom(true)}
+            onClick={openVoiceRoom}
           />
         </div>
         <div className="chat__message_list" ref={listRef}>

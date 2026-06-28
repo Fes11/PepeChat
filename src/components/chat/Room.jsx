@@ -3,13 +3,13 @@ import cls from "./Room.module.css";
 import RoomUser from "./RoomUser";
 import { useVoiceRoom } from "../../hooks/useVoiceRoom";
 
-const Room = function ({ setViewRoom, chatId }) {
+const Room = function ({ setViewRoom, onLeaveRoom, chatId }) {
   const { participants, setMicEnabled, disconnect } = useVoiceRoom(chatId);
   const [muted, setMuted] = useState(false);
 
   const leaveRoom = () => {
     disconnect();
-    setViewRoom(false);
+    onLeaveRoom();
   };
 
   const toggleMic = () => {
