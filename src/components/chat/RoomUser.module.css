@@ -1,7 +1,7 @@
 .room_user {
   width: 260px;
   height: 160px;
-  background: #ffffff10;
+  background: var(--button-soft-bg-color);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -22,8 +22,8 @@
   left: 10px;
   padding: 4px 10px;
   border-radius: 10px;
-  color: rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.1);
+  color: var(--muted-text-color);
+  background: var(--button-soft-bg-color);
 }
 
 .speaking {

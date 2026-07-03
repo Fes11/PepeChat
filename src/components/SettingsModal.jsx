@@ -4,6 +4,11 @@ import AvatarPicker from "../components/chat/AvatarPicker.jsx";
 import { mediaService } from "../services/MediaService";
 import { Context } from "../main";
 import { observer } from "mobx-react-lite";
+import {
+  ACCENT_COLORS,
+  DEFAULT_MAIN_COLOR,
+  useThemeSettings,
+} from "../theme";
 
 const SettingsModal = function ({ onClose }) {
   const [avatar, setAvatar] = useState(null);
@@ -12,6 +17,7 @@ const SettingsModal = function ({ onClose }) {
   const { AuthStore, MediaStore } = useContext(Context);
   const login = AuthStore.user.login || "Login";
   const [activeTab, setActiveTab] = useState("Profile");
+  const { theme, mainColor, setTheme, setMainColor } = useThemeSettings();
   const tabs = ["Profile", "App", "Device"];
   const testStreamRef = useRef(null);
   const audioContextRef = useRef(null);
@@ -246,6 +252,66 @@ const SettingsModal = function ({ onClose }) {
             <div className={classes.tabcontent_header}>
               <h3>App</h3>
             </div>
+
+            <div className={classes.tabcontent_body}>
+              <p className={classes.settings_label}>Appearance</p>
+
+              <div className={classes.app_settings}>
+                <label className={classes.setting_row}>
+                  <span>
+                    <strong>Light theme</strong>
+                    <small>Use bright surfaces and dark text</small>
+                  </span>
+
+                  <input
+                    className={classes.theme_switch}
+                    type="checkbox"
+                    checked={theme === "light"}
+                    onChange={(e) =>
+                      setTheme(e.target.checked ? "light" : "dark")
+                    }
+                  />
+                </label>
+
+                <div className={classes.setting_row}>
+                  <span>
+                    <strong>Main color</strong>
+                    <small>Accent color for buttons and active states</small>
+                  </span>
+
+                  <input
+                    className={classes.color_input}
+                    type="color"
+                    value={mainColor}
+                    onChange={(e) => setMainColor(e.target.value)}
+                    aria-label="Main color"
+                  />
+                </div>
+
+                <div className={classes.color_grid}>
+                  {ACCENT_COLORS.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      className={`${classes.color_swatch} ${
+                        mainColor === color ? classes.color_swatch_active : ""
+                      }`}
+                      style={{ "--swatch-color": color }}
+                      onClick={() => setMainColor(color)}
+                      aria-label={`Set main color ${color}`}
+                    />
+                  ))}
+
+                  <button
+                    type="button"
+                    className={classes.reset_color}
+                    onClick={() => setMainColor(DEFAULT_MAIN_COLOR)}
+                  >
+                    Reset
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -276,7 +342,9 @@ const SettingsModal = function ({ onClose }) {
                   max="2"
                   step="0.01"
                   value={MediaStore.volume}
-                  onChange={(e) => MediaStore.changeVolume(parseFloat(e.target.value))}
+                  onChange={(e) =>
+                    MediaStore.changeVolume(parseFloat(e.target.value))
+                  }
                 />
               </label>
 

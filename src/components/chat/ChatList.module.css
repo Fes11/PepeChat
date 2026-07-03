@@ -26,8 +26,8 @@
   justify-content: center;
   padding: 8px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  background: #7b61ff50;
+  border: 1px solid var(--shadow-border-color);
+  background: var(--main-soft-color);
   backdrop-filter: blur(15px);
   cursor: pointer;
   font-size: 12px;
@@ -44,7 +44,7 @@
 }
 
 .chat_list__btn:hover {
-  background-color: #7b61ff2a;
+  background-color: var(--main-faint-color);
 }
 
 .chat__list__scroll {

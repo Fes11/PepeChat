@@ -21,8 +21,8 @@
   top: 40px;
   left: 6px;
   width: 95%;
-  background: #252525;
-  border: 1px solid #505050;
+  background: var(--modal-bg-color);
+  border: 1px solid var(--input-border-color);
   border-radius: 6px;
   max-height: 250px;
   overflow-x: hidden;
@@ -30,7 +30,7 @@
 }
 
 .serach_local {
-  border-bottom: 1px solid #313131;
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   flex-direction: column;
@@ -39,9 +39,9 @@
 .search_result_text {
   text-align: left;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--muted-text-color);
   padding: 10px 0px 10px 10px;
-  border-top: 2px solid #313131;
+  border-top: 2px solid var(--border-color);
   width: 100%;
 }
 
@@ -58,12 +58,12 @@
 }
 
 .search_result_item:hover {
-  background: #505050;
+  background: var(--hover-bg-color);
 }
 
 .search_participants_qty {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--muted-text-color);
 }
 
 .search_result_username {
@@ -78,7 +78,7 @@
 .search_result_login {
   font-size: 12px;
   font-weight: 300;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--muted-text-color);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

@@ -10,6 +10,7 @@
   font-size: 13px;
   font-weight: 700;
   background: var(--main-color);
+  color: var(--main-contrast-color);
   padding: 0px 10px;
   border-radius: 10px 10px 10px 0px;
   display: flex;
@@ -20,7 +21,7 @@
 
 .message__time {
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--message-time-color);
   text-align: right;
   align-self: flex-end;
   position: absolute;
@@ -42,7 +43,7 @@
   position: relative;
   font-size: 12px;
   font-weight: 700;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--message-other-bg-color);
   padding: 0px 10px;
   border-radius: 10px 10px 0px 10px;
   display: flex;

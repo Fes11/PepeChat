@@ -27,15 +27,15 @@
 }
 
 .login__form_input {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--input-bg-color);
   padding: 15px;
   border-radius: 10px;
   font-weight: bolder;
-  border: 1px solid rgb(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
 }
 
 .login__form_btn {
-  background: rgba(255, 255, 255, 0.4);
+  background: var(--button-soft-bg-color);
   padding: 16px 0;
   font-size: 16px;
   font-weight: bolder;
@@ -44,11 +44,12 @@
 }
 
 .login__form_btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--hover-bg-color);
 }
 
 .login__form_btn2 {
-  background: #7b61ff;
+  background: var(--main-color);
+  color: var(--main-contrast-color);
   padding: 16px 0;
   font-size: 16px;
   font-weight: bolder;
@@ -57,7 +58,7 @@
 }
 
 .login__form_btn2:hover {
-  background: #7b61ff90;
+  background: var(--main-hover-color);
 }
 
 .login__form_title {
@@ -79,5 +80,5 @@
 }
 
 .login__form_bottom p {
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--muted-text-color);
 }

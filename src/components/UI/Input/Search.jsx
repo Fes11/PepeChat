@@ -4,31 +4,60 @@ import ChatServices from "../../../services/ChatService.jsx";
 import SearchUserElement from "../SearchUserElement.jsx";
 import SearchChatElement from "../SearchChatElement.jsx";
 
-const Search = function ({ children, ...props }) {
+const EMPTY_RESULTS = {
+  my_chats: [],
+  global: [],
+};
+
+const normalizeResults = (results) => ({
+  my_chats: results?.my_chats || [],
+  global: results?.global || [],
+});
+
+const Search = function (props) {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState({
-    my_chats: [],
-    global: [],
-  });
-  const [isFocused, setIsFocused] = useState(false);
+  const [results, setResults] = useState(EMPTY_RESULTS);
+  const [hasSearched, setHasSearched] = useState(false);
 
   useEffect(() => {
-    if (!query.trim()) {
-      setResults([]);
+    const trimmedQuery = query.trim();
+
+    if (!trimmedQuery) {
+      setResults(EMPTY_RESULTS);
+      setHasSearched(false);
       return;
     }
 
+    let isActive = true;
+    setResults(EMPTY_RESULTS);
+    setHasSearched(false);
+
     const timeout = setTimeout(async () => {
       try {
-        const res = await ChatServices.globalSearch(query);
-        setResults(res.data);
+        const res = await ChatServices.globalSearch(trimmedQuery);
+
+        if (isActive) {
+          setResults(normalizeResults(res.data));
+          setHasSearched(true);
+        }
       } catch (err) {
-        console.log("Search error:", err);
+        if (isActive) {
+          setHasSearched(true);
+          console.log("Search error:", err);
+        }
       }
     }, 300);
 
-    return () => clearTimeout(timeout);
+    return () => {
+      isActive = false;
+      clearTimeout(timeout);
+    };
   }, [query]);
+
+  const hasLocalResults = results.my_chats.length > 0;
+  const hasGlobalResults = results.global.length > 0;
+  const hasResults = hasLocalResults || hasGlobalResults;
+  const showResults = Boolean(query.trim()) && (hasResults || hasSearched);
 
   return (
     <div className={classes.search_wrapper}>
@@ -38,44 +67,41 @@ const Search = function ({ children, ...props }) {
         {...props}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setTimeout(() => setIsFocused(false), 100)}
       />
 
-      {query &&
-        (results?.my_chats?.length > 0 || results?.global?.length > 0) && (
-          <div className={classes.search_results}>
-            {results.my_chats?.length > 0 && (
-              <p className={classes.search_result_text}>Local results</p>
+      {showResults && (
+        <div className={classes.search_results}>
+          {hasLocalResults && (
+            <p className={classes.search_result_text}>Local results</p>
+          )}
+
+          {hasLocalResults &&
+            results.my_chats.map((result) =>
+              result?.type === "user" ? (
+                <SearchUserElement key={result.id} user={result} />
+              ) : (
+                <SearchChatElement key={result.id} chat={result} />
+              ),
             )}
 
-            {results?.my_chats.length > 0 &&
-              results?.my_chats.map((result) =>
-                result?.type === "user" ? (
-                  <SearchUserElement key={result.id} user={result} />
-                ) : (
-                  <SearchChatElement key={result.id} chat={result} />
-                ),
+          {hasGlobalResults && (
+            <p className={classes.search_result_text}>Global results</p>
+          )}
+
+          {hasGlobalResults &&
+            results.global.map((result) =>
+              result?.type === "user" ? (
+                <SearchUserElement key={result.id} user={result} />
+              ) : (
+                <SearchChatElement key={result.id} chat={result} requiresJoin />
+              ),
             )}
 
-            {results.global?.length > 0 && (
-              <p className={classes.search_result_text}>Global results</p>
-            )}
-
-            {results.global?.length > 0 &&
-              results.global?.map((result) =>
-                result?.type === "user" ? (
-                  <SearchUserElement key={result.id} user={result} />
-                ) : (
-                  <SearchChatElement
-                    key={result.id}
-                    chat={result}
-                    requiresJoin
-                  />
-                ),
-              )}
-          </div>
-        )}
+          {!hasResults && (
+            <p className={classes.search_result_text}>No results found</p>
+          )}
+        </div>
+      )}
     </div>
   );
 };

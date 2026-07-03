@@ -6,11 +6,14 @@ import authStore from "./store/authStore";
 import chatStore from "./store/chatStore";
 import messagesStore from "./store/messagesStore";
 import mediaStore from "./store/mediaStore";
+import { initThemeSettings } from "./theme";
 
 const ChatStore = new chatStore();
 const AuthStore = new authStore(ChatStore);
 const MessagesStore = new messagesStore();
 const MediaStore = new mediaStore();
+
+initThemeSettings();
 
 export const Context = createContext({});
 

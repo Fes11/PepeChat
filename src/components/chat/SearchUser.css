@@ -6,7 +6,7 @@
 .search_user_btn {
   padding: 10px 15px;
   width: 100%;
-  background: #252525;
+  background: var(--input-bg-color);
   border-radius: 10px;
   cursor: pointer;
 }
@@ -14,7 +14,7 @@
 .search_user_input {
   width: 100%;
   padding: 10px 15px;
-  background: #252525;
+  background: var(--input-bg-color);
   border-radius: 10px;
   box-sizing: border-box;
 }
@@ -23,8 +23,8 @@
   position: absolute;
   top: 28px;
   width: 100%;
-  background: #252525;
-  border: 1px solid #505050;
+  background: var(--modal-bg-color);
+  border: 1px solid var(--input-border-color);
   border-radius: 6px;
   max-height: 250px;
   overflow-y: auto;
@@ -45,7 +45,7 @@
 }
 
 .search_result_item:hover {
-  background: #505050;
+  background: var(--hover-bg-color);
 }
 
 .search_result_item.selected_user .search_result_avatar {
@@ -74,7 +74,7 @@
 
 .selected_user_check_mark span {
   content: "\2713";
-  color: #252525;
+  color: var(--main-contrast-color);
   position: absolute;
   top: -4px;
   left: 2px;
@@ -108,7 +108,7 @@
 .search_result_login {
   font-size: 12px;
   font-weight: 300;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--muted-text-color);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -119,7 +119,7 @@
 }
 
 .participant__description_login {
-  color: #797979 !important;
+  color: var(--muted-text-color) !important;
   font-size: 12px !important;
   font-weight: 600;
 }

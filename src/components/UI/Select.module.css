@@ -12,7 +12,7 @@
   text-align: left;
   font-size: 12px;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--faint-text-color);
   cursor: pointer;
   background: var(--box-bg-color);
 
@@ -27,7 +27,7 @@
 /* стиль для опций */
 .select_choise option {
   background: var(--bg-color);
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--faint-text-color);
 }
 
 /* стрелка */
@@ -39,13 +39,13 @@
   transform: translateY(-50%) rotate(45deg);
   width: 5px;
   height: 5px;
-  border-right: 2px solid rgba(255, 255, 255, 0.35);
-  border-bottom: 2px solid rgba(255, 255, 255, 0.35);
+  border-right: 2px solid var(--faint-text-color);
+  border-bottom: 2px solid var(--faint-text-color);
   pointer-events: none;
   transition: transform 0.2s ease;
 }
 
 /* hover эффект для самого select */
 .select_choise:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: var(--hover-bg-color);
 }

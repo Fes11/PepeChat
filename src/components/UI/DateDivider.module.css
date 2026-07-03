@@ -1,9 +1,9 @@
 .date_divider {
   margin: 12px auto;
   padding: 4px 12px;
-  background: rgba(0, 0, 0, 0.1);
+  background: var(--empty-badge-bg-color);
   border-radius: 12px;
   font-size: 13px;
-  color: #555;
+  color: var(--muted-text-color);
   width: fit-content;
 }

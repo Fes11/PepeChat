@@ -42,6 +42,7 @@
 
 .registration__form_btn {
   background: var(--main-color);
+  color: var(--main-contrast-color);
   padding: 16px 0;
   font-size: 16px;
   font-weight: bolder;
@@ -57,11 +58,11 @@
 }
 
 .registration__form_input {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--input-bg-color);
   padding: 15px;
   border-radius: 10px;
   font-weight: bolder;
-  border: 1px solid rgb(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
   margin-bottom: 10px;
   width: 100%;
   box-sizing: border-box;

@@ -3,37 +3,98 @@
   padding: 0;
   border: none;
   transition: 0.2s all;
-  color: whitesmoke;
   text-decoration: none;
   font-family: "Inter", sans-serif;
-  scrollbar-color: #202020 rgba(0, 0, 0, 0);
+  scrollbar-color: var(--scrollbar-thumb-color) transparent;
   scrollbar-width: thin;
 }
 
 :root {
   --bg-color: #17181b;
   --box-bg-color: #252529;
+  --surface-color: #313136;
+  --modal-bg-color: #363636;
+  --input-bg-color: #252529;
+  --input-border-color: #50505a;
+  --button-bg-color: #3b3b3b;
+  --button-soft-bg-color: rgba(255, 255, 255, 0.1);
+  --hover-bg-color: rgba(255, 255, 255, 0.1);
+  --active-bg-color: rgba(255, 255, 255, 0.05);
+  --text-color: #f5f5f5;
+  --muted-text-color: rgba(245, 245, 245, 0.45);
+  --faint-text-color: rgba(245, 245, 245, 0.35);
+  --inverse-text-color: #17181b;
   --main-color: #7b61ff;
   --main-hover-color: #8b74ff;
+  --main-contrast-color: #ffffff;
+  --main-soft-color: rgba(123, 97, 255, 0.28);
+  --main-faint-color: rgba(123, 97, 255, 0.16);
+  --message-time-color: rgba(255, 255, 255, 0.72);
   --border-color: #3a3a40;
+  --shadow-border-color: rgba(255, 255, 255, 0.05);
+  --raised-light-color: rgba(255, 255, 255, 0.1);
+  --raised-dark-color: rgba(185, 185, 185, 0.3);
+  --overlay-color: rgba(0, 0, 0, 0.3);
+  --empty-badge-bg-color: rgba(0, 0, 0, 0.1);
+  --message-other-bg-color: rgba(255, 255, 255, 0.1);
+  --chat-input-bg: linear-gradient(
+    to right,
+    rgba(58, 58, 64, 0.35),
+    rgba(123, 97, 255, 0.14)
+  );
+  --skeleton-bg-color: rgba(46, 46, 46, 0.41);
+  --spinner-track-color: #2f2f2f;
+  --scrollbar-thumb-color: #202020;
+}
+
+[data-theme="light"] {
+  --bg-color: #f2f4f7;
+  --box-bg-color: #ffffff;
+  --surface-color: #eef1f5;
+  --modal-bg-color: #ffffff;
+  --input-bg-color: #f5f7fb;
+  --input-border-color: #d7dce5;
+  --button-bg-color: #e7ebf2;
+  --button-soft-bg-color: rgba(22, 28, 36, 0.07);
+  --hover-bg-color: rgba(22, 28, 36, 0.08);
+  --active-bg-color: rgba(22, 28, 36, 0.05);
+  --text-color: #17181b;
+  --muted-text-color: rgba(23, 24, 27, 0.56);
+  --faint-text-color: rgba(23, 24, 27, 0.42);
+  --inverse-text-color: #ffffff;
+  --border-color: #dce1ea;
+  --shadow-border-color: rgba(22, 28, 36, 0.08);
+  --raised-light-color: rgba(255, 255, 255, 0.95);
+  --raised-dark-color: rgba(22, 28, 36, 0.14);
+  --overlay-color: rgba(20, 24, 31, 0.2);
+  --empty-badge-bg-color: rgba(22, 28, 36, 0.06);
+  --message-other-bg-color: rgba(22, 28, 36, 0.08);
+  --chat-input-bg: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.82),
+    #f2efff
+  );
+  --skeleton-bg-color: rgba(22, 28, 36, 0.08);
+  --spinner-track-color: #d9dee8;
+  --scrollbar-thumb-color: #c7ceda;
 }
 
 button {
-  background: #3b3b3b;
+  background: var(--button-bg-color);
   cursor: pointer;
 }
-
-/* :root {
-  --bg-color: rgba(0,0,0, 0.35);
-  --box-bg-color: rgba(255,255,255,0.1);
-  --main-color: #7B61FF;
-  --main-hover-color: #8b74ff;
-  --border-color: #3A3A40;
-} */
 
 body {
   margin: auto;
   background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+button,
+input,
+select,
+textarea {
+  color: inherit;
 }
 
 html,
@@ -99,9 +160,9 @@ a:hover {
 
 .chat__empty p {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--muted-text-color);
   padding: 10px 20px;
-  background: rgba(0, 0, 0, 0.1);
+  background: var(--empty-badge-bg-color);
   border-radius: 8px;
 }
 
@@ -141,7 +202,7 @@ a:hover {
   text-align: left;
   font-size: 12px;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--faint-text-color);
   cursor: pointer;
   background: var(--box-bg-color);
   position: relative;
@@ -157,7 +218,7 @@ a:hover {
 }
 
 .chat_description__online:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: var(--hover-bg-color);
 }
 
 .chat_description__online::after {
@@ -168,8 +229,8 @@ a:hover {
   transform: translateY(-50%) rotate(45deg);
   width: 5px;
   height: 5px;
-  border-right: 2px solid rgba(255, 255, 255, 0.35);
-  border-bottom: 2px solid rgba(255, 255, 255, 0.35);
+  border-right: 2px solid var(--faint-text-color);
+  border-bottom: 2px solid var(--faint-text-color);
   pointer-events: none;
   transition: transform 0.2s ease;
 }
@@ -185,12 +246,12 @@ a:hover {
 }
 
 .chat_list_element.chat_active {
-  background-color: rgba(153, 153, 153, 0.1);
+  background-color: var(--active-bg-color);
   border-left: 4px var(--main-color) solid;
 }
 
 .chat_list_element:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: var(--hover-bg-color);
 }
 
 .chat_list_element__text_box {
@@ -214,12 +275,12 @@ a:hover {
   text-overflow: ellipsis;
   overflow: hidden;
   max-width: 180px;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--faint-text-color);
 }
 
 .chat_list_element__time {
   font-size: 12px;
-  color: rgb(88, 88, 88);
+  color: var(--muted-text-color);
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -230,6 +291,7 @@ a:hover {
 .new_messages_count {
   background: var(--main-color);
   box-shadow: 0 0 10px var(--main-color);
+  color: var(--main-contrast-color);
   font-size: 10px;
   padding: 1px 4px;
   margin-top: 5px;
@@ -301,7 +363,7 @@ a:hover {
 }
 
 .chat__input {
-  background: linear-gradient(to right, #3a3a4059, #7b61ff23);
+  background: var(--chat-input-bg);
   border-radius: 30px;
   margin-right: 10px;
   padding: 0 15px;
@@ -309,9 +371,9 @@ a:hover {
   height: 45px;
   width: 95%;
   box-shadow:
-    -1px -1px 0 rgba(255, 255, 255, 0.1),
-    1px 1px 0 rgba(185, 185, 185, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+    -1px -1px 0 var(--raised-light-color),
+    1px 1px 0 var(--raised-dark-color);
+  border: 1px solid var(--shadow-border-color);
 }
 
 .chat__send_btn {
@@ -323,10 +385,10 @@ a:hover {
   align-items: center;
   justify-content: center;
   box-shadow:
-    -1px -1px 0 rgba(255, 255, 255, 0.1),
-    1px 1px 0 rgba(185, 185, 185, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  background-color: #7b61ff44;
+    -1px -1px 0 var(--raised-light-color),
+    1px 1px 0 var(--raised-dark-color);
+  border: 1px solid var(--shadow-border-color);
+  background-color: var(--main-soft-color);
   backdrop-filter: blur(20px);
 }
 
@@ -336,14 +398,14 @@ a:hover {
 }
 
 .chat__send_btn:hover {
-  background-color: #7b61ff96;
+  background-color: var(--main-hover-color);
 }
 
 .profile__avatar {
   min-width: 40px;
   min-height: 40px;
   border-radius: 50%;
-  background-color: rgb(88, 88, 88);
+  background-color: var(--surface-color);
 }
 
 .profile {
@@ -374,7 +436,7 @@ a:hover {
 
 .profile__status {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--faint-text-color);
 }
 
 .profile__settings_btn {
@@ -392,7 +454,7 @@ a:hover {
   width: 40px;
   height: 40px;
   border-radius: 10px;
-  background-color: rgb(255, 255, 255, 0.1);
+  background-color: var(--button-soft-bg-color);
 }
 
 .chat__header_info {
@@ -437,7 +499,7 @@ a:hover {
 }
 
 .participant__remove:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--hover-bg-color);
 }
 
 .participant p {
@@ -456,7 +518,7 @@ a:hover {
   width: fit-content;
   padding: 15px 30px;
   background: var(--box-bg-color);
-  color: white;
+  color: var(--text-color);
   border-radius: 8px;
   font-size: 14px;
 }
@@ -473,7 +535,7 @@ a:hover {
 .chat_element_loader {
   width: 100%;
   height: 60px;
-  background: #2e2e2e69;
+  background: var(--skeleton-bg-color);
 }
 
 .shimmer {
@@ -491,7 +553,7 @@ a:hover {
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.1),
+    var(--hover-bg-color),
     transparent
   );
   animation: shimmer 1.5s infinite;
@@ -509,7 +571,7 @@ a:hover {
 
 .participant_profile {
   width: 200px;
-  background: #222222;
+  background: var(--modal-bg-color);
   backdrop-filter: blur(20px);
   border-radius: 15px;
   position: absolute;
@@ -517,7 +579,7 @@ a:hover {
   left: -205px;
   display: flex;
   flex-direction: column;
-  border: 1px solid rgba(68, 68, 68, 0.5);
+  border: 1px solid var(--border-color);
   z-index: 2;
   padding: 15px;
   box-sizing: border-box;
@@ -541,20 +603,20 @@ a:hover {
   font-size: 12px;
   width: 110px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--button-soft-bg-color);
   margin-top: 10px;
   cursor: pointer;
 }
 
 .participant_profile_send_mes:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--hover-bg-color);
 }
 
 .spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #2f2f2f;
-  border-top: 4px solid #7a7aff;
+  border: 4px solid var(--spinner-track-color);
+  border-top: 4px solid var(--main-color);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: auto;
@@ -604,10 +666,10 @@ a:hover {
 
 .not_found {
   padding: 10px 15px;
-  background: #242424;
+  background: var(--box-bg-color);
   border-radius: 5px;
 }
 
 .not_found h3 {
-  color: #5a5a5a;
+  color: var(--muted-text-color);
 }

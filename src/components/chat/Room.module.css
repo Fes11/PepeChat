@@ -17,7 +17,7 @@
 
 .hide_btn {
   position: absolute;
-  background: #ffffff26;
+  background: var(--button-soft-bg-color);
   padding: 15px;
   right: 15px;
   top: 10px;
@@ -25,7 +25,7 @@
 }
 
 .hide_btn:hover {
-  background: #ffffff40;
+  background: var(--hover-bg-color);
 }
 
 .room_users_list {
@@ -44,13 +44,13 @@
 .room_activity_panel {
   padding: 10px 20px;
   background:
-    linear-gradient(rgba(20, 20, 20, 1), rgba(20, 20, 20, 1)) padding-box,
+    linear-gradient(var(--modal-bg-color), var(--modal-bg-color)) padding-box,
     linear-gradient(
         270.14deg,
-        rgba(255, 255, 255, 0.4) 0%,
-        rgba(255, 255, 255, 0) 36.06%,
-        rgba(255, 255, 255, 0) 62.98%,
-        rgba(255, 255, 255, 0.1) 100%
+        var(--muted-text-color) 0%,
+        transparent 36.06%,
+        transparent 62.98%,
+        var(--hover-bg-color) 100%
       )
       border-box;
   border: 1px solid transparent;
@@ -86,9 +86,9 @@
 }
 
 .mic:hover {
-  background: #5e5e5e;
+  background: var(--hover-bg-color);
 }
 
 .headphones:hover {
-  background: #5e5e5e;
+  background: var(--hover-bg-color);
 }
