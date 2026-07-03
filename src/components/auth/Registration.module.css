@@ -68,11 +68,27 @@
   box-sizing: border-box;
 }
 
+.registration__form_input_error {
+  border-color: rgba(128, 0, 32, 0.65);
+}
+
+.registration__form_error {
+  color: rgba(128, 0, 32, 0.8);
+  font-size: 13px;
+  font-weight: 600;
+  margin: -6px 0 10px;
+}
+
 .registration__form_header {
   display: flex;
   margin-bottom: 10px;
   justify-content: space-between;
   width: 100%;
+}
+
+.registration__avatar_box {
+  display: flex;
+  flex-direction: column;
 }
 
 .registration__box {

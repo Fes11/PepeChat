@@ -7,6 +7,7 @@ export class VoiceRoomSocket {
     this.onError = onError;
 
     this.ws = null;
+    this.closeOnOpen = false;
   }
 
   connect() {
@@ -26,12 +27,18 @@ export class VoiceRoomSocket {
     );
 
     this.ws.onopen = () => {
+      if (this.closeOnOpen) {
+        this.ws.close();
+        return;
+      }
+
       this.onOpen?.();
     };
 
     this.ws.onclose = (event) => {
       this.onClose?.(event);
       this.ws = null;
+      this.closeOnOpen = false;
     };
 
     this.ws.onerror = (error) => {
@@ -47,16 +54,21 @@ export class VoiceRoomSocket {
   send(data) {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(data));
+      return true;
     }
+    return false;
   }
 
   disconnect() {
     if (!this.ws) return;
 
+    if (this.ws.readyState === WebSocket.CONNECTING) {
+      this.closeOnOpen = true;
+      return;
+    }
+
     if (this.ws.readyState === WebSocket.OPEN) {
       this.ws.close();
     }
-
-    this.ws = null;
   }
 }

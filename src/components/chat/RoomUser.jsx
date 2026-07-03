@@ -6,9 +6,19 @@ const RoomUser = function ({ participant }) {
   const audioRef = useRef(null);
 
   useEffect(() => {
-    if (audioRef.current && participant.stream) {
-      audioRef.current.srcObject = participant.stream;
+    const audio = audioRef.current;
+    if (audio && participant.stream) {
+      audio.srcObject = participant.stream;
+      audio.play().catch((err) => {
+        console.warn("[VoiceRoom] Cannot play remote audio", err);
+      });
     }
+
+    return () => {
+      if (audio) {
+        audio.srcObject = null;
+      }
+    };
   }, [participant.stream]);
 
   return (

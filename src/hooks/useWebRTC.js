@@ -9,13 +9,39 @@ const ICE_SERVERS = {
     },
   ],
 };
+const MAX_PENDING_ICE_CANDIDATES = 32;
+const PENDING_ICE_TTL = 30_000;
 
 const useWebRTC = (setParticipants, setLocalStreamReady) => {
   const { MediaStore } = useContext(Context);
 
   // Хранятся здесь и пробрасываются наружу через геттер
   const peerConnections = useRef({});
+  const pendingIceCandidates = useRef({});
   const localMediaStream = useRef(null);
+
+  const flushPendingIceCandidates = useCallback(async (participantId) => {
+    const key = String(participantId);
+    const pc = peerConnections.current[key];
+    const now = Date.now();
+    const candidates = (pendingIceCandidates.current[key] || []).filter(
+      (item) => now - item.receivedAt <= PENDING_ICE_TTL,
+    );
+
+    if (!pc || !pc.remoteDescription || candidates.length === 0) return;
+
+    pendingIceCandidates.current[key] = [];
+
+    await Promise.all(
+      candidates.map((item) =>
+        pc
+          .addIceCandidate(new RTCIceCandidate(item.candidate))
+          .catch((err) => {
+            console.error("Failed to add queued ICE candidate:", err);
+          }),
+      ),
+    );
+  }, []);
 
   const startLocalStream = useCallback(async () => {
     try {
@@ -38,22 +64,33 @@ const useWebRTC = (setParticipants, setLocalStreamReady) => {
 
   const createPeerConnection = useCallback(
     async (participantId, sendSignal) => {
-      if (peerConnections.current[participantId]) {
-        peerConnections.current[participantId].close();
-      }
+      const peerKey = String(participantId);
 
-      const stream =
-        localMediaStream.current || await startLocalStream();
-
-      if (!stream) {
-        throw new Error("Failed to initialize local stream");
+      if (peerConnections.current[peerKey]) {
+        peerConnections.current[peerKey].close();
       }
 
       const pc = new RTCPeerConnection(ICE_SERVERS);
+      let stream = localMediaStream.current;
 
-      stream.getTracks().forEach((track) => {
-        pc.addTrack(track, stream);
-      });
+      if (!stream) {
+        try {
+          stream = await startLocalStream();
+        } catch (err) {
+          console.warn(
+            "PeerConnection will be created without local microphone:",
+            err,
+          );
+        }
+      }
+
+      if (stream) {
+        stream.getTracks().forEach((track) => {
+          pc.addTrack(track, stream);
+        });
+      } else {
+        pc.addTransceiver("audio", { direction: "recvonly" });
+      }
 
       pc.onicecandidate = (event) => {
         if (event.candidate) {
@@ -66,10 +103,12 @@ const useWebRTC = (setParticipants, setLocalStreamReady) => {
       };
 
       pc.ontrack = (event) => {
-        const remoteStream = event.streams[0];
+        const remoteStream = event.streams[0] || new MediaStream([event.track]);
         setParticipants((prev) =>
           prev.map((p) =>
-            p.id === participantId ? { ...p, stream: remoteStream } : p,
+            String(p.id) === String(participantId)
+              ? { ...p, stream: remoteStream }
+              : p,
           ),
         );
       };
@@ -85,10 +124,10 @@ const useWebRTC = (setParticipants, setLocalStreamReady) => {
         }
       };
 
-      peerConnections.current[participantId] = pc;
+      peerConnections.current[peerKey] = pc;
       return pc;
     },
-    [setParticipants],
+    [setParticipants, startLocalStream],
   );
 
   const handleOffer = useCallback(
@@ -99,6 +138,8 @@ const useWebRTC = (setParticipants, setLocalStreamReady) => {
       const pc = await createPeerConnection(sender, sendSignal);
 
       await pc.setRemoteDescription(new RTCSessionDescription(offer));
+      await flushPendingIceCandidates(sender);
+
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
 
@@ -108,12 +149,12 @@ const useWebRTC = (setParticipants, setLocalStreamReady) => {
         answer,
       });
     },
-    [createPeerConnection],
+    [createPeerConnection, flushPendingIceCandidates],
   );
 
   const handleAnswer = useCallback(async (data) => {
     const { sender, answer } = data;
-    const pc = peerConnections.current[sender];
+    const pc = peerConnections.current[String(sender)];
 
     if (!pc) {
       console.warn(`No peer connection for sender: ${sender}`);
@@ -122,18 +163,26 @@ const useWebRTC = (setParticipants, setLocalStreamReady) => {
 
     if (pc.signalingState === "have-local-offer") {
       await pc.setRemoteDescription(new RTCSessionDescription(answer));
+      await flushPendingIceCandidates(sender);
     } else {
       console.warn(
         `Cannot set remote answer — signalingState: ${pc.signalingState}`,
       );
     }
-  }, []);
+  }, [flushPendingIceCandidates]);
 
   const handleIceCandidate = useCallback(async (data) => {
     const { sender, candidate } = data;
-    const pc = peerConnections.current[sender];
+    const peerKey = String(sender);
+    const pc = peerConnections.current[peerKey];
 
-    if (!pc) return;
+    if (!pc || !pc.remoteDescription) {
+      pendingIceCandidates.current[peerKey] = [
+        ...(pendingIceCandidates.current[peerKey] || []),
+        { candidate, receivedAt: Date.now() },
+      ].slice(-MAX_PENDING_ICE_CANDIDATES);
+      return;
+    }
 
     try {
       await pc.addIceCandidate(new RTCIceCandidate(candidate));
@@ -144,17 +193,20 @@ const useWebRTC = (setParticipants, setLocalStreamReady) => {
 
   // Закрыть конкретное соединение
   const closePeerConnection = useCallback((participantId) => {
-    const pc = peerConnections.current[participantId];
+    const peerKey = String(participantId);
+    const pc = peerConnections.current[peerKey];
     if (pc) {
       pc.close();
-      delete peerConnections.current[participantId];
+      delete peerConnections.current[peerKey];
     }
+    delete pendingIceCandidates.current[peerKey];
   }, []);
 
   // Закрыть все соединения и остановить поток
   const cleanup = useCallback(() => {
     Object.values(peerConnections.current).forEach((pc) => pc.close());
     peerConnections.current = {};
+    pendingIceCandidates.current = {};
 
     if (localMediaStream.current) {
       localMediaStream.current.getTracks().forEach((t) => t.stop());

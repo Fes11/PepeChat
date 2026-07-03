@@ -5,8 +5,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 2px solid transparent;
   border-radius: 15px;
+  box-sizing: border-box;
   position: relative;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    background-color 120ms ease;
 }
 
 .room_user_avatar {
@@ -27,6 +33,9 @@
 }
 
 .speaking {
-  border: 2px solid #4caf50;
-  box-shadow: 0 0 8px #4caf50;
+  background: rgba(35, 165, 90, 0.12);
+  border-color: #23a55a;
+  box-shadow:
+    0 0 0 1px rgba(35, 165, 90, 0.35),
+    0 0 14px rgba(35, 165, 90, 0.45);
 }

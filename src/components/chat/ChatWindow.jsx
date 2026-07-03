@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { Context } from "../../main.jsx";
 import MessageService from "../../services/MessageService";
+import ChatServices from "../../services/ChatService.jsx";
 import Message from "./Message";
 import ChatDescription from "./ChatDescription.jsx";
 import Spinner from "../UI/Spiner.jsx";
@@ -17,6 +18,8 @@ import { enUS } from "date-fns/locale";
 import DateDivider from "../UI/DateDivider.jsx";
 import { observer } from "mobx-react-lite";
 import Room from "./Room.jsx";
+
+const ACTIVE_VOICE_ROOM_CHAT_ID_KEY = "activeVoiceRoomChatId";
 
 const ChatWindow = observer(({ chat }) => {
   // const [messages, setMessages] = useState([]);
@@ -31,7 +34,10 @@ const ChatWindow = observer(({ chat }) => {
   const listRef = useRef(null);
   const activeChatId = useRef(chat.id);
   const [loadMessage, setLoadMessage] = useState(false);
-  const [viewRoom, setViewRoom] = useState(false);
+  const [viewRoom, setViewRoom] = useState(() => {
+    return sessionStorage.getItem(ACTIVE_VOICE_ROOM_CHAT_ID_KEY) === String(chat.id);
+  });
+  const [participants, setParticipants] = useState([]);
 
   const getLastOnlineStatus = (last_online) => {
     if (!last_online) return null;
@@ -46,8 +52,54 @@ const ChatWindow = observer(({ chat }) => {
 
   const otherUser = ChatStore.getUserPresence(chat.other_user);
   const lastOnlineStatus = getLastOnlineStatus(otherUser?.last_online);
+  const onlineParticipantsCount = participants.filter((participant) => {
+    const user = ChatStore.getUserPresence(participant.user);
+    return user?.status === "online";
+  }).length;
 
   const isFirstLoad = useRef(true);
+
+  useEffect(() => {
+    setViewRoom(
+      sessionStorage.getItem(ACTIVE_VOICE_ROOM_CHAT_ID_KEY) === String(chat.id),
+    );
+  }, [chat.id]);
+
+  const openVoiceRoom = () => {
+    sessionStorage.setItem(ACTIVE_VOICE_ROOM_CHAT_ID_KEY, String(chat.id));
+    setViewRoom(true);
+  };
+
+  const closeVoiceRoom = () => {
+    sessionStorage.removeItem(ACTIVE_VOICE_ROOM_CHAT_ID_KEY);
+    setViewRoom(false);
+  };
+
+  useEffect(() => {
+    if (!chat.is_group) {
+      setParticipants([]);
+      return;
+    }
+
+    let isActual = true;
+
+    const fetchParticipants = async () => {
+      try {
+        const response = await ChatServices.getChatParticipants(chat.id);
+        if (isActual) {
+          setParticipants(response.data.results);
+        }
+      } catch (error) {
+        console.error("Ошибка при получении участников чата:", error);
+      }
+    };
+
+    fetchParticipants();
+
+    return () => {
+      isActual = false;
+    };
+  }, [chat.id, chat.is_group]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -156,7 +208,13 @@ const ChatWindow = observer(({ chat }) => {
   return (
     <div className="chat_window">
       <div className="chat">
-        {viewRoom && <Room setViewRoom={setViewRoom} chatId={chat.id} />}
+        {viewRoom && (
+          <Room
+            setViewRoom={setViewRoom}
+            onLeaveRoom={closeVoiceRoom}
+            chatId={chat.id}
+          />
+        )}
 
         <div className="chat__header">
           <div className="chat_header_box">
@@ -184,7 +242,9 @@ const ChatWindow = observer(({ chat }) => {
                     : (lastOnlineStatus ?? "offline")}
                 </p>
               ) : (
-                ""
+                <p className="chat__header_description">
+                  Online: {onlineParticipantsCount}
+                </p>
               )}
             </div>
           </div>
@@ -192,7 +252,7 @@ const ChatWindow = observer(({ chat }) => {
           <img
             src="/voice_chat.png"
             className="voice_chat_btn"
-            onClick={() => setViewRoom(true)}
+            onClick={openVoiceRoom}
           />
         </div>
         <div className="chat__message_list" ref={listRef}>
@@ -257,7 +317,12 @@ const ChatWindow = observer(({ chat }) => {
         </div>
       </div>
 
-      {chat.is_group && <ChatDescription key={chat.id} chat={chat} />}
+      {chat.is_group && (
+        <ChatDescription
+          key={chat.id}
+          participants={participants}
+        />
+      )}
     </div>
   );
 });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useId, useRef, useState } from "react";
 import classes from "./Search.module.css";
 import ChatServices from "../../../services/ChatService.jsx";
 import SearchUserElement from "../SearchUserElement.jsx";
@@ -15,14 +15,32 @@ const normalizeResults = (results) => ({
 });
 
 const Search = function (props) {
+  const inputRef = useRef(null);
+  const searchId = useId().replace(/:/g, "");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState(EMPTY_RESULTS);
+  const [isFocused, setIsFocused] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const searchName = `pepechat-search-${searchId}`;
+
+  const clearBrowserAutofill = () => {
+    setQuery("");
+
+    if (inputRef.current) {
+      inputRef.current.value = "";
+    }
+  };
+
+  useEffect(() => {
+    const timeout = setTimeout(clearBrowserAutofill, 0);
+
+    return () => clearTimeout(timeout);
+  }, []);
 
   useEffect(() => {
     const trimmedQuery = query.trim();
 
-    if (!trimmedQuery) {
+    if (!isFocused || !trimmedQuery) {
       setResults(EMPTY_RESULTS);
       setHasSearched(false);
       return;
@@ -52,22 +70,46 @@ const Search = function (props) {
       isActive = false;
       clearTimeout(timeout);
     };
-  }, [query]);
+  }, [isFocused, query]);
 
   const hasLocalResults = results.my_chats.length > 0;
   const hasGlobalResults = results.global.length > 0;
   const hasResults = hasLocalResults || hasGlobalResults;
-  const showResults = Boolean(query.trim()) && (hasResults || hasSearched);
+  const showResults = isFocused && Boolean(query.trim()) && (hasResults || hasSearched);
 
   return (
     <div className={classes.search_wrapper}>
-      <input
-        className={classes.search}
-        type="search"
-        {...props}
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
+      <form autoComplete="off" onSubmit={(e) => e.preventDefault()}>
+        <input type="text" name="login" autoComplete="username" hidden />
+        <input
+          type="password"
+          name="password"
+          autoComplete="current-password"
+          hidden
+        />
+        <input
+          ref={inputRef}
+          className={classes.search}
+          type="search"
+          {...props}
+          name={searchName}
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          data-form-type="other"
+          data-lpignore="true"
+          readOnly={!isFocused}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onInput={(e) => setQuery(e.currentTarget.value)}
+          onFocus={() => {
+            setIsFocused(true);
+            clearBrowserAutofill();
+          }}
+          onBlur={() => setTimeout(() => setIsFocused(false), 100)}
+        />
+      </form>
 
       {showResults && (
         <div className={classes.search_results}>

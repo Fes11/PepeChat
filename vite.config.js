@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-const host = process.env.TAURI_DEV_HOST;
+const host = process.env.TAURI_DEV_HOST || "127.0.0.1";
 
 // https://vite.dev/config/
 export default defineConfig(async () => ({
@@ -15,7 +15,7 @@ export default defineConfig(async () => ({
   server: {
     port: 1420,
     strictPort: true,
-    host: host || false,
+    host,
     hmr: host
       ? {
           protocol: "ws",

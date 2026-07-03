@@ -34,6 +34,17 @@
   border: 1px solid var(--border-color);
 }
 
+.login__form_input_error {
+  border-color: rgba(128, 0, 32, 0.65);
+}
+
+.login__form_error {
+  color: rgba(128, 0, 32, 0.8);
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: -8px;
+}
+
 .login__form_btn {
   background: var(--button-soft-bg-color);
   padding: 16px 0;
