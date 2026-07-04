@@ -58,9 +58,12 @@ const CreateChatModal = ({ onChatCreated, onClose }) => {
   };
 
   return (
-    <form className={classes.content}>
+    <form className={classes.content} onSubmit={createChat}>
       <div className={classes.header}>
-        <p className={classes.title}>Create new chat</p>
+        <div>
+          <p className={classes.eyebrow}>Group chat</p>
+          <h2 className={classes.title}>Create new chat</h2>
+        </div>
         <button className={classes.close} type="button" onClick={onClose}>
           X
         </button>
@@ -70,44 +73,64 @@ const CreateChatModal = ({ onChatCreated, onClose }) => {
         <AvatarPicker avatar={avatar} onSelectAvatar={setAvatar} />
 
         <div className={classes.input_box}>
+          <label className={classes.field_label} htmlFor="chat-title">
+            Chat name
+          </label>
           <input
+            id="chat-title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             type="text"
-            placeholder="Chat name"
+            placeholder="Design crew, Project room..."
             className={classes.input}
           />
 
-          <SearchUser
-            onSelectUser={addSelectUser}
-            participants={participants}
-          />
+          <div className={classes.search_box}>
+            <label className={classes.field_label}>Participants</label>
+            <SearchUser
+              onSelectUser={addSelectUser}
+              participants={participants}
+            />
+          </div>
         </div>
       </div>
 
-      <p className={classes.partchipants__list_title}>Participants chat: </p>
+      <div className={classes.partchipants__list_header}>
+        <p className={classes.partchipants__list_title}>Participants</p>
+        <span>{participants.length}</span>
+      </div>
       <div className={classes.partchipants__list}>
-        {participants.map((user) => (
-          <Participant
-            key={user.id}
-            user={user}
-            onRemove={() => removeParticipant(user.id)}
-          />
-        ))}
+        {participants.length > 0 ? (
+          participants.map((user) => (
+            <Participant
+              key={user.id}
+              user={user}
+              onRemove={() => removeParticipant(user.id)}
+            />
+          ))
+        ) : (
+          <div className={classes.empty_participants}>
+            <span>+</span>
+            <p>Add at least one person to create a chat</p>
+          </div>
+        )}
       </div>
 
-      <div className={classes.create_chat_private}>
+      <label className={classes.create_chat_private}>
+        <span>
+          <strong>Private chat</strong>
+          <small>Only invited participants can find it</small>
+        </span>
         <input
           type="checkbox"
           checked={isPrivate}
           onChange={(e) => setPrivate(e.target.checked)}
         />
-        Is private chat
-      </div>
+      </label>
 
       <button
         className={classes.create_chat_btn}
-        onClick={createChat}
+        type="submit"
         disabled={isCreateDisabled}
       >
         Create chat

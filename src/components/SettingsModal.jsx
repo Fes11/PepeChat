@@ -65,6 +65,22 @@ const SettingsModal = function ({ onClose }) {
     }
   }, [activeTab, isTestingMicrophone]);
 
+  useEffect(() => {
+    if (!isTestingMicrophone) return;
+
+    const restartMicrophoneTest = async () => {
+      await stopMicrophoneTest();
+      await startMicrophoneTest();
+    };
+
+    restartMicrophoneTest();
+  }, [
+    MediaStore.autoGainControl,
+    MediaStore.noiseSuppressionMode,
+    MediaStore.noiseGateEnabled,
+    MediaStore.noiseGateThreshold,
+  ]);
+
   useEffect(() => () => {
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
@@ -80,45 +96,18 @@ const SettingsModal = function ({ onClose }) {
     });
     audioContextRef.current = audioContext;
 
-    await audioContext.audioWorklet.addModule("/rnnoise-processor.js");
-
     const source = audioContext.createMediaStreamSource(stream);
-
-    const rnnoiseNode = new AudioWorkletNode(audioContext, "rnnoise-processor");
-
-    const highpass = audioContext.createBiquadFilter();
-    highpass.type = "highpass";
-    highpass.frequency.value = 80;
-
     const gainNode = audioContext.createGain();
-    gainNode.gain.value = MediaStore.volume;
+    gainNode.gain.value = Math.min(MediaStore.volume, 1);
     gainNodeRef.current = gainNode;
-
-    const lowpass = audioContext.createBiquadFilter();
-    lowpass.type = "lowpass";
-    lowpass.frequency.value = 8000;
-
-    const compressor = audioContext.createDynamicsCompressor();
-
-    compressor.threshold.setValueAtTime(-50, audioContext.currentTime);
-    compressor.knee.setValueAtTime(40, audioContext.currentTime);
-    compressor.ratio.setValueAtTime(12, audioContext.currentTime);
-    compressor.attack.setValueAtTime(0, audioContext.currentTime);
-    compressor.release.setValueAtTime(0.25, audioContext.currentTime);
 
     const analyser = audioContext.createAnalyser();
     analyser.fftSize = 256;
 
     analyserRef.current = analyser;
-
     const merger = audioContext.createChannelMerger(2);
 
-    source.connect(rnnoiseNode);
-
-    rnnoiseNode.connect(highpass);
-    highpass.connect(lowpass);
-    lowpass.connect(compressor);
-    compressor.connect(gainNode);
+    source.connect(gainNode);
     gainNode.connect(analyser);
     gainNode.connect(merger, 0, 0);
     gainNode.connect(merger, 0, 1);
@@ -143,11 +132,12 @@ const SettingsModal = function ({ onClose }) {
     update();
   };
 
-  const startMicrophoneTest = async () => {
+  const startMicrophoneTest = async (deviceId = MediaStore.selectedMicrophone) => {
     try {
-      const stream = await mediaService.testMicrophone(
-        MediaStore.selectedMicrophone,
-      );
+      const stream = await mediaService.testMicrophone(deviceId, {
+        volume: MediaStore.volume,
+        audioSettings: MediaStore.getAudioSettings(),
+      });
       testStreamRef.current = stream;
       await startMicAnalyzer(stream);
       setIsTestingMicrophone(true);
@@ -173,7 +163,7 @@ const SettingsModal = function ({ onClose }) {
     }
     MediaStore.changeMicrophone(deviceId);
     if (wasTesting) {
-      await startMicrophoneTest();
+      await startMicrophoneTest(deviceId);
     }
   };
 
@@ -203,46 +193,71 @@ const SettingsModal = function ({ onClose }) {
             </div>
 
             <div className={classes.tabcontent_body}>
-              <p className={classes.settings_label}>Profile Editing</p>
+              <div className={classes.profile_card}>
+                <div className={classes.profile_identity}>
+                  <AvatarPicker avatar={avatar} onSelectAvatar={setAvatar} />
 
-              <div className={classes.settings_box}>
-                <AvatarPicker avatar={avatar} onSelectAvatar={setAvatar} />
+                  <div className={classes.profile_summary}>
+                    <span>{login}</span>
+                    <p>@{login}</p>
+                  </div>
+                </div>
 
-                <div className={classes.settings_field}>
-                  <label>@{login}</label>
-                  <input
-                    type="text"
-                    placeholder="Your username"
-                    className={classes.settings_input}
-                  />
-                  <input
-                    type="email"
-                    placeholder="Your email"
-                    className={classes.settings_input}
-                  />
+                <div className={classes.profile_fields}>
+                  <label className={classes.control_label}>
+                    Username
+                    <input
+                      type="text"
+                      placeholder="Your username"
+                      defaultValue={login}
+                      className={classes.settings_input}
+                    />
+                  </label>
+                  <label className={classes.control_label}>
+                    Email
+                    <input
+                      type="email"
+                      placeholder="your@email.com"
+                      className={classes.settings_input}
+                    />
+                  </label>
                 </div>
               </div>
 
-              <p className={classes.settings_label}>Change password</p>
-              <div className={classes.settings_field}>
-                <input
-                  type="password"
-                  placeholder="New password"
-                  className={classes.settings_input}
-                />
-                <input
-                  type="password"
-                  placeholder="Repeat password"
-                  className={classes.settings_input}
-                />
+              <div className={classes.settings_section}>
+                <div className={classes.section_header}>
+                  <span>Security</span>
+                </div>
+
+                <div className={classes.profile_fields}>
+                  <label className={classes.control_label}>
+                    New password
+                    <input
+                      type="password"
+                      placeholder="New password"
+                      className={classes.settings_input}
+                    />
+                  </label>
+                  <label className={classes.control_label}>
+                    Repeat password
+                    <input
+                      type="password"
+                      placeholder="Repeat password"
+                      className={classes.settings_input}
+                    />
+                  </label>
+                </div>
               </div>
 
-              <button
-                onClick={() => AuthStore.logout()}
-                className={classes.logout}
-              >
-                Logout
-              </button>
+              <div className={classes.profile_actions}>
+                <button className={classes.save_btn}>Save changes</button>
+                <button
+                  onClick={() => AuthStore.logout()}
+                  className={classes.logout}
+                >
+                  Logout
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -322,45 +337,121 @@ const SettingsModal = function ({ onClose }) {
             </div>
 
             <div className={classes.tabcontent_body}>
-              <select
-                value={MediaStore.selectedMicrophone || ""}
-                onChange={(e) => changeMicrophone(e.target.value)}
-                className={classes.devices_select}
-              >
-                {MediaStore.microphones.map((mic) => (
-                  <option key={mic.deviceId} value={mic.deviceId}>
-                    {mic.label || "Microphone"}
-                  </option>
-                ))}
-              </select>
+              <div className={classes.settings_section}>
+                <div className={classes.section_header}>
+                  <span>Input</span>
+                  <button
+                    onClick={toggleMicrophoneTest}
+                    className={classes.devices_test}
+                  >
+                    {isTestingMicrophone ? "Stop test" : "Test microphone"}
+                  </button>
+                </div>
 
-              <label className={classes.volume}>
-                Volume
-                <input
-                  type="range"
-                  min="0"
-                  max="2"
-                  step="0.01"
-                  value={MediaStore.volume}
-                  onChange={(e) =>
-                    MediaStore.changeVolume(parseFloat(e.target.value))
-                  }
-                />
-              </label>
+                <label className={classes.control_label}>
+                  Microphone
+                  <select
+                    value={MediaStore.selectedMicrophone || ""}
+                    onChange={(e) => changeMicrophone(e.target.value)}
+                    className={classes.devices_select}
+                  >
+                    {MediaStore.microphones.map((mic) => (
+                      <option key={mic.deviceId} value={mic.deviceId}>
+                        {mic.label || "Microphone"}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-              <div className={classes.mic_level}>
-                <div
-                  className={classes.mic_level_bar}
-                  style={{ width: `${Math.min(micLevel * 2, 100)}%` }}
-                />
+                <label className={classes.slider_row}>
+                  <span>Input gain</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="2"
+                    step="0.01"
+                    value={MediaStore.volume}
+                    onChange={(e) =>
+                      MediaStore.changeVolume(parseFloat(e.target.value))
+                    }
+                  />
+                  <strong>{Math.round(MediaStore.volume * 100)}%</strong>
+                </label>
+
+                <div className={classes.mic_meter}>
+                  <div className={classes.mic_level}>
+                    <div
+                      className={classes.mic_level_bar}
+                      style={{ width: `${Math.min(micLevel * 2, 100)}%` }}
+                    />
+                  </div>
+                  <span>{isTestingMicrophone ? "Live" : "Idle"}</span>
+                </div>
               </div>
 
-              <button
-                onClick={toggleMicrophoneTest}
-                className={classes.devices_test}
-              >
-                {isTestingMicrophone ? "Stop test" : "Test microphone"}
-              </button>
+              <div className={classes.settings_section}>
+                <div className={classes.section_header}>
+                  <span>Noise control</span>
+                </div>
+
+                <div className={classes.segmented_control}>
+                  {["off", "light", "strong"].map((mode) => (
+                    <button
+                      key={mode}
+                      className={
+                        MediaStore.noiseSuppressionMode === mode
+                          ? classes.active_segment
+                          : ""
+                      }
+                      onClick={() => MediaStore.changeNoiseSuppressionMode(mode)}
+                    >
+                      {mode}
+                    </button>
+                  ))}
+                </div>
+
+                <label className={classes.switch_row}>
+                  <span>Noise gate</span>
+                  <input
+                    type="checkbox"
+                    checked={MediaStore.noiseGateEnabled}
+                    onChange={(e) =>
+                      MediaStore.changeNoiseGateEnabled(e.target.checked)
+                    }
+                  />
+                </label>
+
+                <label className={classes.slider_row}>
+                  <span>Sensitivity</span>
+                  <input
+                    type="range"
+                    min="0.005"
+                    max="0.08"
+                    step="0.001"
+                    value={MediaStore.noiseGateThreshold}
+                    disabled={!MediaStore.noiseGateEnabled}
+                    onChange={(e) =>
+                      MediaStore.changeNoiseGateThreshold(
+                        parseFloat(e.target.value),
+                      )
+                    }
+                  />
+                  <strong>
+                    {Math.round(MediaStore.noiseGateThreshold * 1000)}
+                  </strong>
+                </label>
+
+                <label className={classes.switch_row}>
+                  <span>Auto gain</span>
+                  <input
+                    type="checkbox"
+                    checked={MediaStore.autoGainControl}
+                    onChange={(e) =>
+                      MediaStore.changeAutoGainControl(e.target.checked)
+                    }
+                  />
+                </label>
+              </div>
             </div>
           </div>
         )}

@@ -56,14 +56,20 @@ const SearchUser = ({ onSelectUser, participants }) => {
           + Add user
         </button>
       ) : (
-        <form autoComplete="off" onSubmit={(e) => e.preventDefault()}>
+        <div className="search_user_field">
           <input type="text" name="login" autoComplete="username" hidden />
-          <input type="password" name="password" autoComplete="current-password" hidden />
+          <input
+            type="password"
+            name="password"
+            autoComplete="current-password"
+            hidden
+          />
           <input
             ref={inputRef}
             className="search_user_input"
             type="text"
             name={searchName}
+            placeholder="Search by name or login"
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="off"
@@ -74,47 +80,62 @@ const SearchUser = ({ onSelectUser, participants }) => {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onInput={(e) => setQuery(e.currentTarget.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+              }
+            }}
             onFocus={() => {
               setIsFocused(true);
               clearBrowserAutofill();
             }}
             onBlur={() => setTimeout(() => setIsFocused(false), 100)}
           />
-        </form>
+        </div>
       )}
 
       {isFocused && results.length > 0 && (
         <div className="search_results">
-          {results.map((user) => (
-            <div
-              key={user.id}
-              className={`search_result_item ${
-                participants.some((p) => p.id === user.id)
-                  ? "selected_user"
-                  : ""
-              }`}
-              onClick={() => {
-                onSelectUser(user);
-                setQuery("");
-                setIsEditing(false);
-              }}
-            >
-              <div className="selected_user_check_mark">
-                <span>&#10003;</span>
-              </div>
+          {results.map((user) => {
+            const isSelected = participants.some((p) => p.id === user.id);
 
-              <UserAvatar
-                src={user.avatar}
-                status={user.status}
-                width="28px"
-                height="28px"
-              />
-              <div className="search_result_text">
-                <p className="search_result_username">{user.username}</p>
-                <p className="search_result_login">@{user.login}</p>
-              </div>
-            </div>
-          ))}
+            return (
+              <button
+                key={user.id}
+                type="button"
+                className={`search_result_item ${
+                  isSelected ? "selected_user" : ""
+                }`}
+                disabled={isSelected}
+                aria-disabled={isSelected}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  if (isSelected) return;
+                  onSelectUser(user);
+                  setQuery("");
+                  setIsEditing(false);
+                }}
+              >
+
+                <UserAvatar
+                  src={user.avatar}
+                  status={user.status}
+                  width="30px"
+                  height="30px"
+                />
+                <div className="search_result_text">
+                  <p className="search_result_username">{user.username}</p>
+                  <p className="search_result_login">@{user.login}</p>
+                </div>
+
+                {isSelected ? (
+                  <span className="search_result_badge">Added</span>
+                ) : (
+                  <span className="search_result_add">Add</span>
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

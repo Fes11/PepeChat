@@ -1,7 +1,14 @@
+import { audioProcessingService } from "./AudioProcessingService";
+
 export const DEFAULT_AUDIO_CONSTRAINTS = {
   echoCancellation: true,
-  autoGainControl: true,
   noiseSuppression: true,
+  autoGainControl: false,
+  sampleRate: 48000,
+  sampleSize: 16,
+  channelCount: 1,
+  latency: { ideal: 0.02 },
+  voiceIsolation: true,
 };
 
 export const DEFAULT_VIDEO_CONSTRAINTS = {
@@ -28,10 +35,49 @@ export const mediaService = {
     };
   },
 
-  async getMicrophone(deviceId) {
-    return navigator.mediaDevices.getUserMedia({
-      audio: { deviceId: deviceId, ...DEFAULT_AUDIO_CONSTRAINTS },
+  async getMicrophone(deviceId, options = {}) {
+    const {
+      processAudio = true,
+      volume = 1,
+      audioSettings = {},
+    } = options;
+    const noiseSuppressionMode =
+      audioSettings.noiseSuppressionMode ?? "strong";
+    const audioConstraints = {
+      ...DEFAULT_AUDIO_CONSTRAINTS,
+      autoGainControl: audioSettings.autoGainControl ?? false,
+      noiseSuppression: noiseSuppressionMode !== "off",
+      ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
+    };
+
+    const rawStream = await navigator.mediaDevices.getUserMedia({
+      audio: audioConstraints,
     });
+
+    if (!processAudio) return rawStream;
+
+    try {
+      const processed = await audioProcessingService.createProcessedMicrophoneStream(
+        rawStream,
+        {
+          volume,
+          noiseSuppressionMode,
+          noiseGateEnabled: audioSettings.noiseGateEnabled ?? true,
+          noiseGateThreshold: audioSettings.noiseGateThreshold ?? 0.025,
+        },
+      );
+
+      processed.stream.__audioCleanup = () => {
+        processed.stream.getTracks().forEach((track) => track.stop());
+        processed.cleanup();
+        mediaService.stopStream(rawStream);
+      };
+
+      return processed.stream;
+    } catch (err) {
+      console.warn("[MediaService] Audio processing is unavailable", err);
+      return rawStream;
+    }
   },
 
   async turnOffMicrophone(peerConnection) {
@@ -56,8 +102,11 @@ export const mediaService = {
     }
   },
 
-  async testMicrophone(deviceId) {
-    const stream = await mediaService.getMicrophone(deviceId);
+  async testMicrophone(deviceId, options = {}) {
+    const stream = await mediaService.getMicrophone(deviceId, {
+      processAudio: true,
+      ...options,
+    });
     return stream;
   },
 
@@ -68,6 +117,11 @@ export const mediaService = {
   },
 
   stopStream(stream) {
+    if (stream?.__audioCleanup) {
+      stream.__audioCleanup();
+      return;
+    }
+
     stream.getTracks().forEach((track) => track.stop());
   },
 };

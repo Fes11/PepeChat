@@ -11,6 +11,11 @@ const ICE_SERVERS = {
 };
 const MAX_PENDING_ICE_CANDIDATES = 32;
 const PENDING_ICE_TTL = 30_000;
+const AUDIO_MAX_BITRATE = 64_000;
+const CONNECTION_STATS_INTERVAL = 5_000;
+const HIGH_JITTER_SECONDS = 0.08;
+const HIGH_ROUND_TRIP_TIME_SECONDS = 0.5;
+const HIGH_PACKET_LOSS = 20;
 
 const useWebRTC = (setParticipants, setLocalStreamReady) => {
   const { MediaStore } = useContext(Context);
@@ -19,6 +24,105 @@ const useWebRTC = (setParticipants, setLocalStreamReady) => {
   const peerConnections = useRef({});
   const pendingIceCandidates = useRef({});
   const localMediaStream = useRef(null);
+  const connectionStatsIntervals = useRef({});
+
+  const stopConnectionStats = useCallback((participantId) => {
+    const peerKey = String(participantId);
+    const intervalId = connectionStatsIntervals.current[peerKey];
+
+    if (intervalId) {
+      clearInterval(intervalId);
+      delete connectionStatsIntervals.current[peerKey];
+    }
+  }, []);
+
+  const startConnectionStats = useCallback((participantId, pc) => {
+    const peerKey = String(participantId);
+    stopConnectionStats(peerKey);
+
+    connectionStatsIntervals.current[peerKey] = setInterval(async () => {
+      if (pc.connectionState === "closed") {
+        stopConnectionStats(peerKey);
+        return;
+      }
+
+      try {
+        const stats = await pc.getStats();
+        const snapshot = {
+          inboundAudio: null,
+          outboundAudio: null,
+          candidatePair: null,
+        };
+
+        stats.forEach((report) => {
+          if (report.type === "inbound-rtp" && report.kind === "audio") {
+            snapshot.inboundAudio = {
+              jitter: report.jitter ?? 0,
+              packetsLost: report.packetsLost ?? 0,
+              packetsReceived: report.packetsReceived ?? 0,
+              concealedSamples: report.concealedSamples ?? 0,
+            };
+          }
+
+          if (report.type === "outbound-rtp" && report.kind === "audio") {
+            snapshot.outboundAudio = {
+              packetsSent: report.packetsSent ?? 0,
+              bytesSent: report.bytesSent ?? 0,
+              retransmittedPacketsSent: report.retransmittedPacketsSent ?? 0,
+            };
+          }
+
+          if (
+            report.type === "candidate-pair" &&
+            (report.nominated || report.state === "succeeded") &&
+            report.currentRoundTripTime !== undefined
+          ) {
+            snapshot.candidatePair = {
+              currentRoundTripTime: report.currentRoundTripTime,
+              availableOutgoingBitrate: report.availableOutgoingBitrate,
+            };
+          }
+        });
+
+        const inboundAudio = snapshot.inboundAudio;
+        const candidatePair = snapshot.candidatePair;
+        const hasPoorInboundAudio =
+          inboundAudio &&
+          (inboundAudio.jitter > HIGH_JITTER_SECONDS ||
+            inboundAudio.packetsLost > HIGH_PACKET_LOSS);
+        const hasHighRoundTripTime =
+          candidatePair?.currentRoundTripTime > HIGH_ROUND_TRIP_TIME_SECONDS;
+
+        if (hasPoorInboundAudio || hasHighRoundTripTime) {
+          console.warn("[VoiceRoom] Poor WebRTC audio stats", {
+            participantId,
+            ...snapshot,
+          });
+        } else {
+          console.debug("[VoiceRoom] WebRTC audio stats", {
+            participantId,
+            ...snapshot,
+          });
+        }
+      } catch (err) {
+        console.warn("[VoiceRoom] Failed to read WebRTC stats", err);
+      }
+    }, CONNECTION_STATS_INTERVAL);
+  }, [stopConnectionStats]);
+
+  const configureAudioSender = useCallback(async (sender) => {
+    if (!sender?.track || sender.track.kind !== "audio") return;
+
+    try {
+      const params = sender.getParameters();
+      params.encodings = params.encodings?.length ? params.encodings : [{}];
+      params.encodings[0].maxBitrate = AUDIO_MAX_BITRATE;
+
+      await sender.setParameters(params);
+    } catch (err) {
+      console.warn("[VoiceRoom] Failed to configure audio sender", err);
+    }
+  }, []);
 
   const flushPendingIceCandidates = useCallback(async (participantId) => {
     const key = String(participantId);
@@ -47,6 +151,10 @@ const useWebRTC = (setParticipants, setLocalStreamReady) => {
     try {
       const stream = await mediaService.getMicrophone(
         MediaStore.selectedMicrophone,
+        {
+          volume: MediaStore.volume,
+          audioSettings: MediaStore.getAudioSettings(),
+        },
       );
 
       if (localMediaStream.current) {
@@ -60,7 +168,51 @@ const useWebRTC = (setParticipants, setLocalStreamReady) => {
       console.error("Failed to get microphone access:", err);
       throw err;
     }
-  }, [MediaStore.selectedMicrophone, setLocalStreamReady]);
+  }, [
+    MediaStore,
+    MediaStore.selectedMicrophone,
+    MediaStore.volume,
+    setLocalStreamReady,
+  ]);
+
+  const switchLocalMicrophone = useCallback(
+    async (deviceId) => {
+      const previousStream = localMediaStream.current;
+      const wasEnabled =
+        previousStream?.getAudioTracks?.()[0]?.enabled ?? true;
+      const nextStream = await mediaService.getMicrophone(deviceId, {
+        volume: MediaStore.volume,
+        audioSettings: MediaStore.getAudioSettings(),
+      });
+      const nextTrack = nextStream.getAudioTracks()[0];
+
+      if (nextTrack) {
+        nextTrack.enabled = wasEnabled;
+      }
+
+      await Promise.all(
+        Object.values(peerConnections.current).map(async (pc) => {
+          const sender = pc
+            .getSenders()
+            .find((item) => item.track?.kind === "audio");
+
+          if (!sender || !nextTrack) return;
+          await sender.replaceTrack(nextTrack);
+          await configureAudioSender(sender);
+        }),
+      );
+
+      localMediaStream.current = nextStream;
+
+      if (previousStream) {
+        mediaService.stopStream(previousStream);
+      }
+
+      setLocalStreamReady(true);
+      return nextStream;
+    },
+    [MediaStore, MediaStore.volume, configureAudioSender, setLocalStreamReady],
+  );
 
   const createPeerConnection = useCallback(
     async (participantId, sendSignal) => {
@@ -86,7 +238,8 @@ const useWebRTC = (setParticipants, setLocalStreamReady) => {
 
       if (stream) {
         stream.getTracks().forEach((track) => {
-          pc.addTrack(track, stream);
+          const sender = pc.addTrack(track, stream);
+          configureAudioSender(sender);
         });
       } else {
         pc.addTransceiver("audio", { direction: "recvonly" });
@@ -125,9 +278,10 @@ const useWebRTC = (setParticipants, setLocalStreamReady) => {
       };
 
       peerConnections.current[peerKey] = pc;
+      startConnectionStats(participantId, pc);
       return pc;
     },
-    [setParticipants, startLocalStream],
+    [configureAudioSender, setParticipants, startConnectionStats, startLocalStream],
   );
 
   const handleOffer = useCallback(
@@ -200,16 +354,19 @@ const useWebRTC = (setParticipants, setLocalStreamReady) => {
       delete peerConnections.current[peerKey];
     }
     delete pendingIceCandidates.current[peerKey];
-  }, []);
+    stopConnectionStats(peerKey);
+  }, [stopConnectionStats]);
 
   // Закрыть все соединения и остановить поток
   const cleanup = useCallback(() => {
     Object.values(peerConnections.current).forEach((pc) => pc.close());
     peerConnections.current = {};
     pendingIceCandidates.current = {};
+    Object.values(connectionStatsIntervals.current).forEach(clearInterval);
+    connectionStatsIntervals.current = {};
 
     if (localMediaStream.current) {
-      localMediaStream.current.getTracks().forEach((t) => t.stop());
+      mediaService.stopStream(localMediaStream.current);
       localMediaStream.current = null;
     }
 
@@ -220,6 +377,7 @@ const useWebRTC = (setParticipants, setLocalStreamReady) => {
     peerConnections,       // ref — пробрасываем наружу для useVoiceRoom
     localMediaStream,      // ref — пробрасываем наружу для useVoiceRoom
     startLocalStream,
+    switchLocalMicrophone,
     createPeerConnection,
     closePeerConnection,
     handleOffer,

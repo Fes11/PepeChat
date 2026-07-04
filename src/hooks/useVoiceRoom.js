@@ -28,7 +28,7 @@ const playRoomLeftSound = () => {
 };
 
 export const useVoiceRoom = (chatId) => {
-  const { AuthStore } = useContext(Context);
+  const { AuthStore, MediaStore } = useContext(Context);
   const [participants, setParticipants] = useState([]);
   const [localStreamReady, setLocalStreamReady] = useState(false);
 
@@ -39,6 +39,7 @@ export const useVoiceRoom = (chatId) => {
     peerConnections,
     localMediaStream,
     startLocalStream,
+    switchLocalMicrophone,
     createPeerConnection,
     closePeerConnection,
     handleOffer,
@@ -451,6 +452,55 @@ export const useVoiceRoom = (chatId) => {
     },
     [localMediaStream, sendLocalMediaState],
   );
+
+  useEffect(() => {
+    const switchMicrophone = async (deviceId) => {
+      const stream = await switchLocalMicrophone(deviceId);
+      await startSpeakingDetection(stream);
+    };
+
+    const handleMicrophoneChange = async (event) => {
+      const deviceId = event.detail?.deviceId;
+
+      try {
+        await switchMicrophone(deviceId);
+      } catch (err) {
+        console.error("[VoiceRoom] Cannot switch microphone", err);
+      }
+    };
+
+    const handleAudioSettingsChange = async () => {
+      try {
+        await switchMicrophone(MediaStore.selectedMicrophone);
+      } catch (err) {
+        console.error("[VoiceRoom] Cannot apply audio settings", err);
+      }
+    };
+
+    window.addEventListener(
+      "pepechat:microphonechange",
+      handleMicrophoneChange,
+    );
+    window.addEventListener(
+      "pepechat:audiosettingschange",
+      handleAudioSettingsChange,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "pepechat:microphonechange",
+        handleMicrophoneChange,
+      );
+      window.removeEventListener(
+        "pepechat:audiosettingschange",
+        handleAudioSettingsChange,
+      );
+    };
+  }, [
+    MediaStore.selectedMicrophone,
+    startSpeakingDetection,
+    switchLocalMicrophone,
+  ]);
 
   // ── Lifecycle ────────────────────────────────────────────────────────────
 

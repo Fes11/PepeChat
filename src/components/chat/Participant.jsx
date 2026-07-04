@@ -52,7 +52,11 @@ const Participant = ({ user, onClick, onRemove }) => {
         <button
           type="button"
           className="participant__remove"
-          onClick={onRemove}
+          aria-label={`Remove ${user.username || user.login}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            onRemove();
+          }}
         >
           ✕
         </button>
