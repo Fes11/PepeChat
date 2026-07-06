@@ -5,19 +5,25 @@
 .login {
   max-width: 950px;
   max-height: 525px;
+  width: min(950px, 94vw);
+  height: auto;
   border-radius: 10px;
   padding: 8px;
   display: flex;
+  overflow: hidden;
 }
 
 .auth_img {
   opacity: 90%;
+  max-width: 50%;
+  object-fit: cover;
 }
 
 .login__main {
-  padding: 0 80px;
+  padding: 0 clamp(18px, 8vw, 80px);
   margin: auto;
   width: 100%;
+  min-width: 0;
 }
 
 .login__form {
@@ -79,7 +85,8 @@
 }
 
 .login__form_title p {
-  width: 250px;
+  max-width: 250px;
+  width: 100%;
   margin-top: 16px;
 }
 
@@ -92,4 +99,20 @@
 
 .login__form_bottom p {
   color: var(--muted-text-color);
+}
+
+@media (max-width: 760px), (max-height: 560px) {
+  .login {
+    width: min(420px, 94vw);
+    max-height: 94vh;
+    overflow-y: auto;
+  }
+
+  .auth_img {
+    display: none;
+  }
+
+  .login__main {
+    padding: 20px clamp(14px, 5vw, 28px);
+  }
 }

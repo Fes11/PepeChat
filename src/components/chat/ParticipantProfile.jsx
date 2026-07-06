@@ -1,13 +1,13 @@
-import React, { useState, useContext } from "react";
+import React, { useContext, forwardRef } from "react";
 import UserAvatar from "../UI/UserAvatar.jsx";
 import { Context } from "../../main";
 
-const ParticipantProfile = ({ user, ref }) => {
+const ParticipantProfile = forwardRef(({ user, style }, ref) => {
   const { AuthStore } = useContext(Context);
   const { ChatStore } = useContext(Context);
 
   return (
-    <div className="participant_profile" ref={ref}>
+    <div className="participant_profile" ref={ref} style={style}>
       <div className="participant_profile_header">
         <UserAvatar
           src={user.avatar}
@@ -35,6 +35,8 @@ const ParticipantProfile = ({ user, ref }) => {
       )}
     </div>
   );
-};
+});
+
+ParticipantProfile.displayName = "ParticipantProfile";
 
 export default ParticipantProfile;

@@ -12,6 +12,7 @@ class MediaStore {
   selectedMicrophone = null;
   selectedCamera = null;
   selectedDisplay = null;
+  permissionRequested = false;
 
   volume = 1;
   autoGainControl = false;
@@ -29,6 +30,22 @@ class MediaStore {
     this.microphones = devices.microphones;
     this.cameras = devices.cameras;
     this.speakers = devices.speakers;
+  }
+
+  async initializeDevices({ requestMicrophone = false } = {}) {
+    this.loadSavedDevices();
+
+    if (requestMicrophone && !this.permissionRequested) {
+      this.permissionRequested = true;
+
+      try {
+        await mediaService.ensureMicrophonePermission();
+      } catch (err) {
+        console.warn("[MediaStore] Microphone permission was not granted", err);
+      }
+    }
+
+    await this.loadDevices();
   }
 
   changeMicrophone(target) {

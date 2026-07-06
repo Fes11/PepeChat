@@ -5,25 +5,30 @@ import useSpeakingDetector from "./useSpeakingDetector";
 import roomJoinSoundUrl from "../assets/sounds/JoinSound.mp3";
 import roomLeftSoundUrl from "../assets/sounds/LeftSound.mp3";
 import { Context } from "../main";
+import { mediaService } from "../services/MediaService";
 
 const HEARTBEAT_INTERVAL = 10_000;
 const RECONNECT_DELAY = 3_000;
 const ROOM_JOIN_SOUND_VOLUME = 0.4;
 const LOCAL_STREAM_WAIT_TIMEOUT = 1_500;
 
-const playRoomJoinSound = () => {
+const playRoomJoinSound = (outputDeviceId) => {
   const audio = new Audio(roomJoinSoundUrl);
   audio.volume = ROOM_JOIN_SOUND_VOLUME;
-  audio.play().catch((err) => {
-    console.warn("[VoiceRoom] Cannot play join sound", err);
+  mediaService.setAudioOutput(audio, outputDeviceId).finally(() => {
+    audio.play().catch((err) => {
+      console.warn("[VoiceRoom] Cannot play join sound", err);
+    });
   });
 };
 
-const playRoomLeftSound = () => {
+const playRoomLeftSound = (outputDeviceId) => {
   const audio = new Audio(roomLeftSoundUrl);
   audio.volume = ROOM_JOIN_SOUND_VOLUME;
-  audio.play().catch((err) => {
-    console.warn("[VoiceRoom] Cannot play left sound", err);
+  mediaService.setAudioOutput(audio, outputDeviceId).finally(() => {
+    audio.play().catch((err) => {
+      console.warn("[VoiceRoom] Cannot play left sound", err);
+    });
   });
 };
 
@@ -58,7 +63,11 @@ export const useVoiceRoom = (chatId) => {
   const manuallyClosedRef = useRef(false);
   const disconnectStartedRef = useRef(false);
   const localJoinSoundPlayedRef = useRef(false);
-  const localMediaStateRef = useRef({ muted: false, speaking: false });
+  const localMediaStateRef = useRef({
+    muted: false,
+    speaking: false,
+    deafened: false,
+  });
   const localParticipantIdRef = useRef(null);
   const connectingParticipantIdsRef = useRef(new Set());
 
@@ -283,7 +292,7 @@ export const useVoiceRoom = (chatId) => {
         }
         if (!localJoinSoundPlayedRef.current) {
           localJoinSoundPlayedRef.current = true;
-          playRoomJoinSound();
+          playRoomJoinSound(MediaStore.selectedDisplay);
         }
         startHeartbeat();
       },
@@ -325,7 +334,7 @@ export const useVoiceRoom = (chatId) => {
 
           // Новый участник подключился — мы инициируем offer
           case "user_joined": {
-            playRoomJoinSound();
+            playRoomJoinSound(MediaStore.selectedDisplay);
 
             if (shouldInitiateConnection(data.participant)) {
               await connectToParticipant(data.participant);
@@ -337,7 +346,7 @@ export const useVoiceRoom = (chatId) => {
 
           // Участник отключился
           case "user_left":
-            playRoomLeftSound();
+            playRoomLeftSound(MediaStore.selectedDisplay);
 
             removeParticipant(data.participant_id);
             closePeerConnection(data.participant_id);
@@ -404,6 +413,7 @@ export const useVoiceRoom = (chatId) => {
     handleAnswer,
     handleIceCandidate,
     cleanup,
+    MediaStore.selectedDisplay,
   ]);
 
   // ── Disconnect ───────────────────────────────────────────────────────────
@@ -423,7 +433,7 @@ export const useVoiceRoom = (chatId) => {
     }
 
     if (playSound) {
-      playRoomLeftSound();
+      playRoomLeftSound(MediaStore.selectedDisplay);
     }
 
     if (reconnectTimeoutRef.current) {
@@ -435,7 +445,7 @@ export const useVoiceRoom = (chatId) => {
     cleanup(); // закрывает все PeerConnections и останавливает поток
 
     socketRef.current?.disconnect();
-  }, [stopHeartbeat, stopSpeakingDetection, cleanup]);
+  }, [MediaStore.selectedDisplay, stopHeartbeat, stopSpeakingDetection, cleanup]);
 
   // ── Mute / Unmute ────────────────────────────────────────────────────────
 
@@ -451,6 +461,13 @@ export const useVoiceRoom = (chatId) => {
       });
     },
     [localMediaStream, sendLocalMediaState],
+  );
+
+  const setHeadphonesMuted = useCallback(
+    (muted) => {
+      sendLocalMediaState({ deafened: muted });
+    },
+    [sendLocalMediaState],
   );
 
   useEffect(() => {
@@ -508,7 +525,11 @@ export const useVoiceRoom = (chatId) => {
     manuallyClosedRef.current = false;
     disconnectStartedRef.current = false;
     localJoinSoundPlayedRef.current = false;
-    localMediaStateRef.current = { muted: false, speaking: false };
+    localMediaStateRef.current = {
+      muted: false,
+      speaking: false,
+      deafened: false,
+    };
     localParticipantIdRef.current = null;
     connectingParticipantIdsRef.current = new Set();
 
@@ -524,6 +545,7 @@ export const useVoiceRoom = (chatId) => {
     participants,
     localStreamReady,
     setMicEnabled,
+    setHeadphonesMuted,
     send: (data) => socketRef.current?.send(data),
     disconnect,
   };

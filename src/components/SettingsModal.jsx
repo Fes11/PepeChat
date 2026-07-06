@@ -2,22 +2,35 @@ import React, { useContext, useState, useEffect, useRef } from "react";
 import classes from "./SettingsModal.module.css";
 import AvatarPicker from "../components/chat/AvatarPicker.jsx";
 import { mediaService } from "../services/MediaService";
+import UserServices from "../services/UserService.jsx";
 import { Context } from "../main";
 import { observer } from "mobx-react-lite";
+import { notifyError, notifySuccess } from "../notifications/notificationService";
 import {
   ACCENT_COLORS,
   DEFAULT_MAIN_COLOR,
+  MAX_UI_SCALE,
+  MIN_UI_SCALE,
   useThemeSettings,
 } from "../theme";
 
 const SettingsModal = function ({ onClose }) {
   const [avatar, setAvatar] = useState(null);
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [description, setDescription] = useState("");
+  const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
+  const [profileError, setProfileError] = useState("");
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isTestingMicrophone, setIsTestingMicrophone] = useState(false);
   const [micLevel, setMicLevel] = useState(0);
   const { AuthStore, MediaStore } = useContext(Context);
   const login = AuthStore.user.login || "Login";
+  const displayName = AuthStore.user.username || login;
   const [activeTab, setActiveTab] = useState("Profile");
-  const { theme, mainColor, setTheme, setMainColor } = useThemeSettings();
+  const { theme, mainColor, uiScale, setTheme, setMainColor, setUiScale } =
+    useThemeSettings();
   const tabs = ["Profile", "App", "Device"];
   const testStreamRef = useRef(null);
   const audioContextRef = useRef(null);
@@ -26,9 +39,124 @@ const SettingsModal = function ({ onClose }) {
   const animationRef = useRef(null);
 
   useEffect(() => {
-    MediaStore.loadDevices();
-    MediaStore.loadSavedDevices();
+    MediaStore.initializeDevices({ requestMicrophone: true });
   }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadProfile = async () => {
+      try {
+        const response = await UserServices.getProfile();
+        if (!isMounted) return;
+        AuthStore.setUser({
+          ...AuthStore.user,
+          ...response.data,
+        });
+      } catch (error) {
+        console.error("Failed to load profile:", error);
+      }
+    };
+
+    loadProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [AuthStore]);
+
+  useEffect(() => {
+    setUsername(AuthStore.user.username || "");
+    setEmail(AuthStore.user.email || "");
+    setDescription(AuthStore.user.descriptions || "");
+    setAvatar(null);
+    setPassword("");
+    setPasswordConfirm("");
+    setProfileError("");
+  }, [
+    AuthStore.user.id,
+    AuthStore.user.username,
+    AuthStore.user.email,
+    AuthStore.user.descriptions,
+  ]);
+
+  const getProfileErrorMessage = (error) => {
+    const data = error.response?.data;
+    if (!data) return error.message || "Could not save profile";
+    if (typeof data === "string") return data;
+    if (data.detail) return data.detail;
+
+    const firstField = Object.keys(data)[0];
+    const firstValue = data[firstField];
+    if (Array.isArray(firstValue)) {
+      return `${firstField}: ${firstValue[0]}`;
+    }
+    if (firstValue) {
+      return `${firstField}: ${firstValue}`;
+    }
+
+    return "Could not save profile";
+  };
+
+  const saveProfile = async (event) => {
+    event.preventDefault();
+    setProfileError("");
+
+    if ((password || passwordConfirm) && password !== passwordConfirm) {
+      setProfileError("Passwords do not match");
+      return;
+    }
+
+    const nextUsername = username.trim();
+    const nextEmail = email.trim();
+    const nextDescription = description.trim();
+    const formData = new FormData();
+
+    if (nextUsername !== (AuthStore.user.username || "")) {
+      formData.append("username", nextUsername);
+    }
+
+    if (nextEmail !== (AuthStore.user.email || "")) {
+      formData.append("email", nextEmail);
+    }
+
+    if (nextDescription !== (AuthStore.user.descriptions || "")) {
+      formData.append("descriptions", nextDescription);
+    }
+
+    if (avatar) {
+      formData.append("avatar", avatar);
+    }
+
+    if (password) {
+      formData.append("password", password);
+      formData.append("password_confirm", passwordConfirm);
+    }
+
+    if ([...formData.keys()].length === 0) {
+      notifySuccess("Profile is already up to date");
+      return;
+    }
+
+    try {
+      setIsSavingProfile(true);
+      const response = await UserServices.updateProfile(formData);
+      AuthStore.setUser({
+        ...AuthStore.user,
+        ...response.data,
+      });
+      setAvatar(null);
+      setPassword("");
+      setPasswordConfirm("");
+      notifySuccess("Profile updated");
+    } catch (error) {
+      const message = getProfileErrorMessage(error);
+      setProfileError(message);
+      notifyError(error, message);
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
 
   const stopMicrophoneTest = async () => {
     if (animationRef.current) {
@@ -167,6 +295,10 @@ const SettingsModal = function ({ onClose }) {
     }
   };
 
+  const changeSpeaker = (deviceId) => {
+    MediaStore.setDisplay(deviceId);
+  };
+
   return (
     <div className={classes.settings_modal}>
       <button onClick={onClose} className={classes.close}>
@@ -192,13 +324,17 @@ const SettingsModal = function ({ onClose }) {
               <h3>Profile</h3>
             </div>
 
-            <div className={classes.tabcontent_body}>
+            <form className={classes.tabcontent_body} onSubmit={saveProfile}>
               <div className={classes.profile_card}>
                 <div className={classes.profile_identity}>
-                  <AvatarPicker avatar={avatar} onSelectAvatar={setAvatar} />
+                  <AvatarPicker
+                    avatar={avatar}
+                    onSelectAvatar={setAvatar}
+                    previewSrc={AuthStore.user.avatar}
+                  />
 
                   <div className={classes.profile_summary}>
-                    <span>{login}</span>
+                    <span>{displayName}</span>
                     <p>@{login}</p>
                   </div>
                 </div>
@@ -209,7 +345,8 @@ const SettingsModal = function ({ onClose }) {
                     <input
                       type="text"
                       placeholder="Your username"
-                      defaultValue={login}
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
                       className={classes.settings_input}
                     />
                   </label>
@@ -218,6 +355,18 @@ const SettingsModal = function ({ onClose }) {
                     <input
                       type="email"
                       placeholder="your@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className={classes.settings_input}
+                    />
+                  </label>
+                  <label className={classes.control_label}>
+                    Description
+                    <input
+                      type="text"
+                      placeholder="About you"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
                       className={classes.settings_input}
                     />
                   </label>
@@ -235,6 +384,8 @@ const SettingsModal = function ({ onClose }) {
                     <input
                       type="password"
                       placeholder="New password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                       className={classes.settings_input}
                     />
                   </label>
@@ -243,22 +394,35 @@ const SettingsModal = function ({ onClose }) {
                     <input
                       type="password"
                       placeholder="Repeat password"
+                      value={passwordConfirm}
+                      onChange={(e) => setPasswordConfirm(e.target.value)}
                       className={classes.settings_input}
                     />
                   </label>
                 </div>
               </div>
 
+              {profileError && (
+                <p className={classes.profile_error}>{profileError}</p>
+              )}
+
               <div className={classes.profile_actions}>
-                <button className={classes.save_btn}>Save changes</button>
                 <button
+                  type="submit"
+                  className={classes.save_btn}
+                  disabled={isSavingProfile}
+                >
+                  {isSavingProfile ? "Saving..." : "Save changes"}
+                </button>
+                <button
+                  type="button"
                   onClick={() => AuthStore.logout()}
                   className={classes.logout}
                 >
                   Logout
                 </button>
               </div>
-            </div>
+            </form>
           </div>
         )}
 
@@ -325,6 +489,29 @@ const SettingsModal = function ({ onClose }) {
                     Reset
                   </button>
                 </div>
+
+                <div className={classes.setting_row}>
+                  <span>
+                    <strong>Interface scale</strong>
+                    <small>Adjust the app size on this screen</small>
+                  </span>
+
+                  <div className={classes.scale_control}>
+                    <input
+                      type="range"
+                      min={MIN_UI_SCALE}
+                      max={MAX_UI_SCALE}
+                      step="0.05"
+                      value={uiScale}
+                      onChange={(e) => setUiScale(e.target.value)}
+                      aria-label="Interface scale"
+                    />
+                    <strong>{Math.round(uiScale * 100)}%</strong>
+                    <button type="button" onClick={() => setUiScale(null)}>
+                      Reset
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -358,6 +545,22 @@ const SettingsModal = function ({ onClose }) {
                     {MediaStore.microphones.map((mic) => (
                       <option key={mic.deviceId} value={mic.deviceId}>
                         {mic.label || "Microphone"}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className={classes.control_label}>
+                  Output
+                  <select
+                    value={MediaStore.selectedDisplay || ""}
+                    onChange={(e) => changeSpeaker(e.target.value)}
+                    className={classes.devices_select}
+                  >
+                    <option value="">System default</option>
+                    {MediaStore.speakers.map((speaker) => (
+                      <option key={speaker.deviceId} value={speaker.deviceId}>
+                        {speaker.label || "Output device"}
                       </option>
                     ))}
                   </select>

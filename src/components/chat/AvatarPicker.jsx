@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import "./AvatarPicker.css";
 
-const AvatarPicker = ({ avatar, onSelectAvatar }) => {
-  const [avatarPreview, setAvatarPreview] = useState(null);
+const AvatarPicker = ({ avatar, onSelectAvatar, previewSrc = null }) => {
+  const [avatarPreview, setAvatarPreview] = useState(previewSrc);
 
   useEffect(() => {
     if (!avatar) {
-      setAvatarPreview(null);
+      setAvatarPreview(previewSrc);
     }
-  }, [avatar]);
+  }, [avatar, previewSrc]);
 
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
@@ -19,6 +19,14 @@ const AvatarPicker = ({ avatar, onSelectAvatar }) => {
     const previewUrl = URL.createObjectURL(file);
     setAvatarPreview(previewUrl);
   };
+
+  useEffect(() => {
+    return () => {
+      if (avatarPreview?.startsWith("blob:")) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+    };
+  }, [avatarPreview]);
 
   return (
     <label className="avatar_picker">

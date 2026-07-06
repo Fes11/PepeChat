@@ -29,8 +29,7 @@
 }
 
 .room_users_list {
-  padding: 20px;
-  box-sizing: border-box;
+  padding: clamp(10px, 2vw, 20px);
   width: 100%;
   height: 100%;
   display: flex;
@@ -43,16 +42,7 @@
 
 .room_activity_panel {
   padding: 10px 20px;
-  background:
-    linear-gradient(var(--modal-bg-color), var(--modal-bg-color)) padding-box,
-    linear-gradient(
-        270.14deg,
-        var(--muted-text-color) 0%,
-        transparent 36.06%,
-        transparent 62.98%,
-        var(--hover-bg-color) 100%
-      )
-      border-box;
+  background: var(--bg-color);
   border: 1px solid transparent;
   border-radius: 25px;
   backdrop-filter: blur(200px);
@@ -62,6 +52,9 @@
   transform: translateX(-50%);
   display: flex;
   gap: 10px;
+  max-width: calc(100% - 24px);
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .room_activity_btn {
@@ -75,6 +68,28 @@
 .room_activity_btn img {
   width: 20px;
   height: 20px;
+}
+
+@media (max-width: 520px), (max-height: 520px) {
+  .room_header {
+    padding: 8px 48px 8px 10px;
+  }
+
+  .hide_btn {
+    right: 10px;
+    top: 8px;
+    padding: 10px;
+  }
+
+  .room_activity_panel {
+    bottom: 10px;
+    padding: 8px 12px;
+    border-radius: 18px;
+  }
+
+  .room_activity_btn {
+    padding: 8px;
+  }
 }
 
 .leave {
@@ -91,4 +106,16 @@
 
 .headphones:hover {
   background: var(--hover-bg-color);
+}
+
+.muted {
+  background: rgba(237, 66, 69, 0.18);
+}
+
+.muted:hover {
+  background: rgba(237, 66, 69, 0.26);
+}
+
+.room_activity_btn[aria-disabled="true"] {
+  opacity: 0.65;
 }

@@ -11,13 +11,15 @@ import ChatPage from "./components/chat/ChatPage";
 import NotFound404 from "./components/UI/NotFound404";
 
 const App = observer(() => {
-  const { ChatStore, AuthStore } = useContext(Context);
+  const { ChatStore, AuthStore, MediaStore } = useContext(Context);
 
   useEffect(() => {
     const init = async () => {
       await AuthStore.checkAuth();
 
       if (AuthStore.isAuth) {
+        MediaStore.initializeDevices({ requestMicrophone: true });
+
         const token = localStorage.getItem("token");
         if (token) {
           ChatStore.connect(token);

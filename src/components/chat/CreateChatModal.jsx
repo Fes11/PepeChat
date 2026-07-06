@@ -4,6 +4,7 @@ import SearchUser from "./SearchUser.jsx";
 import AvatarPicker from "./AvatarPicker.jsx";
 import Participant from "./Participant.jsx";
 import ChatService from "../../services/ChatService";
+import { notifySuccess } from "../../notifications/notificationService";
 
 const CreateChatModal = ({ onChatCreated, onClose }) => {
   const [title, setTitle] = useState("");
@@ -48,6 +49,7 @@ const CreateChatModal = ({ onChatCreated, onClose }) => {
       setPrivate(false);
 
       onClose();
+      notifySuccess("Чат создан");
     } catch (error) {
       console.error("Ошибка при создании чата:", error);
     }

@@ -25,7 +25,23 @@ export const ADDITIONAL_VIDEO_CONSTRAINTS = {
 export const mediaService = {
   async getMedia(constraints) {},
 
+  async ensureMicrophonePermission() {
+    if (!navigator.mediaDevices?.getUserMedia) return false;
+
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaService.stopStream(stream);
+    return true;
+  },
+
   async getDevices() {
+    if (!navigator.mediaDevices?.enumerateDevices) {
+      return {
+        microphones: [],
+        cameras: [],
+        speakers: [],
+      };
+    }
+
     const devices = await navigator.mediaDevices.enumerateDevices();
 
     return {
@@ -33,6 +49,16 @@ export const mediaService = {
       cameras: devices.filter((d) => d.kind === "videoinput"),
       speakers: devices.filter((d) => d.kind === "audiooutput"),
     };
+  },
+
+  async setAudioOutput(audioElement, deviceId) {
+    if (!audioElement || !deviceId || !audioElement.setSinkId) return;
+
+    try {
+      await audioElement.setSinkId(deviceId);
+    } catch (err) {
+      console.warn("[MediaService] Cannot set audio output device", err);
+    }
   },
 
   async getMicrophone(deviceId, options = {}) {

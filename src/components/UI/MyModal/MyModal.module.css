@@ -20,5 +20,14 @@
   background-color: var(--modal-bg-color);
   border-radius: 15px;
   min-width: 250px;
+  max-width: 96vw;
+  max-height: 94vh;
   overflow: hidden;
+}
+
+@media (max-width: 360px) {
+  .myModal__content {
+    min-width: 0;
+    width: 96vw;
+  }
 }

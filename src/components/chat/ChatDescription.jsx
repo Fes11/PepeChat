@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { observer } from "mobx-react-lite";
 import { Context } from "../../main.jsx";
 import Search from "../UI/Input/Search";
@@ -8,6 +8,17 @@ import Participant from "./Participant";
 
 const ChatDescription = ({ participants = [] }) => {
   const { ChatStore } = useContext(Context);
+  const [expandedSections, setExpandedSections] = useState({
+    online: true,
+    offline: true,
+  });
+
+  const toggleSection = (section) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
+  };
 
   const participantsWithPresence = participants.map((participant) => ({
     ...participant,
@@ -32,24 +43,48 @@ const ChatDescription = ({ participants = [] }) => {
 
         <Search placeholder="Search..." /> */}
 
-        <div className="chat_description__online">
-          Online – {onlineParticipants.length}
+        <button
+          type="button"
+          className="chat_description__online"
+          aria-expanded={expandedSections.online}
+          onClick={() => toggleSection("online")}
+        >
+          <span>Online – {onlineParticipants.length}</span>
+          <span className="chat_description__arrow" aria-hidden="true" />
+        </button>
+
+        <div
+          className={`participants_list_shell ${
+            expandedSections.online ? "" : "participants_list_shell--collapsed"
+          }`}
+        >
+          <div className="participants_list">
+            {onlineParticipants.map((participant) => (
+              <Participant key={participant.user.id} user={participant.user} />
+            ))}
+          </div>
         </div>
 
-        <div className="participants_list">
-          {onlineParticipants.map((participant) => (
-            <Participant key={participant.user.id} user={participant.user} />
-          ))}
-        </div>
+        <button
+          type="button"
+          className="chat_description__online"
+          aria-expanded={expandedSections.offline}
+          onClick={() => toggleSection("offline")}
+        >
+          <span>Offline – {offlineParticipants.length}</span>
+          <span className="chat_description__arrow" aria-hidden="true" />
+        </button>
 
-        <div className="chat_description__online">
-          Offline – {offlineParticipants.length}
-        </div>
-
-        <div className="participants_list">
-          {offlineParticipants.map((participant) => (
-            <Participant key={participant.user.id} user={participant.user} />
-          ))}
+        <div
+          className={`participants_list_shell ${
+            expandedSections.offline ? "" : "participants_list_shell--collapsed"
+          }`}
+        >
+          <div className="participants_list">
+            {offlineParticipants.map((participant) => (
+              <Participant key={participant.user.id} user={participant.user} />
+            ))}
+          </div>
         </div>
       </div>
     </div>

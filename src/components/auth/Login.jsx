@@ -21,7 +21,7 @@ const getErrorMessage = (errors, field) => {
 
 const Login = () => {
   const navigate = useNavigate();
-  const { AuthStore } = useContext(Context);
+  const { AuthStore, MediaStore } = useContext(Context);
 
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
@@ -46,6 +46,7 @@ const Login = () => {
     const result = await AuthStore.login(login, password);
 
     if (result.ok) {
+      MediaStore.initializeDevices({ requestMicrophone: true });
       navigate("/chat/"); // переход после успешного входа
     } else {
       setErrors(result.errors);

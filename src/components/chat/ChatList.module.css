@@ -1,12 +1,15 @@
 .chat_list {
+  flex: 0 0 clamp(220px, 24vw, 300px);
   max-width: 300px;
-  min-width: 250px;
+  min-width: 0;
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 8px;
   position: relative;
+  overflow: hidden;
 }
 
 .chat_list__content {
@@ -18,6 +21,7 @@
   flex: 1;
   min-height: 0;
   position: relative;
+  overflow: hidden;
 }
 
 .chat_list__btn {
@@ -34,9 +38,11 @@
   font-weight: 800;
   margin: 0 8px;
   position: absolute;
-  width: 95%;
+  width: calc(100% - 16px);
   bottom: 10px;
-  left: auto;
+  left: 0;
+  right: 0;
+  margin-inline: auto;
 }
 
 .chat_list__btn img {
@@ -51,4 +57,25 @@
   flex: 1;
   overflow-y: auto;
   min-height: 0;
+}
+
+@media (max-width: 760px) {
+  .chat_list {
+    flex-basis: clamp(170px, 30vw, 220px);
+    max-width: 220px;
+    min-height: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .chat_list {
+    flex-basis: 160px;
+    max-width: 160px;
+  }
+}
+
+@media (max-height: 560px) and (min-width: 761px) {
+  .chat_list {
+    flex-basis: clamp(190px, 22vw, 260px);
+  }
 }

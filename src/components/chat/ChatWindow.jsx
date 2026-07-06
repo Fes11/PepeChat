@@ -18,6 +18,7 @@ import { enUS } from "date-fns/locale";
 import DateDivider from "../UI/DateDivider.jsx";
 import { observer } from "mobx-react-lite";
 import Room from "./Room.jsx";
+import { notifyError } from "../../notifications/notificationService.js";
 
 const ACTIVE_VOICE_ROOM_CHAT_ID_KEY = "activeVoiceRoomChatId";
 
@@ -200,6 +201,7 @@ const ChatWindow = observer(({ chat }) => {
       setInputMessage("");
     } catch (err) {
       console.error("Ошибка отправки сообщения:", err);
+      notifyError(err, "Не удалось отправить сообщение");
     } finally {
       setLoadMessage(false);
     }

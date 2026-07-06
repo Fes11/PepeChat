@@ -7,6 +7,7 @@ import chatStore from "./store/chatStore";
 import messagesStore from "./store/messagesStore";
 import mediaStore from "./store/mediaStore";
 import { initThemeSettings } from "./theme";
+import { NotificationProvider } from "./notifications/NotificationProvider";
 
 const ChatStore = new chatStore();
 const AuthStore = new authStore(ChatStore);
@@ -16,6 +17,17 @@ const MediaStore = new mediaStore();
 initThemeSettings();
 
 export const Context = createContext({});
+
+document.addEventListener("contextmenu", (event) => {
+  if (
+    event.target instanceof Element &&
+    event.target.closest("[data-allow-native-context-menu]")
+  ) {
+    return;
+  }
+
+  event.preventDefault();
+});
 
 const container = document.getElementById("root");
 if (!window._root) {
@@ -28,7 +40,9 @@ window._root.render(
       value={{ AuthStore, ChatStore, MessagesStore, MediaStore }}
     >
       <BrowserRouter>
-        <App />
+        <NotificationProvider>
+          <App />
+        </NotificationProvider>
       </BrowserRouter>
     </Context.Provider>
   </React.StrictMode>,

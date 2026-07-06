@@ -2,9 +2,13 @@ import { useEffect, useState } from "react";
 
 const THEME_STORAGE_KEY = "app-theme";
 const MAIN_COLOR_STORAGE_KEY = "main-color";
+const UI_SCALE_STORAGE_KEY = "ui-scale";
 
 export const DEFAULT_THEME = "dark";
 export const DEFAULT_MAIN_COLOR = "#7b61ff";
+export const DEFAULT_UI_SCALE = 1.25;
+export const MIN_UI_SCALE = 1;
+export const MAX_UI_SCALE = 1.5;
 export const ACCENT_COLORS = [
   "#7b61ff",
   "#2f80ed",
@@ -72,20 +76,53 @@ const withAlpha = (hex, alpha) => {
 
 const getTheme = (theme) => (theme === "light" ? "light" : DEFAULT_THEME);
 
+const normalizeUiScale = (uiScale) => {
+  if (uiScale === null || uiScale === undefined || uiScale === "") {
+    return null;
+  }
+
+  const scale = Number.parseFloat(uiScale);
+
+  if (!Number.isFinite(scale)) {
+    return null;
+  }
+
+  return Number(
+    Math.min(Math.max(scale, MIN_UI_SCALE), MAX_UI_SCALE).toFixed(2),
+  );
+};
+
+const getCurrentUiScale = () => {
+  if (typeof window === "undefined") {
+    return DEFAULT_UI_SCALE;
+  }
+
+  const currentScale = window
+    .getComputedStyle(document.documentElement)
+    .getPropertyValue("--ui-scale");
+
+  return normalizeUiScale(currentScale) ?? DEFAULT_UI_SCALE;
+};
+
 const getSavedTheme = () => {
   const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
   return getTheme(savedTheme);
 };
 
+const getSavedUiScale = () =>
+  normalizeUiScale(localStorage.getItem(UI_SCALE_STORAGE_KEY));
+
 export const getSavedThemeSettings = () => ({
   theme: getSavedTheme(),
   mainColor: normalizeHexColor(localStorage.getItem(MAIN_COLOR_STORAGE_KEY)),
+  uiScale: getSavedUiScale(),
 });
 
-export const applyThemeSettings = ({ theme, mainColor }) => {
+export const applyThemeSettings = ({ theme, mainColor, uiScale }) => {
   const root = document.documentElement;
   const nextTheme = getTheme(theme);
   const nextMainColor = normalizeHexColor(mainColor);
+  const nextUiScale = normalizeUiScale(uiScale);
   const contrastColor = getContrastColor(nextMainColor);
   const hoverMixColor = nextTheme === "light" ? "#000000" : "#ffffff";
   const chatInputBg =
@@ -101,6 +138,11 @@ export const applyThemeSettings = ({ theme, mainColor }) => {
         )})`;
 
   root.dataset.theme = nextTheme;
+  if (nextUiScale === null) {
+    root.style.removeProperty("--ui-scale");
+  } else {
+    root.style.setProperty("--ui-scale", nextUiScale);
+  }
   root.style.setProperty("--main-color", nextMainColor);
   root.style.setProperty(
     "--main-hover-color",
@@ -119,9 +161,17 @@ export const applyThemeSettings = ({ theme, mainColor }) => {
   root.style.setProperty("--chat-input-bg", chatInputBg);
 };
 
-export const saveThemeSettings = ({ theme, mainColor }) => {
+export const saveThemeSettings = ({ theme, mainColor, uiScale }) => {
+  const nextUiScale = normalizeUiScale(uiScale);
+
   localStorage.setItem(THEME_STORAGE_KEY, getTheme(theme));
   localStorage.setItem(MAIN_COLOR_STORAGE_KEY, normalizeHexColor(mainColor));
+
+  if (nextUiScale === null) {
+    localStorage.removeItem(UI_SCALE_STORAGE_KEY);
+  } else {
+    localStorage.setItem(UI_SCALE_STORAGE_KEY, nextUiScale);
+  }
 };
 
 export const initThemeSettings = () => {
@@ -150,9 +200,18 @@ export const useThemeSettings = () => {
     }));
   };
 
+  const setUiScale = (uiScale) => {
+    setSettings((currentSettings) => ({
+      ...currentSettings,
+      uiScale: normalizeUiScale(uiScale),
+    }));
+  };
+
   return {
     ...settings,
+    uiScale: settings.uiScale ?? getCurrentUiScale(),
     setTheme,
     setMainColor,
+    setUiScale,
   };
 };

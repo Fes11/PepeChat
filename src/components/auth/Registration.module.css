@@ -1,15 +1,18 @@
 .registration {
   max-width: 950px;
   max-height: 525px;
+  width: min(950px, 94vw);
   border-radius: 10px;
   padding: 8px;
   display: flex;
+  overflow-y: auto;
 }
 
 .registration_main {
-  padding: 0 80px;
+  padding: 0 clamp(18px, 8vw, 80px);
   margin: auto;
   width: 100%;
+  min-width: 0;
 }
 
 .registration_header {
@@ -93,4 +96,26 @@
 
 .registration__box {
   width: 65%;
+  min-width: 0;
+}
+
+@media (max-width: 760px), (max-height: 620px) {
+  .registration {
+    width: min(520px, 94vw);
+    max-height: 94vh;
+  }
+
+  .registration_main {
+    padding: 20px clamp(14px, 5vw, 28px);
+  }
+
+  .registration__form_header {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .registration__box {
+    width: 100%;
+  }
 }

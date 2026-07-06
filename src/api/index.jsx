@@ -1,4 +1,5 @@
 import axios from "axios";
+import { notifyError } from "../notifications/notificationService";
 
 export const BASE_URL = "http://localhost:8000";
 
@@ -52,7 +53,11 @@ api.interceptors.response.use(
         refreshPromise = null;
       }
     }
-    
+
+    if (!originalRequest?.skipErrorNotification) {
+      notifyError(error);
+    }
+
     return Promise.reject(error);
   }
 );

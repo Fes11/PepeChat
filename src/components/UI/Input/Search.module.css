@@ -55,6 +55,7 @@
   align-items: flex-start;
   cursor: pointer;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .search_result_item:hover {
@@ -73,6 +74,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .search_result_login {
@@ -82,4 +84,5 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%;
 }

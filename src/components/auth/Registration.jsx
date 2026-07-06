@@ -20,7 +20,7 @@ const getErrorMessage = (errors, field) => {
 
 const Registration = function () {
   const navigate = useNavigate();
-  const { AuthStore } = useContext(Context);
+  const { AuthStore, MediaStore } = useContext(Context);
 
   const [avatar, setAvatar] = useState(null);
   const [login, setLogin] = useState("");
@@ -64,6 +64,7 @@ const Registration = function () {
     const result = await AuthStore.registration(formData);
 
     if (result.ok) {
+      MediaStore.initializeDevices({ requestMicrophone: true });
       navigate("/chat/");
     } else {
       setErrors(result.errors);
