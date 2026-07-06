@@ -33,6 +33,18 @@
   background: var(--button-soft-bg-color);
   max-width: calc(100% - 20px);
   min-width: 0;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease,
+    background-color 180ms ease;
+}
+
+.room_user_name_row_visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .room_user_name {
@@ -46,10 +58,15 @@
 }
 
 .room_user_status {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
   display: flex;
   align-items: center;
   gap: 4px;
-  flex: 0 0 auto;
+  padding: 5px;
+  border-radius: 8px;
+  background: var(--button-soft-bg-color);
 }
 
 .room_user_status img {
@@ -58,12 +75,16 @@
   opacity: 0.72;
 }
 
+.local_mute_icon {
+  filter: grayscale(1) brightness(2);
+  opacity: 0.82 !important;
+}
+
 .speaking {
-  background: rgba(35, 165, 90, 0.12);
-  border-color: #23a55a;
+  border-color: var(--main-color);
   box-shadow:
-    0 0 0 1px rgba(35, 165, 90, 0.35),
-    0 0 14px rgba(35, 165, 90, 0.45);
+    0 0 0 1px var(--main-color),
+    0 0 14px var(--main-color);
 }
 
 @media (max-width: 520px) {

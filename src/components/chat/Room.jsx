@@ -8,7 +8,13 @@ import { Context } from "../../main";
 const DEFAULT_USER_VOLUME = 1;
 const VOLUME_STEP = 5;
 
-const Room = function ({ onLeaveRoom, chatId }) {
+const Room = function ({
+  onLeaveRoom,
+  onHide,
+  chatId,
+  isOpen = true,
+  preserveChatDescription = false,
+}) {
   const { AuthStore, ChatStore } = useContext(Context);
   const {
     participants,
@@ -21,7 +27,9 @@ const Room = function ({ onLeaveRoom, chatId }) {
   const [participantVolumes, setParticipantVolumes] = useState({});
   const [mutedParticipantIds, setMutedParticipantIds] = useState(() => new Set());
   const [contextMenu, setContextMenu] = useState(null);
+  const [isRoomHovered, setIsRoomHovered] = useState(false);
   const micMutedBeforeHeadphonesRef = useRef(false);
+  const showRoomUi = isRoomHovered || Boolean(contextMenu);
 
   const selectedParticipant = useMemo(
     () =>
@@ -151,7 +159,29 @@ const Room = function ({ onLeaveRoom, chatId }) {
   };
 
   return (
-    <div className={cls.room} onContextMenu={handleRoomContextMenu}>
+    <div
+      className={`${cls.room} ${
+        preserveChatDescription ? cls.room_preserve_description : ""
+      } ${isOpen ? "" : cls.room_hidden}`}
+      onContextMenu={handleRoomContextMenu}
+      onMouseEnter={() => setIsRoomHovered(true)}
+      onMouseLeave={() => setIsRoomHovered(false)}
+      onFocus={() => setIsRoomHovered(true)}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) {
+          setIsRoomHovered(false);
+        }
+      }}
+    >
+      <button
+        className={cls.hide_btn}
+        type="button"
+        onClick={onHide}
+        title="Свернуть голосовую комнату"
+      >
+        <img src="/arrow.svg" />
+      </button>
+
       <div className={cls.room_header}>
         <p></p>
       </div>
@@ -164,6 +194,7 @@ const Room = function ({ onLeaveRoom, chatId }) {
             soundMuted={headphonesMuted}
             userMuted={mutedParticipantIds.has(participant.id)}
             volume={getParticipantVolume(participant.id)}
+            showDetails={showRoomUi}
             onContextMenu={(event) =>
               openParticipantContextMenu(event, participant)
             }
@@ -179,7 +210,11 @@ const Room = function ({ onLeaveRoom, chatId }) {
         onClose={closeContextMenu}
       />
 
-      <div className={cls.room_activity_panel}>
+      <div
+        className={`${cls.room_activity_panel} ${
+          showRoomUi ? cls.room_activity_panel_visible : ""
+        }`}
+      >
         <button
           className={`${cls.room_activity_btn} ${cls.headphones} ${
             headphonesMuted ? cls.muted : ""

@@ -23,12 +23,15 @@ const RoomUser = function ({
   soundMuted = false,
   userMuted = false,
   volume = 1,
+  showDetails = false,
   onContextMenu,
 }) {
   const { MediaStore } = useContext(Context);
   const audioRef = useRef(null);
   const isHeadphonesMuted = Boolean(participant.state?.deafened);
-  const isMicMuted = Boolean(participant.state?.muted) && !isHeadphonesMuted;
+  const isRemoteMicMuted = Boolean(participant.state?.muted) && !isHeadphonesMuted;
+  const isLocallyMuted = Boolean(userMuted);
+  const hasStatus = isLocallyMuted || isHeadphonesMuted || isRemoteMicMuted;
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -59,13 +62,13 @@ const RoomUser = function ({
     const audio = audioRef.current;
     if (!audio) return;
 
-    audio.muted = soundMuted || userMuted;
+    audio.muted = soundMuted || isLocallyMuted;
     audio.volume = volume;
 
     if (!audio.muted) {
       playAudio(audio);
     }
-  }, [participant.stream, soundMuted, userMuted, volume]);
+  }, [participant.stream, soundMuted, isLocallyMuted, volume]);
 
   return (
     <div
@@ -76,21 +79,44 @@ const RoomUser = function ({
         src={participant.user.avatar}
         className={cls.room_user_avatar}
       />
-      <div className={cls.room_user_name_row}>
+      <div
+        className={`${cls.room_user_name_row} ${
+          showDetails ? cls.room_user_name_row_visible : ""
+        }`}
+      >
         <p className={cls.room_user_name}>
           {participant.user.username || participant.user.login}
         </p>
-
-        {(isHeadphonesMuted || isMicMuted) && (
-          <span className={cls.room_user_status}>
-            {isHeadphonesMuted && (
-              <img src="/headphones-off.svg" alt="headphones muted" />
-            )}
-            {isMicMuted && <img src="/mic-off.svg" alt="microphone muted" />}
-          </span>
-        )}
       </div>
-      <audio ref={audioRef} autoPlay playsInline muted={soundMuted} />
+
+      {hasStatus && (
+        <span className={cls.room_user_status}>
+          {isLocallyMuted ? (
+            <img
+              className={cls.local_mute_icon}
+              src="/mic-off.svg"
+              alt="muted for you"
+              title="Вы замутили пользователя"
+            />
+          ) : (
+            <>
+              {isHeadphonesMuted && (
+                <img src="/headphones-off.svg" alt="headphones muted" />
+              )}
+              {isRemoteMicMuted && (
+                <img src="/mic-off.svg" alt="microphone muted" />
+              )}
+            </>
+          )}
+        </span>
+      )}
+
+      <audio
+        ref={audioRef}
+        autoPlay
+        playsInline
+        muted={soundMuted || isLocallyMuted}
+      />
     </div>
   );
 };

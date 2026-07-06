@@ -14,6 +14,12 @@ const ChatListElement = observer(({ chat, isSelected, isLast }) => {
     lastMessage?.created_at || chat.last_message?.created_at;
   const last_message_text =
     lastMessage?.text || chat.last_message?.text || "Сообщений пока нет";
+  const voiceParticipants = ChatStore.getVoiceParticipants(chat.id);
+  const hasVoiceParticipants = voiceParticipants.length > 0;
+  const visibleVoiceAvatars =
+    voiceParticipants.length > 3
+      ? voiceParticipants.slice(0, 2)
+      : voiceParticipants.slice(0, 3);
   const chatCreatedAt = chat?.created_at;
   const chat_created_time = chatCreatedAt
     ? format(parseISO(chatCreatedAt), "HH:mm")
@@ -22,7 +28,6 @@ const ChatListElement = observer(({ chat, isSelected, isLast }) => {
   return (
     <div
       onClick={() => {
-        ChatStore.openChat(chat);
         navigate(`/chat/${chat.id}`);
       }}
       className={"chat_list_element" + (isSelected ? " chat_active" : "")}
@@ -48,6 +53,36 @@ const ChatListElement = observer(({ chat, isSelected, isLast }) => {
       </div>
 
       <div className="chat_list_element__time">
+        {hasVoiceParticipants && (
+          <div
+            className="chat_list_element__voice"
+            title={`В голосовой комнате: ${voiceParticipants.length}`}
+          >
+            <div className="chat_list_element__voice_avatars">
+              {visibleVoiceAvatars.map((participant) => (
+                <img
+                  key={participant.id}
+                  src={participant.user?.avatar || "/default.jpg"}
+                  alt=""
+                  className="chat_list_element__voice_avatar"
+                />
+              ))}
+
+              {voiceParticipants.length > 3 && (
+                <span className="chat_list_element__voice_count">
+                  {voiceParticipants.length}
+                </span>
+              )}
+            </div>
+
+            <img
+              src="/voice.svg"
+              alt=""
+              className="chat_list_element__voice_icon"
+            />
+          </div>
+        )}
+
         {last_message_time
           ? format(parseISO(last_message_time), "HH:mm")
           : chat_created_time}

@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef, useContext } from "react";
+import React, { useState, useEffect, useRef, useContext, useCallback } from "react";
 import ChatListElement from "./ChatListElement.jsx";
 import Profile from "../Profile.jsx";
 import Search from "../UI/Input/Search.jsx";
-import Select from "../UI/Select.jsx";
 import MyModal from "../UI/MyModal/MyModal.jsx";
 import CreateChatModal from "./CreateChatModal.jsx";
 import ChatServices from "../../services/ChatService.jsx";
@@ -10,17 +9,23 @@ import classes from "./ChatList.module.css";
 import { Context } from "../../main.jsx";
 import { observer } from "mobx-react-lite";
 
-const ChatList = observer(() => {
+const ChatList = observer(({
+  activeVoiceRoomChatId,
+  activeVoiceRoomName,
+  onOpenVoiceRoomPanel,
+  onLeaveVoiceRoom,
+}) => {
   const { ChatStore } = useContext(Context);
   const [modal, setModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const sortedChats = ChatStore.sortedChats;
 
   const loadingRef = useRef();
   const pageRef = useRef(1);
   const loadingRefState = useRef(false);
 
-  const fetchChats = async () => {
+  const fetchChats = useCallback(async () => {
     if (loadingRefState.current || !hasMore) return;
 
     loadingRefState.current = true;
@@ -38,11 +43,11 @@ const ChatList = observer(() => {
       loadingRefState.current = false;
       setLoading(false);
     }
-  };
+  }, [ChatStore, hasMore]);
 
   useEffect(() => {
     fetchChats();
-  }, []);
+  }, [fetchChats]);
 
   const handleChatCreated = (newChat) => {
     ChatStore.openChat(newChat);
@@ -60,7 +65,7 @@ const ChatList = observer(() => {
     }
 
     return () => observerInstance.disconnect();
-  }, [hasMore]);
+  }, [fetchChats, hasMore]);
 
   return (
     <div className={classes.chat_list}>
@@ -81,14 +86,17 @@ const ChatList = observer(() => {
         </Select> */}
 
         <div className={classes.chat__list__scroll}>
-          {ChatStore.sortedChats.map((chat, idx) => (
+          {sortedChats.map((chat, idx) => (
             <ChatListElement
               key={chat.id}
               chat={chat}
-              isSelected={chat.id === ChatStore.selectedChat?.data.id}
-              isLast={idx === ChatStore.sortedChats.length - 1}
+              isSelected={String(chat.id) === String(ChatStore.selectedChat?.data?.id)}
+              isLast={idx === sortedChats.length - 1}
             />
           ))}
+          <div ref={loadingRef} className={classes.chat_list__loader}>
+            {loading && "Loading..."}
+          </div>
         </div>
 
         <button
@@ -100,7 +108,12 @@ const ChatList = observer(() => {
         </button>
       </div>
 
-      <Profile />
+      <Profile
+        activeVoiceRoomChatId={activeVoiceRoomChatId}
+        activeVoiceRoomName={activeVoiceRoomName}
+        onOpenVoiceRoomPanel={onOpenVoiceRoomPanel}
+        onLeaveVoiceRoom={onLeaveVoiceRoom}
+      />
     </div>
   );
 });

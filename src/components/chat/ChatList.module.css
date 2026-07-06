@@ -59,6 +59,16 @@
   min-height: 0;
 }
 
+.chat_list__loader {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 72px;
+  color: var(--muted-text-color);
+  font-size: 12px;
+}
+
 @media (max-width: 760px) {
   .chat_list {
     flex-basis: clamp(170px, 30vw, 220px);

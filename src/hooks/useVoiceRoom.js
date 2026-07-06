@@ -33,7 +33,7 @@ const playRoomLeftSound = (outputDeviceId) => {
 };
 
 export const useVoiceRoom = (chatId) => {
-  const { AuthStore, MediaStore } = useContext(Context);
+  const { AuthStore, ChatStore, MediaStore } = useContext(Context);
   const [participants, setParticipants] = useState([]);
   const [localStreamReady, setLocalStreamReady] = useState(false);
 
@@ -520,6 +520,14 @@ export const useVoiceRoom = (chatId) => {
   ]);
 
   // ── Lifecycle ────────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    ChatStore?.setVoiceParticipants(chatId, participants);
+  }, [ChatStore, chatId, participants]);
+
+  useEffect(() => {
+    return () => ChatStore?.clearVoiceParticipants(chatId);
+  }, [ChatStore, chatId]);
 
   useEffect(() => {
     manuallyClosedRef.current = false;

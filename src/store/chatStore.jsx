@@ -3,6 +3,7 @@ import ChatService from "../services/ChatService";
 import { refreshAccessToken, redirectToLogin } from "../api";
 
 const HEARTBEAT_INTERVAL = 20_000;
+const normalizeId = (id) => String(id);
 
 export default class ChatStore {
   selectedChat = null;
@@ -20,6 +21,7 @@ export default class ChatStore {
   pendingReadsByChat = new Map();
   lastReadRequestByChat = {};
   presenceByUserId = {};
+  voiceParticipantsByChatId = {};
   presenceListener = null;
   heartbeatTimer = null;
 
@@ -49,21 +51,71 @@ export default class ChatStore {
     });
   }
 
+  dedupeChats() {
+    const uniqueById = new Map();
+
+    this.chats.forEach((chat) => {
+      if (!chat?.id) return;
+
+      const chatId = normalizeId(chat.id);
+      const existing = uniqueById.get(chatId);
+      uniqueById.set(chatId, { ...existing, ...chat });
+    });
+
+    this.chats = Array.from(uniqueById.values());
+  }
+
+  upsertChat(chat, options = {}) {
+    if (!chat?.id) return;
+
+    const { prepend = true, unreadCount = chat.unread_count } = options;
+    const chatId = normalizeId(chat.id);
+    const existingIndex = this.chats.findIndex(
+      (item) => normalizeId(item.id) === chatId,
+    );
+    const existing = existingIndex >= 0 ? this.chats[existingIndex] : null;
+    const chatsWithoutCurrent = this.chats.filter(
+      (item) => normalizeId(item.id) !== chatId,
+    );
+    const nextChat = {
+      ...existing,
+      ...chat,
+      unread_count:
+        normalizeId(this.selectedChat?.id) === chatId
+          ? 0
+          : (unreadCount ?? existing?.unread_count ?? chat.unread_count ?? 0),
+    };
+
+    if (prepend || existingIndex < 0) {
+      this.chats = [nextChat, ...chatsWithoutCurrent];
+    } else {
+      const nextChats = [...chatsWithoutCurrent];
+      nextChats.splice(existingIndex, 0, nextChat);
+      this.chats = nextChats;
+    }
+
+    this.dedupeChats();
+  }
+
   setChats(chats) {
-    const existingById = new Map(this.chats.map((chat) => [chat.id, chat]));
+    const existingById = new Map(
+      this.chats.map((chat) => [normalizeId(chat.id), chat]),
+    );
     const uniqueChats = new Map();
 
     chats.forEach((chat) => {
-      const existing = existingById.get(chat.id);
+      const chatId = normalizeId(chat.id);
+      const existing = existingById.get(chatId);
       const mergedChat = {
+        ...existing,
         ...chat,
         unread_count:
-          this.selectedChat?.id === chat.id
+          normalizeId(this.selectedChat?.id) === chatId
             ? 0
             : (existing?.unread_count ?? chat.unread_count ?? 0),
       };
 
-      uniqueChats.set(chat.id, mergedChat);
+      uniqueChats.set(chatId, mergedChat);
 
       if (chat.last_message) {
         const currentLastMessage = this.lastMessageByChat[chat.id];
@@ -78,6 +130,7 @@ export default class ChatStore {
     });
 
     this.chats = Array.from(uniqueChats.values());
+    this.dedupeChats();
   }
 
   connect(token) {
@@ -117,6 +170,10 @@ export default class ChatStore {
 
       if (data.type === "presence.changed") {
         this.handlePresenceChanged(data);
+      }
+
+      if (data.type === "voice_room.state") {
+        this.handleVoiceRoomState(data);
       }
     };
 
@@ -194,7 +251,12 @@ export default class ChatStore {
       this.messagesByChat[chatId] = [];
     }
 
-    if (this.messagesByChat[chatId].some((item) => item.id === message.id)) {
+    const messageId = normalizeId(message.id);
+    if (
+      this.messagesByChat[chatId].some(
+        (item) => normalizeId(item.id) === messageId,
+      )
+    ) {
       return;
     }
 
@@ -202,16 +264,33 @@ export default class ChatStore {
   }
 
   setMessages(chatId, messages) {
-    this.messagesByChat[chatId] = messages;
+    const uniqueMessages = new Map();
+
+    messages.forEach((message) => {
+      const messageId = normalizeId(message.id);
+      const existing = uniqueMessages.get(messageId);
+      uniqueMessages.set(messageId, {
+        ...existing,
+        ...message,
+        is_read: Boolean(existing?.is_read || message.is_read),
+      });
+    });
+
+    this.messagesByChat[chatId] = Array.from(uniqueMessages.values()).sort(
+      (a, b) => new Date(a.created_at) - new Date(b.created_at),
+    );
   }
 
   mergeMessages(chatId, messages) {
     const merged = new Map();
 
-    this.getMessages(chatId).forEach((message) => merged.set(message.id, message));
+    this.getMessages(chatId).forEach((message) =>
+      merged.set(normalizeId(message.id), message),
+    );
     messages.forEach((message) => {
-      const existing = merged.get(message.id);
-      merged.set(message.id, {
+      const messageId = normalizeId(message.id);
+      const existing = merged.get(messageId);
+      merged.set(messageId, {
         ...existing,
         ...message,
         is_read: Boolean(existing?.is_read || message.is_read),
@@ -243,17 +322,43 @@ export default class ChatStore {
     return this.lastMessageByChat[chatId] || null;
   }
 
+  setVoiceParticipants(chatId, participants = []) {
+    if (!chatId) return;
+
+    this.voiceParticipantsByChatId[chatId] = participants;
+  }
+
+  getVoiceParticipants(chatId) {
+    return this.voiceParticipantsByChatId[chatId] || [];
+  }
+
+  clearVoiceParticipants(chatId) {
+    if (!chatId) return;
+
+    delete this.voiceParticipantsByChatId[chatId];
+  }
+
+  handleVoiceRoomState(data) {
+    const { chat_id: chatId, participants = [] } = data;
+
+    this.setVoiceParticipants(chatId, participants);
+  }
+
   updateChat(chatId, changes) {
-    const chatIndex = this.chats.findIndex((chat) => chat.id === chatId);
+    const normalizedChatId = normalizeId(chatId);
+    const chatIndex = this.chats.findIndex(
+      (chat) => normalizeId(chat.id) === normalizedChatId,
+    );
     const chat = this.chats[chatIndex];
     const chatChanged = chat
       && Object.entries(changes).some(([key, value]) => chat[key] !== value);
 
     if (chatChanged) {
       this.chats[chatIndex] = { ...chat, ...changes };
+      this.dedupeChats();
     }
 
-    const selectedChatChanged = this.selectedChat?.id === chatId
+    const selectedChatChanged = normalizeId(this.selectedChat?.id) === normalizedChatId
       && Object.entries(changes).some(
         ([key, value]) => this.selectedChat.data[key] !== value,
       );
@@ -267,13 +372,16 @@ export default class ChatStore {
   }
 
   setUnreadCount(chatId, unreadCount) {
+    const normalizedChatId = normalizeId(chatId);
     const normalizedCount = Math.max(0, unreadCount);
-    const chat = this.chats.find((item) => item.id === chatId);
+    const chat = this.chats.find(
+      (item) => normalizeId(item.id) === normalizedChatId,
+    );
 
     if (
       (chat?.unread_count ?? 0) === normalizedCount
       && (
-        this.selectedChat?.id !== chatId
+        normalizeId(this.selectedChat?.id) !== normalizedChatId
         || (this.selectedChat.data.unread_count ?? 0) === normalizedCount
       )
     ) {
@@ -286,14 +394,18 @@ export default class ChatStore {
   }
 
   incrementUnreadCount(chatId) {
-    const chat = this.chats.find((item) => item.id === chatId);
+    const chat = this.chats.find(
+      (item) => normalizeId(item.id) === normalizeId(chatId),
+    );
     if (!chat) return;
 
     this.setUnreadCount(chatId, (chat.unread_count || 0) + 1);
   }
 
   markChatRead(chatId, upToMessageId = null, force = false) {
-    const chat = this.chats.find((item) => item.id === chatId);
+    const chat = this.chats.find(
+      (item) => normalizeId(item.id) === normalizeId(chatId),
+    );
     const targetMessageId = upToMessageId
       || this.getLastMessage(chatId)?.id
       || this.getMessages(chatId).at(-1)?.id
@@ -353,20 +465,22 @@ export default class ChatStore {
       return;
     }
 
-    if (this.selectedChat?.id === chatId) {
+    if (normalizeId(this.selectedChat?.id) === normalizeId(chatId)) {
       this.setUnreadCount(chatId, unreadCount ?? 1);
       this.markChatRead(chatId, message.id);
     } else {
       this.setUnreadCount(
         chatId,
-        unreadCount ?? ((this.chats.find((chat) => chat.id === chatId)?.unread_count || 0) + 1),
+        unreadCount ?? ((this.chats.find(
+          (chat) => normalizeId(chat.id) === normalizeId(chatId),
+        )?.unread_count || 0) + 1),
       );
     }
   }
 
   async ensureChatLoaded(chatId, unreadCount = null) {
     if (
-      this.chats.some((chat) => chat.id === chatId) ||
+      this.chats.some((chat) => normalizeId(chat.id) === normalizeId(chatId)) ||
       this.loadingChatIds.has(chatId)
     ) {
       return;
@@ -378,14 +492,9 @@ export default class ChatStore {
       const response = await ChatService.getChat(chatId);
       const chat = response.data;
 
-      if (chat && !this.chats.some((item) => item.id === chat.id)) {
+      if (chat) {
         runInAction(() => {
-          this.chats.unshift({
-            ...chat,
-            unread_count: this.selectedChat?.id === chat.id
-              ? 0
-              : (unreadCount ?? chat.unread_count),
-          });
+          this.upsertChat(chat, { unreadCount });
         });
       }
     } catch (error) {
@@ -405,12 +514,9 @@ export default class ChatStore {
         id: chat.id,
         data: { ...chat, unread_count: 0 },
       };
+      this.upsertChat(chat, { unreadCount: 0 });
       this.setUnreadCount(chat.id, 0);
     });
-
-    if (!this.chats.find((c) => c.id === chat.id)) {
-      this.chats.unshift({ ...chat, unread_count: 0 });
-    }
 
     if (unreadCount > 0) {
       this.markChatRead(chat.id, null, true);
@@ -425,10 +531,7 @@ export default class ChatStore {
         id: res.data.id,
         data: { ...res.data, unread_count: 0 },
       };
-      // Добавляем временно пустой чат в список, если его там нет
-      if (!this.chats.find((c) => c.id === res.data.id)) {
-        this.chats.unshift({ ...res.data, unread_count: 0 });
-      }
+      this.upsertChat(res.data, { unreadCount: 0 });
     });
   }
 
@@ -450,7 +553,9 @@ export default class ChatStore {
 
   removeChat(chatId) {
     runInAction(() => {
-      this.chats = this.chats.filter((c) => c.id !== chatId);
+      this.chats = this.chats.filter(
+        (c) => normalizeId(c.id) !== normalizeId(chatId),
+      );
     });
   }
 
@@ -465,6 +570,7 @@ export default class ChatStore {
     this.pendingReadsByChat.clear();
     this.lastReadRequestByChat = {};
     this.presenceByUserId = {};
+    this.voiceParticipantsByChatId = {};
     // this.disconnect();
   }
 
@@ -509,6 +615,7 @@ export default class ChatStore {
         other_user: { ...chat.other_user, ...presence },
       };
     });
+    this.dedupeChats();
 
     if (this.selectedChat?.data?.other_user?.id === userId) {
       this.selectedChat = {

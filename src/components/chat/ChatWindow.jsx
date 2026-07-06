@@ -4,6 +4,8 @@ import React, {
   useRef,
   useLayoutEffect,
   useContext,
+  useCallback,
+  memo,
 } from "react";
 import { Context } from "../../main.jsx";
 import MessageService from "../../services/MessageService";
@@ -17,12 +19,222 @@ import { parseISO, isSameDay, formatDistanceToNow } from "date-fns";
 import { enUS } from "date-fns/locale";
 import DateDivider from "../UI/DateDivider.jsx";
 import { observer } from "mobx-react-lite";
-import Room from "./Room.jsx";
 import { notifyError } from "../../notifications/notificationService.js";
 
-const ACTIVE_VOICE_ROOM_CHAT_ID_KEY = "activeVoiceRoomChatId";
+const EMOJI_LIST = [
+  "😀", "😃", "😄", "😁", "😆", "😅", "😂", "🤣",
+  "😊", "😇", "🙂", "🙃", "😉", "😍", "😘", "😋",
+  "😎", "🥳", "🤩", "🤔", "🤨", "😐", "😑", "😶",
+  "😏", "😒", "🙄", "😬", "😮‍💨", "🤥", "😌", "😔",
+  "😪", "🤤", "😴", "😷", "🤒", "🤕", "🤢", "🤮",
+  "🤧", "🥵", "🥶", "🥴", "😵", "😵‍💫", "🤯", "🤠",
+  "🥸", "😈", "👿", "👻", "💀", "☠️", "👽", "🤖",
+  "💩", "😺", "😸", "😹", "😻", "😼", "😽", "🙀",
+  "😿", "😾", "🙈", "🙉", "🙊", "💋", "💌", "💘",
+  "💝", "💖", "💗", "💓", "💞", "💕", "💟", "❣️",
+  "❤️", "🧡", "💛", "💚", "💙", "💜", "🤎", "🖤",
+  "🤍", "💔", "❤️‍🔥", "❤️‍🩹", "💯", "💢", "💥", "💫",
+  "💦", "💨", "🕳️", "💬", "👁️‍🗨️", "🗨️", "🗯️", "💭",
+  "💤", "👋", "🤚", "🖐️", "✋", "🖖", "👌", "🤌",
+  "🤏", "✌️", "🤞", "🫰", "🤟", "🤘", "🤙", "👈",
+  "👉", "👆", "🖕", "👇", "☝️", "👍", "👎", "✊",
+  "👊", "🤛", "🤜", "👏", "🙌", "🫶", "👐", "🤲",
+  "🤝", "🙏", "✍️", "💅", "🤳", "💪", "🦾", "🦵",
+  "🦶", "👂", "🦻", "👃", "🧠", "🫀", "🫁", "🦷",
+  "🦴", "👀", "👁️", "👅", "👄", "🫦", "👶", "🧒",
+  "👦", "👧", "🧑", "👱", "👨", "🧔", "🧔‍♂️", "🧔‍♀️",
+  "👨‍🦰", "👨‍🦱", "👨‍🦳", "👨‍🦲", "👩", "👩‍🦰", "🧑‍🦰", "👩‍🦱",
+  "🧑‍🦱", "👩‍🦳", "🧑‍🦳", "👩‍🦲", "🧑‍🦲", "👱‍♀️", "👱‍♂️", "🧓",
+  "👴", "👵", "🙍", "🙎", "🙅", "🙆", "💁", "🙋",
+  "🧏", "🙇", "🤦", "🤷", "👮", "🕵️", "💂", "🥷",
+  "👷", "🫅", "🤴", "👸", "👳", "👲", "🧕", "🤵",
+  "👰", "🤰", "🫃", "🫄", "👼", "🎅", "🤶", "🧑‍🎄",
+  "🦸", "🦹", "🧙", "🧚", "🧛", "🧜", "🧝", "🧞",
+  "🧟", "💆", "💇", "🚶", "🧍", "🧎", "🏃", "💃",
+  "🕺", "🕴️", "👯", "🧖", "🧗", "🤺", "🏇", "⛷️",
+  "🏂", "🏌️", "🏄", "🚣", "🏊", "⛹️", "🏋️", "🚴",
+  "🚵", "🤸", "🤼", "🤽", "🤾", "🤹", "🧘", "🛀",
+  "🛌", "👭", "👫", "👬", "💏", "💑", "👪", "🗣️",
+  "👤", "👥", "🫂", "🧳", "🌂", "☂️", "🧵", "🪡",
+  "🪢", "🧶", "👓", "🕶️", "🥽", "🥼", "🦺", "👔",
+  "👕", "👖", "🧣", "🧤", "🧥", "🧦", "👗", "👘",
+  "🥻", "🩱", "🩲", "🩳", "👙", "👚", "🪭", "👛",
+  "👜", "👝", "🛍️", "🎒", "🩴", "👞", "👟", "🥾",
+  "🥿", "👠", "👡", "🩰", "👢", "👑", "👒", "🎩",
+  "🎓", "🧢", "🪖", "⛑️", "📿", "💄", "💍", "💎",
+  "🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼",
+  "🐻‍❄️", "🐨", "🐯", "🦁", "🐮", "🐷", "🐽", "🐸",
+  "🐵", "🙈", "🙉", "🙊", "🐒", "🐔", "🐧", "🐦",
+  "🐤", "🐣", "🐥", "🦆", "🦅", "🦉", "🦇", "🐺",
+  "🐗", "🐴", "🦄", "🐝", "🪲", "🐞", "🦋", "🐌",
+  "🐛", "🐜", "🪰", "🪱", "🦟", "🦗", "🕷️", "🕸️",
+  "🦂", "🐢", "🐍", "🦎", "🦖", "🦕", "🐙", "🦑",
+  "🦐", "🦞", "🦀", "🐡", "🐠", "🐟", "🐬", "🐳",
+  "🐋", "🦈", "🦭", "🐊", "🐅", "🐆", "🦓", "🦍",
+  "🦧", "🦣", "🐘", "🦛", "🦏", "🐪", "🐫", "🦒",
+  "🦘", "🦬", "🐃", "🐂", "🐄", "🐎", "🐖", "🐏",
+  "🐑", "🦙", "🐐", "🦌", "🐕", "🐩", "🦮", "🐕‍🦺",
+  "🐈", "🐈‍⬛", "🪶", "🐓", "🦃", "🦤", "🦚", "🦜",
+  "🦢", "🦩", "🕊️", "🐇", "🦝", "🦨", "🦡", "🦫",
+  "🦦", "🦥", "🐁", "🐀", "🐿️", "🦔", "🐾", "🐉",
+  "🐲", "🌵", "🎄", "🌲", "🌳", "🌴", "🪵", "🌱",
+  "🌿", "☘️", "🍀", "🎍", "🪴", "🎋", "🍃", "🍂",
+  "🍁", "🍄", "🐚", "🪨", "🌾", "💐", "🌷", "🌹",
+  "🥀", "🪷", "🌺", "🌸", "🌼", "🌻", "🌞", "🌝",
+  "🌛", "🌜", "🌚", "🌕", "🌖", "🌗", "🌘", "🌑",
+  "🌒", "🌓", "🌔", "🌙", "🌎", "🌍", "🌏", "🪐",
+  "💫", "⭐", "🌟", "✨", "⚡", "☄️", "💥", "🔥",
+  "🌪️", "🌈", "☀️", "🌤️", "⛅", "🌥️", "☁️", "🌦️",
+  "🌧️", "⛈️", "🌩️", "🌨️", "❄️", "☃️", "⛄", "🌬️",
+  "💨", "💧", "💦", "☔", "☂️", "🌊", "🌫️", "🍏",
+  "🍎", "🍐", "🍊", "🍋", "🍌", "🍉", "🍇", "🍓",
+  "🫐", "🍈", "🍒", "🍑", "🥭", "🍍", "🥥", "🥝",
+  "🍅", "🍆", "🥑", "🥦", "🥬", "🥒", "🌶️", "🫑",
+  "🌽", "🥕", "🫒", "🧄", "🧅", "🥔", "🍠", "🫘",
+  "🥐", "🥯", "🍞", "🥖", "🥨", "🧀", "🥚", "🍳",
+  "🧈", "🥞", "🧇", "🥓", "🥩", "🍗", "🍖", "🦴",
+  "🌭", "🍔", "🍟", "🍕", "🫓", "🥪", "🥙", "🧆",
+  "🌮", "🌯", "🫔", "🥗", "🥘", "🫕", "🥫", "🍝",
+  "🍜", "🍲", "🍛", "🍣", "🍱", "🥟", "🦪", "🍤",
+  "🍙", "🍚", "🍘", "🍥", "🥠", "🥮", "🍢", "🍡",
+  "🍧", "🍨", "🍦", "🥧", "🧁", "🍰", "🎂", "🍮",
+  "🍭", "🍬", "🍫", "🍿", "🍩", "🍪", "🌰", "🥜",
+  "🍯", "🥛", "🍼", "☕", "🫖", "🍵", "🧃", "🥤",
+  "🧋", "🍶", "🍺", "🍻", "🥂", "🍷", "🥃", "🍸",
+  "🍹", "🧉", "🍾", "🧊", "🥄", "🍴", "🍽️", "🥣",
+  "🥡", "🥢", "🧂", "⚽", "🏀", "🏈", "⚾", "🥎",
+  "🎾", "🏐", "🏉", "🥏", "🎱", "🪀", "🏓", "🏸",
+  "🏒", "🏑", "🥍", "🏏", "🪃", "🥅", "⛳", "🪁",
+  "🏹", "🎣", "🤿", "🥊", "🥋", "🎽", "🛹", "🛼",
+  "🛷", "⛸️", "🥌", "🎿", "⛷️", "🏂", "🪂", "🏋️",
+  "🤼", "🤸", "⛹️", "🤺", "🤾", "🏌️", "🏇", "🧘",
+  "🏄", "🏊", "🤽", "🚣", "🧗", "🚵", "🚴", "🏆",
+  "🥇", "🥈", "🥉", "🏅", "🎖️", "🏵️", "🎗️", "🎫",
+  "🎟️", "🎪", "🤹", "🎭", "🩰", "🎨", "🎬", "🎤",
+  "🎧", "🎼", "🎹", "🥁", "🪘", "🎷", "🎺", "🪗",
+  "🎸", "🪕", "🎻", "🎲", "♟️", "🎯", "🎳", "🎮",
+  "🎰", "🧩", "🚗", "🚕", "🚙", "🚌", "🚎", "🏎️",
+  "🚓", "🚑", "🚒", "🚐", "🛻", "🚚", "🚛", "🚜",
+  "🦯", "🦽", "🦼", "🛴", "🚲", "🛵", "🏍️", "🛺",
+  "🚨", "🚔", "🚍", "🚘", "🚖", "🚡", "🚠", "🚟",
+  "🚃", "🚋", "🚞", "🚝", "🚄", "🚅", "🚈", "🚂",
+  "🚆", "🚇", "🚊", "🚉", "✈️", "🛫", "🛬", "🛩️",
+  "💺", "🛰️", "🚀", "🛸", "🚁", "🛶", "⛵", "🚤",
+  "🛥️", "🛳️", "⛴️", "🚢", "⚓", "🛟", "🪝", "⛽",
+  "🚧", "🚦", "🚥", "🚏", "🗺️", "🗿", "🗽", "🗼",
+  "🏰", "🏯", "🏟️", "🎡", "🎢", "🎠", "⛲", "⛱️",
+  "🏖️", "🏝️", "🏜️", "🌋", "⛰️", "🏔️", "🗻", "🏕️",
+  "⛺", "🛖", "🏠", "🏡", "🏘️", "🏚️", "🏗️", "🏭",
+  "🏢", "🏬", "🏣", "🏤", "🏥", "🏦", "🏨", "🏪",
+  "🏫", "🏩", "💒", "🏛️", "⛪", "🕌", "🕍", "🛕",
+  "🕋", "⛩️", "🛤️", "🛣️", "🗾", "🎑", "🏞️", "🌅",
+  "🌄", "🌠", "🎇", "🎆", "🌇", "🌆", "🏙️", "🌃",
+  "🌌", "🌉", "🌁", "⌚", "📱", "📲", "💻", "⌨️",
+  "🖥️", "🖨️", "🖱️", "🖲️", "🕹️", "🗜️", "💽", "💾",
+  "💿", "📀", "📼", "📷", "📸", "📹", "🎥", "📽️",
+  "🎞️", "📞", "☎️", "📟", "📠", "📺", "📻", "🎙️",
+  "🎚️", "🎛️", "🧭", "⏱️", "⏲️", "⏰", "🕰️", "⌛",
+  "⏳", "📡", "🔋", "🪫", "🔌", "💡", "🔦", "🕯️",
+  "🪔", "🧯", "🛢️", "💸", "💵", "💴", "💶", "💷",
+  "🪙", "💰", "💳", "💎", "⚖️", "🪜", "🧰", "🪛",
+  "🔧", "🔨", "⚒️", "🛠️", "⛏️", "🪚", "🔩", "⚙️",
+  "🪤", "🧱", "⛓️", "🧲", "🔫", "💣", "🧨", "🪓",
+  "🔪", "🗡️", "⚔️", "🛡️", "🚬", "⚰️", "🪦", "⚱️",
+  "🏺", "🔮", "📿", "🧿", "💈", "⚗️", "🔭", "🔬",
+  "🕳️", "🩹", "🩺", "💊", "💉", "🩸", "🧬", "🦠",
+  "🧫", "🧪", "🌡️", "🧹", "🪠", "🧺", "🧻", "🚽",
+  "🚰", "🚿", "🛁", "🛀", "🧼", "🪥", "🪒", "🧽",
+  "🪣", "🧴", "🛎️", "🔑", "🗝️", "🚪", "🪑", "🛋️",
+  "🛏️", "🛌", "🧸", "🪆", "🖼️", "🪞", "🪟", "🛍️",
+  "🛒", "🎁", "🎈", "🎏", "🎀", "🪄", "🪅", "🎊",
+  "🎉", "🎎", "🏮", "🎐", "🧧", "✉️", "📩", "📨",
+  "📧", "💌", "📥", "📤", "📦", "🏷️", "🪧", "📪",
+  "📫", "📬", "📭", "📮", "📯", "📜", "📃", "📄",
+  "📑", "🧾", "📊", "📈", "📉", "🗒️", "🗓️", "📆",
+  "📅", "🗑️", "📇", "🗃️", "🗳️", "🗄️", "📋", "📁",
+  "📂", "🗂️", "🗞️", "📰", "📓", "📔", "📒", "📕",
+  "📗", "📘", "📙", "📚", "📖", "🔖", "🧷", "🔗",
+  "📎", "🖇️", "📐", "📏", "🧮", "📌", "📍", "✂️",
+  "🖊️", "🖋️", "✒️", "🖌️", "🖍️", "📝", "✏️", "🔍",
+  "🔎", "🔏", "🔐", "🔒", "🔓", "✅", "☑️", "✔️",
+  "❌", "❎", "➕", "➖", "➗", "✖️", "♾️", "‼️",
+  "⁉️", "❓", "❔", "❕", "❗", "〰️", "💱", "💲",
+  "⚕️", "♻️", "⚜️", "🔱", "📛", "🔰", "⭕", "🟢",
+  "🟡", "🟠", "🔴", "🟣", "🔵", "⚫", "⚪", "🟤",
+];
+const EMOJI_INITIAL_COUNT = 120;
+const EMOJI_RENDER_STEP = 120;
 
-const ChatWindow = observer(({ chat }) => {
+const EmojiPicker = memo(({ activeTab, onTabChange, onEmojiSelect }) => {
+  const [visibleEmojiCount, setVisibleEmojiCount] = useState(EMOJI_INITIAL_COUNT);
+
+  useEffect(() => {
+    if (activeTab !== "emoji") return;
+
+    setVisibleEmojiCount(EMOJI_INITIAL_COUNT);
+
+    let frameId = null;
+    const growEmojiList = () => {
+      setVisibleEmojiCount((currentCount) => {
+        if (currentCount >= EMOJI_LIST.length) return currentCount;
+        const nextCount = Math.min(currentCount + EMOJI_RENDER_STEP, EMOJI_LIST.length);
+        frameId = requestAnimationFrame(growEmojiList);
+        return nextCount;
+      });
+    };
+
+    frameId = requestAnimationFrame(growEmojiList);
+    return () => {
+      if (frameId) cancelAnimationFrame(frameId);
+    };
+  }, [activeTab]);
+
+  return (
+    <div className="chat__emoji_picker">
+      <div className="chat__emoji_tabs">
+        <button
+          className={`chat__emoji_tab ${
+            activeTab === "emoji" ? "chat__emoji_tab--active" : ""
+          }`}
+          type="button"
+          onClick={() => onTabChange("emoji")}
+        >
+          Emoji
+        </button>
+        <button
+          className={`chat__emoji_tab ${
+            activeTab === "stickers" ? "chat__emoji_tab--active" : ""
+          }`}
+          type="button"
+          onClick={() => onTabChange("stickers")}
+        >
+          Стикеры
+        </button>
+      </div>
+
+      {activeTab === "emoji" ? (
+        <div className="chat__emoji_grid">
+          {EMOJI_LIST.slice(0, visibleEmojiCount).map((emoji, index) => (
+            <button
+              className="chat__emoji_item"
+              type="button"
+              key={`${emoji}-${index}`}
+              onClick={() => onEmojiSelect(emoji)}
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="chat__stickers_empty">
+          Стикеры появятся позже
+        </div>
+      )}
+    </div>
+  );
+});
+
+const ChatWindow = observer(({ chat, activeVoiceRoomChatId, onOpenVoiceRoom }) => {
   // const [messages, setMessages] = useState([]);
   const { ChatStore } = useContext(Context);
   const messages = ChatStore.getMessages(chat.id);
@@ -33,11 +245,12 @@ const ChatWindow = observer(({ chat }) => {
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState(null);
   const listRef = useRef(null);
+  const inputRef = useRef(null);
+  const emojiPickerRef = useRef(null);
   const activeChatId = useRef(chat.id);
   const [loadMessage, setLoadMessage] = useState(false);
-  const [viewRoom, setViewRoom] = useState(() => {
-    return sessionStorage.getItem(ACTIVE_VOICE_ROOM_CHAT_ID_KEY) === String(chat.id);
-  });
+  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+  const [emojiTab, setEmojiTab] = useState("emoji");
   const [participants, setParticipants] = useState([]);
 
   const getLastOnlineStatus = (last_online) => {
@@ -61,19 +274,23 @@ const ChatWindow = observer(({ chat }) => {
   const isFirstLoad = useRef(true);
 
   useEffect(() => {
-    setViewRoom(
-      sessionStorage.getItem(ACTIVE_VOICE_ROOM_CHAT_ID_KEY) === String(chat.id),
-    );
+    setIsEmojiPickerOpen(false);
   }, [chat.id]);
 
-  const openVoiceRoom = () => {
-    sessionStorage.setItem(ACTIVE_VOICE_ROOM_CHAT_ID_KEY, String(chat.id));
-    setViewRoom(true);
-  };
+  useEffect(() => {
+    if (!isEmojiPickerOpen) return;
 
-  const closeVoiceRoom = () => {
-    sessionStorage.removeItem(ACTIVE_VOICE_ROOM_CHAT_ID_KEY);
-    setViewRoom(false);
+    const closeOnOutsideClick = (event) => {
+      if (emojiPickerRef.current?.contains(event.target)) return;
+      setIsEmojiPickerOpen(false);
+    };
+
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    return () => document.removeEventListener("mousedown", closeOnOutsideClick);
+  }, [isEmojiPickerOpen]);
+
+  const openVoiceRoom = () => {
+    onOpenVoiceRoom?.(chat.id);
   };
 
   useEffect(() => {
@@ -207,17 +424,30 @@ const ChatWindow = observer(({ chat }) => {
     }
   };
 
+  const addEmoji = useCallback((emoji) => {
+    const input = inputRef.current;
+    const selectionStart = input?.selectionStart ?? 0;
+    const selectionEnd = input?.selectionEnd ?? selectionStart;
+
+    setInputMessage((currentMessage) => {
+      const nextMessage =
+        currentMessage.slice(0, selectionStart) +
+        emoji +
+        currentMessage.slice(selectionEnd);
+
+      return nextMessage;
+    });
+
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+      const nextCursorPosition = selectionStart + emoji.length;
+      inputRef.current?.setSelectionRange(nextCursorPosition, nextCursorPosition);
+    });
+  }, []);
+
   return (
     <div className="chat_window">
       <div className="chat">
-        {viewRoom && (
-          <Room
-            setViewRoom={setViewRoom}
-            onLeaveRoom={closeVoiceRoom}
-            chatId={chat.id}
-          />
-        )}
-
         <div className="chat__header">
           <div className="chat_header_box">
             {chat.is_group ? (
@@ -253,8 +483,13 @@ const ChatWindow = observer(({ chat }) => {
 
           <img
             src="/voice_chat.png"
-            className="voice_chat_btn"
+            className={`voice_chat_btn ${
+              String(activeVoiceRoomChatId) === String(chat.id)
+                ? "voice_chat_btn--active"
+                : ""
+            }`}
             onClick={openVoiceRoom}
+            alt="Open voice room"
           />
         </div>
         <div className="chat__message_list" ref={listRef}>
@@ -303,16 +538,35 @@ const ChatWindow = observer(({ chat }) => {
             })}
         </div>
         <div className="chat__bottom">
-          <input
-            className="chat__input"
-            type="text"
-            placeholder="Write a message..."
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") sendMessage(e);
-            }}
-          />
+          <div className="chat__input_box" ref={emojiPickerRef}>
+            {isEmojiPickerOpen && (
+              <EmojiPicker
+                activeTab={emojiTab}
+                onTabChange={setEmojiTab}
+                onEmojiSelect={addEmoji}
+              />
+            )}
+            <input
+              ref={inputRef}
+              className="chat__input"
+              type="text"
+              placeholder="Write a message..."
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") sendMessage(e);
+                if (e.key === "Escape") setIsEmojiPickerOpen(false);
+              }}
+            />
+            <button
+              className="chat__emoji_btn"
+              type="button"
+              aria-label="Open emoji picker"
+              onClick={() => setIsEmojiPickerOpen((isOpen) => !isOpen)}
+            >
+              <img src="/smile.svg" alt="" />
+            </button>
+          </div>
           <button className="chat__send_btn" onClick={sendMessage}>
             <img src="/paperplane.svg" alt="Send" />
           </button>
