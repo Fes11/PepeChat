@@ -274,7 +274,14 @@ const ChatWindow = observer(({ chat, activeVoiceRoomChatId, onOpenVoiceRoom }) =
   const isFirstLoad = useRef(true);
 
   useEffect(() => {
+    setInputMessage("");
+    setError(null);
+    setNextCursor(null);
+    setHasMore(true);
+    setIsLoadingMore(false);
+    setLoadMessage(false);
     setIsEmojiPickerOpen(false);
+    setEmojiTab("emoji");
   }, [chat.id]);
 
   useEffect(() => {

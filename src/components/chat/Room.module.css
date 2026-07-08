@@ -5,7 +5,7 @@
   height: 100%;
   position: absolute;
   inset: 0;
-  z-index: 30;
+  z-index: 3;
   overflow: hidden;
   opacity: 1;
   pointer-events: auto;
@@ -69,6 +69,18 @@
   align-content: flex-start;
 }
 
+.room_loader {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--box-bg-color) 88%, transparent);
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+}
+
 .room_activity_panel {
   padding: 10px 20px;
   background: var(--bg-color);
@@ -86,6 +98,7 @@
   max-width: calc(100% - 24px);
   flex-wrap: wrap;
   justify-content: center;
+  z-index: 4;
   transition:
     opacity 0.3s ease,
     transform 0.3s ease,

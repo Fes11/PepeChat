@@ -5,6 +5,7 @@ import { format, parseISO } from "date-fns";
 import { Context } from "../../main.jsx";
 import { observer } from "mobx-react-lite";
 import { useNavigate } from "react-router-dom";
+import { resolveMediaUrl } from "../../utils/mediaUrl";
 
 const ChatListElement = observer(({ chat, isSelected, isLast }) => {
   const { ChatStore } = useContext(Context);
@@ -62,7 +63,7 @@ const ChatListElement = observer(({ chat, isSelected, isLast }) => {
               {visibleVoiceAvatars.map((participant) => (
                 <img
                   key={participant.id}
-                  src={participant.user?.avatar || "/default.jpg"}
+                  src={resolveMediaUrl(participant.user?.avatar) || "/default.jpg"}
                   alt=""
                   className="chat_list_element__voice_avatar"
                 />

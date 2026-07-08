@@ -11,7 +11,13 @@ const ACTIVE_VOICE_ROOM_CHAT_ID_KEY = "activeVoiceRoomChatId";
 const ChatPage = observer(() => {
   const { ChatStore } = useContext(Context);
   const selectedChat = ChatStore?.selectedChat;
+  const selectedChatData = selectedChat?.data ?? null;
+  const selectedChatId = selectedChatData?.id ?? selectedChat?.id ?? null;
   const { id } = useParams();
+  const routeChatId = id ? String(id) : null;
+  const shouldShowSelectedChat =
+    selectedChatData
+    && (!routeChatId || String(selectedChatId) === routeChatId);
   const [activeVoiceRoomChatId, setActiveVoiceRoomChatId] = useState(() => {
     return sessionStorage.getItem(ACTIVE_VOICE_ROOM_CHAT_ID_KEY);
   });
@@ -46,22 +52,22 @@ const ChatPage = observer(() => {
 
   useEffect(() => {
     if (id && ChatStore.chats.length > 0) {
-      if (String(selectedChat?.id) === String(id)) return;
+      if (String(selectedChatId) === String(id)) return;
 
       const chat = ChatStore.chats.find((c) => String(c.id) === String(id));
       if (chat) {
         ChatStore.openChat(chat);
       }
     }
-  }, [id, selectedChat?.id, ChatStore, ChatStore.chats.length]);
+  }, [id, selectedChatId, ChatStore, ChatStore.chats]);
 
   useEffect(() => {
-    if (!activeVoiceRoomChatId || !selectedChat?.id) return;
+    if (!activeVoiceRoomChatId || !selectedChatId) return;
 
-    if (String(activeVoiceRoomChatId) !== String(selectedChat.id)) {
+    if (String(activeVoiceRoomChatId) !== String(selectedChatId)) {
       setIsVoiceRoomOpen(false);
     }
-  }, [activeVoiceRoomChatId, selectedChat?.id]);
+  }, [activeVoiceRoomChatId, selectedChatId]);
 
   return (
     <div className="chat_page">
@@ -73,10 +79,9 @@ const ChatPage = observer(() => {
       />
 
       <div className="chat_page_main">
-        {selectedChat ? (
+        {shouldShowSelectedChat ? (
           <ChatWindow
-            key={selectedChat.id}
-            chat={selectedChat.data}
+            chat={selectedChatData}
             type={selectedChat.type}
             activeVoiceRoomChatId={activeVoiceRoomChatId}
             onOpenVoiceRoom={openVoiceRoom}
@@ -92,7 +97,7 @@ const ChatPage = observer(() => {
             key={activeVoiceRoomChatId}
             chatId={activeVoiceRoomChatId}
             isOpen={isVoiceRoomOpen}
-            preserveChatDescription={Boolean(selectedChat?.data?.is_group)}
+            preserveChatDescription={Boolean(selectedChatData?.is_group)}
             onHide={() => setIsVoiceRoomOpen(false)}
             onLeaveRoom={leaveVoiceRoom}
           />

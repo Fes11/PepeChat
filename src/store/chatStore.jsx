@@ -1,6 +1,7 @@
 import { makeAutoObservable, runInAction } from "mobx";
 import ChatService from "../services/ChatService";
 import { refreshAccessToken, redirectToLogin } from "../api";
+import { WS_BASE_URL } from "../config/env";
 
 const HEARTBEAT_INTERVAL = 20_000;
 const normalizeId = (id) => String(id);
@@ -24,6 +25,7 @@ export default class ChatStore {
   voiceParticipantsByChatId = {};
   presenceListener = null;
   heartbeatTimer = null;
+  openChatRequestId = 0;
 
   setCurrentUser(user) {
     this.currentUser = user;
@@ -139,9 +141,7 @@ export default class ChatStore {
     this.socketToken = token;
     this.shouldReconnect = true;
 
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsHost = import.meta.env.VITE_WS_HOST || "localhost:8000";
-    const wsUrl = `${protocol}//${wsHost}/ws/`;
+    const wsUrl = `${WS_BASE_URL}/ws/`;
     this.socket = new WebSocket(wsUrl, ["access-token", token]);
 
     this.socket.onopen = () => {
@@ -507,6 +507,7 @@ export default class ChatStore {
   }
 
   openChat(chat) {
+    this.openChatRequestId += 1;
     const unreadCount = chat.unread_count || 0;
 
     runInAction(() => {
@@ -524,9 +525,13 @@ export default class ChatStore {
   }
 
   async openPrivateChat(user) {
+    const requestId = this.openChatRequestId + 1;
+    this.openChatRequestId = requestId;
     const res = await ChatService.openPrivateChat(user.id);
 
     runInAction(() => {
+      if (requestId !== this.openChatRequestId) return;
+
       this.selectedChat = {
         id: res.data.id,
         data: { ...res.data, unread_count: 0 },
@@ -538,11 +543,15 @@ export default class ChatStore {
   async joinAndOpenChat(chatId) {
     if (this.isOpening) return;
 
+    const requestId = this.openChatRequestId + 1;
+    this.openChatRequestId = requestId;
     this.isOpening = true;
 
     try {
       await ChatService.joinChat(chatId);
       const response = await ChatService.getChat(chatId);
+      if (requestId !== this.openChatRequestId) return;
+
       this.openChat(response.data);
     } finally {
       runInAction(() => {

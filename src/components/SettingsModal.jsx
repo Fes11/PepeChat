@@ -5,6 +5,7 @@ import { mediaService } from "../services/MediaService";
 import UserServices from "../services/UserService.jsx";
 import { Context } from "../main";
 import { observer } from "mobx-react-lite";
+import { useNavigate } from "react-router-dom";
 import { notifyError, notifySuccess } from "../notifications/notificationService";
 import {
   ACCENT_COLORS,
@@ -15,6 +16,7 @@ import {
 } from "../theme";
 
 const SettingsModal = function ({ onClose }) {
+  const navigate = useNavigate();
   const [avatar, setAvatar] = useState(null);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -299,6 +301,11 @@ const SettingsModal = function ({ onClose }) {
     MediaStore.setDisplay(deviceId);
   };
 
+  const handleLogout = async () => {
+    await AuthStore.logout();
+    navigate("/login", { replace: true });
+  };
+
   return (
     <div className={classes.settings_modal}>
       <button onClick={onClose} className={classes.close}>
@@ -416,7 +423,7 @@ const SettingsModal = function ({ onClose }) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => AuthStore.logout()}
+                  onClick={handleLogout}
                   className={classes.logout}
                 >
                   Logout

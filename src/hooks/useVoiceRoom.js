@@ -36,6 +36,7 @@ export const useVoiceRoom = (chatId) => {
   const { AuthStore, ChatStore, MediaStore } = useContext(Context);
   const [participants, setParticipants] = useState([]);
   const [localStreamReady, setLocalStreamReady] = useState(false);
+  const [isJoining, setIsJoining] = useState(true);
 
   // localStreamReady в замыканиях устаревает — держим актуальное значение в ref
   const localStreamReadyRef = useRef(false);
@@ -305,6 +306,7 @@ export const useVoiceRoom = (chatId) => {
         stopSpeakingDetection();
         cleanup();
         setParticipants([]);
+        setIsJoining(!manuallyClosedRef.current);
 
         if (!manuallyClosedRef.current) {
           reconnectTimeoutRef.current = setTimeout(connect, RECONNECT_DELAY);
@@ -327,6 +329,7 @@ export const useVoiceRoom = (chatId) => {
             );
             rememberLocalParticipant(nextParticipants);
             setParticipants(nextParticipants);
+            setIsJoining(false);
 
             await connectToParticipants(nextParticipants);
             break;
@@ -532,6 +535,7 @@ export const useVoiceRoom = (chatId) => {
   useEffect(() => {
     manuallyClosedRef.current = false;
     disconnectStartedRef.current = false;
+    setIsJoining(true);
     localJoinSoundPlayedRef.current = false;
     localMediaStateRef.current = {
       muted: false,
@@ -552,6 +556,7 @@ export const useVoiceRoom = (chatId) => {
   return {
     participants,
     localStreamReady,
+    isJoining,
     setMicEnabled,
     setHeadphonesMuted,
     send: (data) => socketRef.current?.send(data),

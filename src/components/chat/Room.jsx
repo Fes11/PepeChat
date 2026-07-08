@@ -4,6 +4,7 @@ import RoomUser from "./RoomUser";
 import { useVoiceRoom } from "../../hooks/useVoiceRoom";
 import ContextMenu from "../UI/ContextMenu";
 import { Context } from "../../main";
+import Spinner from "../UI/Spiner";
 
 const DEFAULT_USER_VOLUME = 1;
 const VOLUME_STEP = 5;
@@ -18,6 +19,7 @@ const Room = function ({
   const { AuthStore, ChatStore } = useContext(Context);
   const {
     participants,
+    isJoining,
     setMicEnabled,
     setHeadphonesMuted: setRemoteHeadphonesMuted,
     disconnect,
@@ -29,7 +31,7 @@ const Room = function ({
   const [contextMenu, setContextMenu] = useState(null);
   const [isRoomHovered, setIsRoomHovered] = useState(false);
   const micMutedBeforeHeadphonesRef = useRef(false);
-  const showRoomUi = isRoomHovered || Boolean(contextMenu);
+  const showRoomUi = isJoining || isRoomHovered || Boolean(contextMenu);
 
   const selectedParticipant = useMemo(
     () =>
@@ -201,6 +203,12 @@ const Room = function ({
           />
         ))}
       </div>
+
+      {isJoining && (
+        <div className={cls.room_loader} role="status" aria-label="Подключение">
+          <Spinner />
+        </div>
+      )}
 
       <ContextMenu
         isOpen={Boolean(contextMenu && selectedParticipant)}

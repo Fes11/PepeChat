@@ -1,3 +1,5 @@
+import { WS_BASE_URL } from "../config/env";
+
 export class VoiceRoomSocket {
   constructor(chatId, { onMessage, onOpen, onClose, onError }) {
     this.chatId = chatId;
@@ -19,10 +21,8 @@ export class VoiceRoomSocket {
       return;
     }
 
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsHost = import.meta.env.VITE_WS_HOST || "localhost:8000";
     this.ws = new WebSocket(
-      `${protocol}//${wsHost}/ws/room/${this.chatId}/`,
+      `${WS_BASE_URL}/ws/room/${this.chatId}/`,
       ["access-token", token],
     );
 

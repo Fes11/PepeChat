@@ -2,7 +2,7 @@ import api from "../api";
 
 export default class ChatServices {
   static async getChats(page) {
-    return api.get(`/api/chats?page=${page}`);
+    return api.get(`/api/chats/?page=${page}`);
   }
 
   static async openPrivateChat(userId) {
