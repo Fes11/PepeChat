@@ -2,13 +2,54 @@ import { useRef, useContext, useCallback } from "react";
 import { mediaService } from "../services/MediaService";
 import { Context } from "../main";
 
-const ICE_SERVERS = {
-  iceServers: [
-    {
-      urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"],
-    },
-  ],
+const DEFAULT_ICE_SERVERS = [
+  {
+    urls: [
+      "stun:stun.l.google.com:19302",
+      "stun:stun1.l.google.com:19302",
+      "stun:openrelay.metered.ca:80",
+    ],
+  },
+  {
+    urls: [
+      "turn:openrelay.metered.ca:80",
+      "turn:openrelay.metered.ca:443",
+      "turn:openrelay.metered.ca:443?transport=tcp",
+      "turns:openrelay.metered.ca:443?transport=tcp",
+    ],
+    username: "openrelayproject",
+    credential: "openrelayproject",
+  },
+];
+
+const getIceServersConfig = () => {
+  const envConfig = import.meta.env.VITE_ICE_SERVERS_JSON;
+
+  if (!envConfig) {
+    return { iceServers: DEFAULT_ICE_SERVERS };
+  }
+
+  try {
+    const parsedConfig = JSON.parse(envConfig);
+    const iceServers = Array.isArray(parsedConfig)
+      ? parsedConfig
+      : parsedConfig?.iceServers;
+
+    if (Array.isArray(iceServers) && iceServers.length > 0) {
+      return { iceServers };
+    }
+
+    console.warn(
+      "[VoiceRoom] VITE_ICE_SERVERS_JSON must be an array or an object with iceServers.",
+    );
+  } catch (err) {
+    console.warn("[VoiceRoom] Failed to parse VITE_ICE_SERVERS_JSON", err);
+  }
+
+  return { iceServers: DEFAULT_ICE_SERVERS };
 };
+
+const ICE_SERVERS = getIceServersConfig();
 const MAX_PENDING_ICE_CANDIDATES = 32;
 const PENDING_ICE_TTL = 30_000;
 const AUDIO_MAX_BITRATE = 64_000;

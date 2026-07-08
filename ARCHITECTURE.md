@@ -55,7 +55,13 @@ src/
 - `handleIceCandidate(data)` — обработка ICE кандидата
   - Добавляет кандидата в peer connection
 
-**STUN сервер:** `stun:stun.l.google.com:19302`
+**ICE серверы по умолчанию:**
+
+- STUN: `stun:stun.l.google.com:19302`, `stun:stun1.l.google.com:19302`, `stun:openrelay.metered.ca:80`
+- TURN: публичный OpenRelay набор `turn:openrelay.metered.ca:80`, `turn:openrelay.metered.ca:443`, `turn:openrelay.metered.ca:443?transport=tcp`, `turns:openrelay.metered.ca:443?transport=tcp`
+- Логин/пароль публичного TURN: `openrelayproject` / `openrelayproject`
+
+Конфигурацию можно переопределить через `VITE_ICE_SERVERS_JSON`. Значение должно быть JSON-массивом `RTCIceServer[]` или объектом `{ "iceServers": [...] }`.
 
 **Хранение состояния:**
 
@@ -370,8 +376,9 @@ src/
 ### WebRTC
 
 - Используется DTLS-SRTP для шифрования медиапотоков
-- STUN сервер для обхода NAT
-- В продакшене рекомендуется использовать TURN сервер
+- STUN серверы для обхода NAT
+- Публичный TURN fallback для сложных сетей и симметричных NAT
+- В продакшене рекомендуется использовать собственный TURN сервер с приватными учетными данными
 
 ## Производительность
 
@@ -407,10 +414,11 @@ npm run tauri build
 
 - `VITE_API_URL` — URL бэкенда API
 - `VITE_WS_URL` — URL WebSocket сервера
+- `VITE_ICE_SERVERS_JSON` — необязательная ICE-конфигурация WebRTC в формате JSON
 
 ## Будущие улучшения
 
-1. **TURN сервер** — для работы за симметричными NAT
+1. **Собственный TURN сервер** — для стабильной работы за симметричными NAT без зависимости от публичного relay
 2. **SFU архитектура** — для поддержки больших комнат (20+ участников)
 3. **Детекция голоса** — визуальная индикация говорящего
 4. **Запись разговора** — возможность записи голосовых звонков
