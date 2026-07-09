@@ -39,7 +39,7 @@ const AvatarPicker = ({ avatar, onSelectAvatar, previewSrc = null }) => {
           className="avatar_preview"
         />
       ) : (
-        <div className="avatar_placeholder"></div>
+        <div className="avatar_placeholder" />
       )}
 
       <input

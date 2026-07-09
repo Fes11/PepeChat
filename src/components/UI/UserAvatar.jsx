@@ -3,7 +3,7 @@ import classes from "./UserAvatar.module.css";
 import { resolveMediaUrl } from "../../utils/mediaUrl";
 
 const UserAvatar = ({ src, status, className }) => {
-  // console.log("UserAvatar render", user.status);
+  const shouldShowStatus = status === "online" || status === "offline";
 
   return (
     <div className={classes.user_avatar}>
@@ -13,7 +13,13 @@ const UserAvatar = ({ src, status, className }) => {
         className={className}
       />
 
-      {status && status === "online" && <div className={classes.status}></div>}
+      {shouldShowStatus && (
+        <div
+          className={
+            status === "online" ? classes.status : classes.status_offline
+          }
+        />
+      )}
     </div>
   );
 };

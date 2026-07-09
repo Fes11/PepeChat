@@ -6,7 +6,7 @@ const UI_SCALE_STORAGE_KEY = "ui-scale";
 
 export const DEFAULT_THEME = "dark";
 export const DEFAULT_MAIN_COLOR = "#7b61ff";
-export const DEFAULT_UI_SCALE = 1.25;
+export const DEFAULT_UI_SCALE = 1;
 export const MIN_UI_SCALE = 1;
 export const MAX_UI_SCALE = 1.5;
 export const ACCENT_COLORS = [

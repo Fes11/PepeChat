@@ -2,8 +2,8 @@
   max-width: 950px;
   max-height: 525px;
   width: min(950px, 94vw);
+  height: auto;
   border-radius: 10px;
-  padding: 8px;
   display: flex;
   overflow: hidden;
 }
@@ -26,6 +26,7 @@
   margin: auto;
   width: 100%;
   min-width: 0;
+  max-width: 500px;
 }
 
 .registration_header {

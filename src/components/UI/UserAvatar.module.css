@@ -3,6 +3,8 @@
   align-items: flex-end;
   cursor: pointer;
   position: relative;
+  background: #ffffff10;
+  border-radius: 50%;
 }
 
 .user_avatar img {
@@ -11,13 +13,20 @@
   border-radius: 50%;
 }
 
-.status {
+.status, .status_offline {
   position: absolute;
-  top: 23px;
+  top: 25px;
   right: -2px;
-  width: 10px;
-  height: 10px;
-  background: #4caf50;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  border: 2px solid var(--box-bg-color);
+  border: 3px solid var(--box-bg-color);
+}
+
+.status {
+  background: var(--main-color);
+}
+
+.status_offline {
+  background: #535353;
 }

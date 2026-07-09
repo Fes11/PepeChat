@@ -20,8 +20,8 @@
   background-color: var(--modal-bg-color);
   border-radius: 15px;
   min-width: 250px;
-  max-width: 96vw;
-  max-height: 94vh;
+  max-width: calc(100vw / var(--ui-scale) - 16px);
+  max-height: calc(100vh / var(--ui-scale) - 16px);
   overflow: hidden;
 }
 

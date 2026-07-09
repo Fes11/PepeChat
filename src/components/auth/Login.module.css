@@ -10,7 +10,6 @@
   width: min(950px, 94vw);
   height: auto;
   border-radius: 10px;
-  padding: 8px;
   display: flex;
   overflow: hidden;
 }
@@ -101,6 +100,11 @@
 
 .login__form_bottom p {
   color: var(--muted-text-color);
+}
+
+.login_p {
+  font-size: 12px;
+  opacity: 40%;
 }
 
 @media (max-width: 760px), (max-height: 560px) {

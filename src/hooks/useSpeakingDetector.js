@@ -1,8 +1,8 @@
 import { useCallback, useRef } from "react";
 
 const SPEAKING_CHECK_INTERVAL = 120;
-const SPEAKING_THRESHOLD = 0.035;
-const SPEAKING_RELEASE_DELAY = 250;
+const SPEAKING_THRESHOLD = 0.02;
+const SPEAKING_RELEASE_DELAY = 400;
 
 const useSpeakingDetector = ({ isMutedRef, onSpeakingChange }) => {
   const detectorRef = useRef(null);
@@ -25,7 +25,8 @@ const useSpeakingDetector = ({ isMutedRef, onSpeakingChange }) => {
       const audioTrack = stream?.getAudioTracks?.()[0];
       if (!audioTrack) return;
 
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      const AudioContextClass =
+        window.AudioContext || window.webkitAudioContext;
       if (!AudioContextClass) return;
 
       const audioContext = new AudioContextClass();

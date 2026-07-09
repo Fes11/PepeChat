@@ -36,6 +36,7 @@ const SettingsModal = function ({ onClose }) {
   const [activeTab, setActiveTab] = useState("Profile");
   const { theme, mainColor, uiScale, setTheme, setMainColor, setUiScale } =
     useThemeSettings();
+  const [pendingMainColor, setPendingMainColor] = useState(mainColor);
   const tabs = ["Profile", "App", "Device"];
   const testStreamRef = useRef(null);
   const audioContextRef = useRef(null);
@@ -46,6 +47,10 @@ const SettingsModal = function ({ onClose }) {
   useEffect(() => {
     MediaStore.initializeDevices({ requestMicrophone: true });
   }, []);
+
+  useEffect(() => {
+    setPendingMainColor(mainColor);
+  }, [mainColor]);
 
   useEffect(() => {
     let isMounted = true;
@@ -314,6 +319,10 @@ const SettingsModal = function ({ onClose }) {
     navigate("/login", { replace: true });
   };
 
+  const applyMainColor = () => {
+    setMainColor(pendingMainColor);
+  };
+
   return (
     <div className={classes.settings_modal}>
       <button onClick={onClose} className={classes.close}>
@@ -469,16 +478,13 @@ const SettingsModal = function ({ onClose }) {
                 <div className={classes.setting_row}>
                   <span>
                     <strong>Основной цвет</strong>
-                    <small>
-                      Акцентный цвет для кнопок и активных состояний
-                    </small>
                   </span>
 
                   <input
                     className={classes.color_input}
                     type="color"
-                    value={mainColor}
-                    onChange={(e) => setMainColor(e.target.value)}
+                    value={pendingMainColor}
+                    onChange={(e) => setPendingMainColor(e.target.value)}
                     aria-label="Main color"
                   />
                 </div>
@@ -489,10 +495,12 @@ const SettingsModal = function ({ onClose }) {
                       key={color}
                       type="button"
                       className={`${classes.color_swatch} ${
-                        mainColor === color ? classes.color_swatch_active : ""
+                        pendingMainColor === color
+                          ? classes.color_swatch_active
+                          : ""
                       }`}
                       style={{ "--swatch-color": color }}
-                      onClick={() => setMainColor(color)}
+                      onClick={() => setPendingMainColor(color)}
                       aria-label={`Set main color ${color}`}
                     />
                   ))}
@@ -500,16 +508,24 @@ const SettingsModal = function ({ onClose }) {
                   <button
                     type="button"
                     className={classes.reset_color}
-                    onClick={() => setMainColor(DEFAULT_MAIN_COLOR)}
+                    onClick={() => setPendingMainColor(DEFAULT_MAIN_COLOR)}
                   >
                     Сбросить
+                  </button>
+
+                  <button
+                    type="button"
+                    className={classes.apply_color}
+                    onClick={applyMainColor}
+                    disabled={pendingMainColor === mainColor}
+                  >
+                    Применить
                   </button>
                 </div>
 
                 <div className={classes.setting_row}>
                   <span>
                     <strong>Масштаб интерфейса</strong>
-                    <small>Настройте размер приложения на этом экране</small>
                   </span>
 
                   <div className={classes.scale_control}>

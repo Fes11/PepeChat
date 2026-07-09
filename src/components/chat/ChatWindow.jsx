@@ -407,7 +407,11 @@ const ChatWindow = observer(
                 return (
                   <React.Fragment key={msg.id}>
                     {showDate && <DateDivider date={currentDate} />}
-                    <Message message={msg} load={loadMessage} />
+                    <Message
+                      message={msg}
+                      load={loadMessage}
+                      isLastInList={index === messages.length - 1}
+                    />
                   </React.Fragment>
                 );
               })}

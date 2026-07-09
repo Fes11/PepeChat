@@ -30,7 +30,7 @@ const ParticipantProfile = forwardRef(({ user, style }, ref) => {
           className="participant_profile_send_mes"
           onClick={() => ChatStore.openPrivateChat(user)}
         >
-          Отправить сообщение
+          Написать
         </button>
       )}
     </div>

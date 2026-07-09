@@ -48,7 +48,10 @@ const ChatDescription = ({ participants = [] }) => {
           onClick={() => toggleSection("online")}
         >
           <span className="chat_description__status-indicator" />
-          <span>Онлайн {onlineParticipants.length}</span>
+          <span>
+            ОНЛАЙН
+            <span className="status_count">{onlineParticipants.length}</span>
+          </span>
           {/* <span className="chat_description__arrow" aria-hidden="true" /> */}
         </button>
 
@@ -71,7 +74,10 @@ const ChatDescription = ({ participants = [] }) => {
           onClick={() => toggleSection("offline")}
         >
           <span className="chat_description__status-indicator-offline" />
-          <span>Офлайн {offlineParticipants.length}</span>
+          <span>
+            ОФЛАЙН
+            <span className="status_count">{offlineParticipants.length}</span>
+          </span>
           {/* <span className="chat_description__arrow" aria-hidden="true" /> */}
         </button>
 

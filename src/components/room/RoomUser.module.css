@@ -1,7 +1,7 @@
 .room_user {
-  width: clamp(140px, 28vw, 260px);
-  height: clamp(105px, 18vw, 160px);
-  background: var(--button-soft-bg-color);
+  width: 90%;
+  height: 70%;
+  background: var(--surface-color);
   display: flex;
   align-items: center;
   justify-content: center;

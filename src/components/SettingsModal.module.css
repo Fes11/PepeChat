@@ -1,6 +1,6 @@
 .settings_modal {
-  height: min(620px, 88vh);
-  width: min(860px, 92vw);
+  height: min(620px, calc(100vh / var(--ui-scale) - 32px));
+  width: min(860px, calc(100vw / var(--ui-scale) - 32px));
   position: relative;
   background: var(--box-bg-color);
   border: 1px solid var(--border-color);
@@ -46,7 +46,7 @@
 
 .tablinks.active {
   color: var(--text-color);
-  background: color-mix(in srgb, var(--main-color) 70%, transparent);
+  background: var(--main-color);
   z-index: 2;
 }
 
@@ -306,6 +306,7 @@
   border: 1px solid var(--border-color);
   border-radius: 8px;
   cursor: pointer;
+  color-scheme: inherit;
 }
 
 .color_grid {
@@ -337,6 +338,23 @@
 
 .reset_color:hover {
   background: var(--hover-bg-color);
+}
+
+.apply_color {
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: var(--main-color);
+  color: var(--main-contrast-color);
+  font-weight: 700;
+}
+
+.apply_color:hover {
+  background: var(--main-hover-color);
+}
+
+.apply_color:disabled {
+  cursor: default;
+  opacity: 0.55;
 }
 
 .scale_control {
@@ -559,8 +577,8 @@
 
 @media (max-width: 760px) {
   .settings_modal {
-    width: 94vw;
-    height: 90vh;
+    width: min(94vw, calc(100vw / var(--ui-scale) - 16px));
+    height: min(90vh, calc(100vh / var(--ui-scale) - 16px));
   }
 
   .profile_card,
