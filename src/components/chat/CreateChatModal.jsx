@@ -63,8 +63,8 @@ const CreateChatModal = ({ onChatCreated, onClose }) => {
     <form className={classes.content} onSubmit={createChat}>
       <div className={classes.header}>
         <div>
-          <p className={classes.eyebrow}>Group chat</p>
-          <h2 className={classes.title}>Create new chat</h2>
+          <p className={classes.eyebrow}>Чат</p>
+          <h2 className={classes.title}>Создание нового чата</h2>
         </div>
         <button className={classes.close} type="button" onClick={onClose}>
           X
@@ -76,19 +76,19 @@ const CreateChatModal = ({ onChatCreated, onClose }) => {
 
         <div className={classes.input_box}>
           <label className={classes.field_label} htmlFor="chat-title">
-            Chat name
+            Название чата
           </label>
           <input
             id="chat-title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             type="text"
-            placeholder="Design crew, Project room..."
+            placeholder="Введите название чата"
             className={classes.input}
           />
 
           <div className={classes.search_box}>
-            <label className={classes.field_label}>Participants</label>
+            <label className={classes.field_label}>Участники</label>
             <SearchUser
               onSelectUser={addSelectUser}
               participants={participants}
@@ -98,7 +98,7 @@ const CreateChatModal = ({ onChatCreated, onClose }) => {
       </div>
 
       <div className={classes.partchipants__list_header}>
-        <p className={classes.partchipants__list_title}>Participants</p>
+        <p className={classes.partchipants__list_title}>Участники</p>
         <span>{participants.length}</span>
       </div>
       <div className={classes.partchipants__list}>
@@ -113,15 +113,15 @@ const CreateChatModal = ({ onChatCreated, onClose }) => {
         ) : (
           <div className={classes.empty_participants}>
             <span>+</span>
-            <p>Add at least one person to create a chat</p>
+            <p>Добавьте хотя бы одного пользователя, чтобы создать чат</p>
           </div>
         )}
       </div>
 
       <label className={classes.create_chat_private}>
         <span>
-          <strong>Private chat</strong>
-          <small>Only invited participants can find it</small>
+          <strong>Приватный чат</strong>
+          <small>Только приглашенные участники могут найти его</small>
         </span>
         <input
           type="checkbox"
@@ -135,7 +135,7 @@ const CreateChatModal = ({ onChatCreated, onClose }) => {
         type="submit"
         disabled={isCreateDisabled}
       >
-        Create chat
+        Создать чат
       </button>
     </form>
   );

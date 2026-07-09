@@ -1,8 +1,8 @@
 import { useContext, useEffect, useRef } from "react";
 import cls from "./RoomUser.module.css";
 import UserAvatar from "../UI/UserAvatar.jsx";
-import { Context } from "../../main";
-import { mediaService } from "../../services/MediaService";
+import { Context } from "../../main.jsx";
+import { mediaService } from "../../services/MediaService.jsx";
 
 const isInterruptedPlayError = (err) =>
   err?.name === "AbortError" &&
@@ -29,7 +29,8 @@ const RoomUser = function ({
   const { MediaStore } = useContext(Context);
   const audioRef = useRef(null);
   const isHeadphonesMuted = Boolean(participant.state?.deafened);
-  const isRemoteMicMuted = Boolean(participant.state?.muted) && !isHeadphonesMuted;
+  const isRemoteMicMuted =
+    Boolean(participant.state?.muted) && !isHeadphonesMuted;
   const isLocallyMuted = Boolean(userMuted);
   const hasStatus = isLocallyMuted || isHeadphonesMuted || isRemoteMicMuted;
 

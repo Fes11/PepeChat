@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import ChatList from "./ChatList.jsx";
 import ChatWindow from "./ChatWindow.jsx";
-import Room from "./Room.jsx";
+import Room from "../room/Room.jsx";
 import { Context } from "../../main.jsx";
 import { observer } from "mobx-react-lite";
 
@@ -16,8 +16,8 @@ const ChatPage = observer(() => {
   const { id } = useParams();
   const routeChatId = id ? String(id) : null;
   const shouldShowSelectedChat =
-    selectedChatData
-    && (!routeChatId || String(selectedChatId) === routeChatId);
+    selectedChatData &&
+    (!routeChatId || String(selectedChatId) === routeChatId);
   const [activeVoiceRoomChatId, setActiveVoiceRoomChatId] = useState(() => {
     return sessionStorage.getItem(ACTIVE_VOICE_ROOM_CHAT_ID_KEY);
   });
@@ -32,10 +32,10 @@ const ChatPage = observer(() => {
   }, [ChatStore.chats, activeVoiceRoomChatId]);
 
   const activeVoiceRoomName =
-    activeVoiceChat?.name
-    || activeVoiceChat?.other_user?.username
-    || activeVoiceChat?.other_user?.login
-    || "Голосовая комната";
+    activeVoiceChat?.name ||
+    activeVoiceChat?.other_user?.username ||
+    activeVoiceChat?.other_user?.login ||
+    "Голосовая комната";
 
   const openVoiceRoom = (chatId) => {
     const nextChatId = String(chatId);
@@ -102,7 +102,6 @@ const ChatPage = observer(() => {
             onLeaveRoom={leaveVoiceRoom}
           />
         )}
-
       </div>
     </div>
   );

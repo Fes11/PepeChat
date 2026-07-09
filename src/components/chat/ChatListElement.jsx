@@ -37,9 +37,10 @@ const ChatListElement = observer(({ chat, isSelected, isLast }) => {
       {chat.is_group ? (
         <ChatAvatar src={chat?.avatar} />
       ) : (
-        <UserAvatar 
-          src={chat?.other_user?.avatar} 
-          status={chat?.other_user?.status} />
+        <UserAvatar
+          src={chat?.other_user?.avatar}
+          status={chat?.other_user?.status}
+        />
       )}
 
       <div className="chat_list_element__text_box">
@@ -63,7 +64,9 @@ const ChatListElement = observer(({ chat, isSelected, isLast }) => {
               {visibleVoiceAvatars.map((participant) => (
                 <img
                   key={participant.id}
-                  src={resolveMediaUrl(participant.user?.avatar) || "/default.jpg"}
+                  src={
+                    resolveMediaUrl(participant.user?.avatar) || "/default.jpg"
+                  }
                   alt=""
                   className="chat_list_element__voice_avatar"
                 />

@@ -10,7 +10,7 @@ import React, {
 import { Context } from "../../main.jsx";
 import MessageService from "../../services/MessageService";
 import ChatServices from "../../services/ChatService.jsx";
-import Message from "./Message";
+import Message from "../message/Message.jsx";
 import ChatDescription from "./ChatDescription.jsx";
 import Spinner from "../UI/Spiner.jsx";
 import ChatAvatar from "../UI/ChatAvatar.jsx";
@@ -20,153 +20,15 @@ import { enUS } from "date-fns/locale";
 import DateDivider from "../UI/DateDivider.jsx";
 import { observer } from "mobx-react-lite";
 import { notifyError } from "../../notifications/notificationService.js";
+import emojis from "../../utils/emojis.json";
 
-const EMOJI_LIST = [
-  "😀", "😃", "😄", "😁", "😆", "😅", "😂", "🤣",
-  "😊", "😇", "🙂", "🙃", "😉", "😍", "😘", "😋",
-  "😎", "🥳", "🤩", "🤔", "🤨", "😐", "😑", "😶",
-  "😏", "😒", "🙄", "😬", "😮‍💨", "🤥", "😌", "😔",
-  "😪", "🤤", "😴", "😷", "🤒", "🤕", "🤢", "🤮",
-  "🤧", "🥵", "🥶", "🥴", "😵", "😵‍💫", "🤯", "🤠",
-  "🥸", "😈", "👿", "👻", "💀", "☠️", "👽", "🤖",
-  "💩", "😺", "😸", "😹", "😻", "😼", "😽", "🙀",
-  "😿", "😾", "🙈", "🙉", "🙊", "💋", "💌", "💘",
-  "💝", "💖", "💗", "💓", "💞", "💕", "💟", "❣️",
-  "❤️", "🧡", "💛", "💚", "💙", "💜", "🤎", "🖤",
-  "🤍", "💔", "❤️‍🔥", "❤️‍🩹", "💯", "💢", "💥", "💫",
-  "💦", "💨", "🕳️", "💬", "👁️‍🗨️", "🗨️", "🗯️", "💭",
-  "💤", "👋", "🤚", "🖐️", "✋", "🖖", "👌", "🤌",
-  "🤏", "✌️", "🤞", "🫰", "🤟", "🤘", "🤙", "👈",
-  "👉", "👆", "🖕", "👇", "☝️", "👍", "👎", "✊",
-  "👊", "🤛", "🤜", "👏", "🙌", "🫶", "👐", "🤲",
-  "🤝", "🙏", "✍️", "💅", "🤳", "💪", "🦾", "🦵",
-  "🦶", "👂", "🦻", "👃", "🧠", "🫀", "🫁", "🦷",
-  "🦴", "👀", "👁️", "👅", "👄", "🫦", "👶", "🧒",
-  "👦", "👧", "🧑", "👱", "👨", "🧔", "🧔‍♂️", "🧔‍♀️",
-  "👨‍🦰", "👨‍🦱", "👨‍🦳", "👨‍🦲", "👩", "👩‍🦰", "🧑‍🦰", "👩‍🦱",
-  "🧑‍🦱", "👩‍🦳", "🧑‍🦳", "👩‍🦲", "🧑‍🦲", "👱‍♀️", "👱‍♂️", "🧓",
-  "👴", "👵", "🙍", "🙎", "🙅", "🙆", "💁", "🙋",
-  "🧏", "🙇", "🤦", "🤷", "👮", "🕵️", "💂", "🥷",
-  "👷", "🫅", "🤴", "👸", "👳", "👲", "🧕", "🤵",
-  "👰", "🤰", "🫃", "🫄", "👼", "🎅", "🤶", "🧑‍🎄",
-  "🦸", "🦹", "🧙", "🧚", "🧛", "🧜", "🧝", "🧞",
-  "🧟", "💆", "💇", "🚶", "🧍", "🧎", "🏃", "💃",
-  "🕺", "🕴️", "👯", "🧖", "🧗", "🤺", "🏇", "⛷️",
-  "🏂", "🏌️", "🏄", "🚣", "🏊", "⛹️", "🏋️", "🚴",
-  "🚵", "🤸", "🤼", "🤽", "🤾", "🤹", "🧘", "🛀",
-  "🛌", "👭", "👫", "👬", "💏", "💑", "👪", "🗣️",
-  "👤", "👥", "🫂", "🧳", "🌂", "☂️", "🧵", "🪡",
-  "🪢", "🧶", "👓", "🕶️", "🥽", "🥼", "🦺", "👔",
-  "👕", "👖", "🧣", "🧤", "🧥", "🧦", "👗", "👘",
-  "🥻", "🩱", "🩲", "🩳", "👙", "👚", "🪭", "👛",
-  "👜", "👝", "🛍️", "🎒", "🩴", "👞", "👟", "🥾",
-  "🥿", "👠", "👡", "🩰", "👢", "👑", "👒", "🎩",
-  "🎓", "🧢", "🪖", "⛑️", "📿", "💄", "💍", "💎",
-  "🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼",
-  "🐻‍❄️", "🐨", "🐯", "🦁", "🐮", "🐷", "🐽", "🐸",
-  "🐵", "🙈", "🙉", "🙊", "🐒", "🐔", "🐧", "🐦",
-  "🐤", "🐣", "🐥", "🦆", "🦅", "🦉", "🦇", "🐺",
-  "🐗", "🐴", "🦄", "🐝", "🪲", "🐞", "🦋", "🐌",
-  "🐛", "🐜", "🪰", "🪱", "🦟", "🦗", "🕷️", "🕸️",
-  "🦂", "🐢", "🐍", "🦎", "🦖", "🦕", "🐙", "🦑",
-  "🦐", "🦞", "🦀", "🐡", "🐠", "🐟", "🐬", "🐳",
-  "🐋", "🦈", "🦭", "🐊", "🐅", "🐆", "🦓", "🦍",
-  "🦧", "🦣", "🐘", "🦛", "🦏", "🐪", "🐫", "🦒",
-  "🦘", "🦬", "🐃", "🐂", "🐄", "🐎", "🐖", "🐏",
-  "🐑", "🦙", "🐐", "🦌", "🐕", "🐩", "🦮", "🐕‍🦺",
-  "🐈", "🐈‍⬛", "🪶", "🐓", "🦃", "🦤", "🦚", "🦜",
-  "🦢", "🦩", "🕊️", "🐇", "🦝", "🦨", "🦡", "🦫",
-  "🦦", "🦥", "🐁", "🐀", "🐿️", "🦔", "🐾", "🐉",
-  "🐲", "🌵", "🎄", "🌲", "🌳", "🌴", "🪵", "🌱",
-  "🌿", "☘️", "🍀", "🎍", "🪴", "🎋", "🍃", "🍂",
-  "🍁", "🍄", "🐚", "🪨", "🌾", "💐", "🌷", "🌹",
-  "🥀", "🪷", "🌺", "🌸", "🌼", "🌻", "🌞", "🌝",
-  "🌛", "🌜", "🌚", "🌕", "🌖", "🌗", "🌘", "🌑",
-  "🌒", "🌓", "🌔", "🌙", "🌎", "🌍", "🌏", "🪐",
-  "💫", "⭐", "🌟", "✨", "⚡", "☄️", "💥", "🔥",
-  "🌪️", "🌈", "☀️", "🌤️", "⛅", "🌥️", "☁️", "🌦️",
-  "🌧️", "⛈️", "🌩️", "🌨️", "❄️", "☃️", "⛄", "🌬️",
-  "💨", "💧", "💦", "☔", "☂️", "🌊", "🌫️", "🍏",
-  "🍎", "🍐", "🍊", "🍋", "🍌", "🍉", "🍇", "🍓",
-  "🫐", "🍈", "🍒", "🍑", "🥭", "🍍", "🥥", "🥝",
-  "🍅", "🍆", "🥑", "🥦", "🥬", "🥒", "🌶️", "🫑",
-  "🌽", "🥕", "🫒", "🧄", "🧅", "🥔", "🍠", "🫘",
-  "🥐", "🥯", "🍞", "🥖", "🥨", "🧀", "🥚", "🍳",
-  "🧈", "🥞", "🧇", "🥓", "🥩", "🍗", "🍖", "🦴",
-  "🌭", "🍔", "🍟", "🍕", "🫓", "🥪", "🥙", "🧆",
-  "🌮", "🌯", "🫔", "🥗", "🥘", "🫕", "🥫", "🍝",
-  "🍜", "🍲", "🍛", "🍣", "🍱", "🥟", "🦪", "🍤",
-  "🍙", "🍚", "🍘", "🍥", "🥠", "🥮", "🍢", "🍡",
-  "🍧", "🍨", "🍦", "🥧", "🧁", "🍰", "🎂", "🍮",
-  "🍭", "🍬", "🍫", "🍿", "🍩", "🍪", "🌰", "🥜",
-  "🍯", "🥛", "🍼", "☕", "🫖", "🍵", "🧃", "🥤",
-  "🧋", "🍶", "🍺", "🍻", "🥂", "🍷", "🥃", "🍸",
-  "🍹", "🧉", "🍾", "🧊", "🥄", "🍴", "🍽️", "🥣",
-  "🥡", "🥢", "🧂", "⚽", "🏀", "🏈", "⚾", "🥎",
-  "🎾", "🏐", "🏉", "🥏", "🎱", "🪀", "🏓", "🏸",
-  "🏒", "🏑", "🥍", "🏏", "🪃", "🥅", "⛳", "🪁",
-  "🏹", "🎣", "🤿", "🥊", "🥋", "🎽", "🛹", "🛼",
-  "🛷", "⛸️", "🥌", "🎿", "⛷️", "🏂", "🪂", "🏋️",
-  "🤼", "🤸", "⛹️", "🤺", "🤾", "🏌️", "🏇", "🧘",
-  "🏄", "🏊", "🤽", "🚣", "🧗", "🚵", "🚴", "🏆",
-  "🥇", "🥈", "🥉", "🏅", "🎖️", "🏵️", "🎗️", "🎫",
-  "🎟️", "🎪", "🤹", "🎭", "🩰", "🎨", "🎬", "🎤",
-  "🎧", "🎼", "🎹", "🥁", "🪘", "🎷", "🎺", "🪗",
-  "🎸", "🪕", "🎻", "🎲", "♟️", "🎯", "🎳", "🎮",
-  "🎰", "🧩", "🚗", "🚕", "🚙", "🚌", "🚎", "🏎️",
-  "🚓", "🚑", "🚒", "🚐", "🛻", "🚚", "🚛", "🚜",
-  "🦯", "🦽", "🦼", "🛴", "🚲", "🛵", "🏍️", "🛺",
-  "🚨", "🚔", "🚍", "🚘", "🚖", "🚡", "🚠", "🚟",
-  "🚃", "🚋", "🚞", "🚝", "🚄", "🚅", "🚈", "🚂",
-  "🚆", "🚇", "🚊", "🚉", "✈️", "🛫", "🛬", "🛩️",
-  "💺", "🛰️", "🚀", "🛸", "🚁", "🛶", "⛵", "🚤",
-  "🛥️", "🛳️", "⛴️", "🚢", "⚓", "🛟", "🪝", "⛽",
-  "🚧", "🚦", "🚥", "🚏", "🗺️", "🗿", "🗽", "🗼",
-  "🏰", "🏯", "🏟️", "🎡", "🎢", "🎠", "⛲", "⛱️",
-  "🏖️", "🏝️", "🏜️", "🌋", "⛰️", "🏔️", "🗻", "🏕️",
-  "⛺", "🛖", "🏠", "🏡", "🏘️", "🏚️", "🏗️", "🏭",
-  "🏢", "🏬", "🏣", "🏤", "🏥", "🏦", "🏨", "🏪",
-  "🏫", "🏩", "💒", "🏛️", "⛪", "🕌", "🕍", "🛕",
-  "🕋", "⛩️", "🛤️", "🛣️", "🗾", "🎑", "🏞️", "🌅",
-  "🌄", "🌠", "🎇", "🎆", "🌇", "🌆", "🏙️", "🌃",
-  "🌌", "🌉", "🌁", "⌚", "📱", "📲", "💻", "⌨️",
-  "🖥️", "🖨️", "🖱️", "🖲️", "🕹️", "🗜️", "💽", "💾",
-  "💿", "📀", "📼", "📷", "📸", "📹", "🎥", "📽️",
-  "🎞️", "📞", "☎️", "📟", "📠", "📺", "📻", "🎙️",
-  "🎚️", "🎛️", "🧭", "⏱️", "⏲️", "⏰", "🕰️", "⌛",
-  "⏳", "📡", "🔋", "🪫", "🔌", "💡", "🔦", "🕯️",
-  "🪔", "🧯", "🛢️", "💸", "💵", "💴", "💶", "💷",
-  "🪙", "💰", "💳", "💎", "⚖️", "🪜", "🧰", "🪛",
-  "🔧", "🔨", "⚒️", "🛠️", "⛏️", "🪚", "🔩", "⚙️",
-  "🪤", "🧱", "⛓️", "🧲", "🔫", "💣", "🧨", "🪓",
-  "🔪", "🗡️", "⚔️", "🛡️", "🚬", "⚰️", "🪦", "⚱️",
-  "🏺", "🔮", "📿", "🧿", "💈", "⚗️", "🔭", "🔬",
-  "🕳️", "🩹", "🩺", "💊", "💉", "🩸", "🧬", "🦠",
-  "🧫", "🧪", "🌡️", "🧹", "🪠", "🧺", "🧻", "🚽",
-  "🚰", "🚿", "🛁", "🛀", "🧼", "🪥", "🪒", "🧽",
-  "🪣", "🧴", "🛎️", "🔑", "🗝️", "🚪", "🪑", "🛋️",
-  "🛏️", "🛌", "🧸", "🪆", "🖼️", "🪞", "🪟", "🛍️",
-  "🛒", "🎁", "🎈", "🎏", "🎀", "🪄", "🪅", "🎊",
-  "🎉", "🎎", "🏮", "🎐", "🧧", "✉️", "📩", "📨",
-  "📧", "💌", "📥", "📤", "📦", "🏷️", "🪧", "📪",
-  "📫", "📬", "📭", "📮", "📯", "📜", "📃", "📄",
-  "📑", "🧾", "📊", "📈", "📉", "🗒️", "🗓️", "📆",
-  "📅", "🗑️", "📇", "🗃️", "🗳️", "🗄️", "📋", "📁",
-  "📂", "🗂️", "🗞️", "📰", "📓", "📔", "📒", "📕",
-  "📗", "📘", "📙", "📚", "📖", "🔖", "🧷", "🔗",
-  "📎", "🖇️", "📐", "📏", "🧮", "📌", "📍", "✂️",
-  "🖊️", "🖋️", "✒️", "🖌️", "🖍️", "📝", "✏️", "🔍",
-  "🔎", "🔏", "🔐", "🔒", "🔓", "✅", "☑️", "✔️",
-  "❌", "❎", "➕", "➖", "➗", "✖️", "♾️", "‼️",
-  "⁉️", "❓", "❔", "❕", "❗", "〰️", "💱", "💲",
-  "⚕️", "♻️", "⚜️", "🔱", "📛", "🔰", "⭕", "🟢",
-  "🟡", "🟠", "🔴", "🟣", "🔵", "⚫", "⚪", "🟤",
-];
+const EMOJI_LIST = emojis;
 const EMOJI_INITIAL_COUNT = 120;
 const EMOJI_RENDER_STEP = 120;
 
 const EmojiPicker = memo(({ activeTab, onTabChange, onEmojiSelect }) => {
-  const [visibleEmojiCount, setVisibleEmojiCount] = useState(EMOJI_INITIAL_COUNT);
+  const [visibleEmojiCount, setVisibleEmojiCount] =
+    useState(EMOJI_INITIAL_COUNT);
 
   useEffect(() => {
     if (activeTab !== "emoji") return;
@@ -177,7 +39,10 @@ const EmojiPicker = memo(({ activeTab, onTabChange, onEmojiSelect }) => {
     const growEmojiList = () => {
       setVisibleEmojiCount((currentCount) => {
         if (currentCount >= EMOJI_LIST.length) return currentCount;
-        const nextCount = Math.min(currentCount + EMOJI_RENDER_STEP, EMOJI_LIST.length);
+        const nextCount = Math.min(
+          currentCount + EMOJI_RENDER_STEP,
+          EMOJI_LIST.length,
+        );
         frameId = requestAnimationFrame(growEmojiList);
         return nextCount;
       });
@@ -226,368 +91,369 @@ const EmojiPicker = memo(({ activeTab, onTabChange, onEmojiSelect }) => {
           ))}
         </div>
       ) : (
-        <div className="chat__stickers_empty">
-          Стикеры появятся позже
-        </div>
+        <div className="chat__stickers_empty">Стикеры появятся позже</div>
       )}
     </div>
   );
 });
 
-const ChatWindow = observer(({ chat, activeVoiceRoomChatId, onOpenVoiceRoom }) => {
-  // const [messages, setMessages] = useState([]);
-  const { ChatStore } = useContext(Context);
-  const messages = ChatStore.getMessages(chat.id);
-  const [inputMessage, setInputMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [nextCursor, setNextCursor] = useState(null);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const [error, setError] = useState(null);
-  const listRef = useRef(null);
-  const inputRef = useRef(null);
-  const emojiPickerRef = useRef(null);
-  const activeChatId = useRef(chat.id);
-  const [loadMessage, setLoadMessage] = useState(false);
-  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
-  const [emojiTab, setEmojiTab] = useState("emoji");
-  const [participants, setParticipants] = useState([]);
+const ChatWindow = observer(
+  ({ chat, activeVoiceRoomChatId, onOpenVoiceRoom }) => {
+    // const [messages, setMessages] = useState([]);
+    const { ChatStore } = useContext(Context);
+    const messages = ChatStore.getMessages(chat.id);
+    const [inputMessage, setInputMessage] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const [nextCursor, setNextCursor] = useState(null);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
+    const [error, setError] = useState(null);
+    const listRef = useRef(null);
+    const inputRef = useRef(null);
+    const emojiPickerRef = useRef(null);
+    const activeChatId = useRef(chat.id);
+    const [loadMessage, setLoadMessage] = useState(false);
+    const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+    const [emojiTab, setEmojiTab] = useState("emoji");
+    const [participants, setParticipants] = useState([]);
 
-  const getLastOnlineStatus = (last_online) => {
-    if (!last_online) return null;
+    const getLastOnlineStatus = (last_online) => {
+      if (!last_online) return null;
 
-    const date = parseISO(last_online);
+      const date = parseISO(last_online);
 
-    return formatDistanceToNow(date, {
-      addSuffix: true,
-      locale: enUS,
-    });
-  };
+      return formatDistanceToNow(date, {
+        addSuffix: true,
+        locale: enUS,
+      });
+    };
 
-  const otherUser = ChatStore.getUserPresence(chat.other_user);
-  const lastOnlineStatus = getLastOnlineStatus(otherUser?.last_online);
-  const onlineParticipantsCount = participants.filter((participant) => {
-    const user = ChatStore.getUserPresence(participant.user);
-    return user?.status === "online";
-  }).length;
+    const otherUser = ChatStore.getUserPresence(chat.other_user);
+    const lastOnlineStatus = getLastOnlineStatus(otherUser?.last_online);
+    const onlineParticipantsCount = participants.filter((participant) => {
+      const user = ChatStore.getUserPresence(participant.user);
+      return user?.status === "online";
+    }).length;
 
-  const isFirstLoad = useRef(true);
+    const isFirstLoad = useRef(true);
 
-  useEffect(() => {
-    setInputMessage("");
-    setError(null);
-    setNextCursor(null);
-    setHasMore(true);
-    setIsLoadingMore(false);
-    setLoadMessage(false);
-    setIsEmojiPickerOpen(false);
-    setEmojiTab("emoji");
-  }, [chat.id]);
-
-  useEffect(() => {
-    if (!isEmojiPickerOpen) return;
-
-    const closeOnOutsideClick = (event) => {
-      if (emojiPickerRef.current?.contains(event.target)) return;
+    useEffect(() => {
+      setInputMessage("");
+      setError(null);
+      setNextCursor(null);
+      setHasMore(true);
+      setIsLoadingMore(false);
+      setLoadMessage(false);
       setIsEmojiPickerOpen(false);
+      setEmojiTab("emoji");
+    }, [chat.id]);
+
+    useEffect(() => {
+      if (!isEmojiPickerOpen) return;
+
+      const closeOnOutsideClick = (event) => {
+        if (emojiPickerRef.current?.contains(event.target)) return;
+        setIsEmojiPickerOpen(false);
+      };
+
+      document.addEventListener("mousedown", closeOnOutsideClick);
+      return () =>
+        document.removeEventListener("mousedown", closeOnOutsideClick);
+    }, [isEmojiPickerOpen]);
+
+    const openVoiceRoom = () => {
+      onOpenVoiceRoom?.(chat.id);
     };
 
-    document.addEventListener("mousedown", closeOnOutsideClick);
-    return () => document.removeEventListener("mousedown", closeOnOutsideClick);
-  }, [isEmojiPickerOpen]);
-
-  const openVoiceRoom = () => {
-    onOpenVoiceRoom?.(chat.id);
-  };
-
-  useEffect(() => {
-    if (!chat.is_group) {
-      setParticipants([]);
-      return;
-    }
-
-    let isActual = true;
-
-    const fetchParticipants = async () => {
-      try {
-        const response = await ChatServices.getChatParticipants(chat.id);
-        if (isActual) {
-          setParticipants(response.data.results);
-        }
-      } catch (error) {
-        console.error("Ошибка при получении участников чата:", error);
+    useEffect(() => {
+      if (!chat.is_group) {
+        setParticipants([]);
+        return;
       }
-    };
 
-    fetchParticipants();
+      let isActual = true;
 
-    return () => {
-      isActual = false;
-    };
-  }, [chat.id, chat.is_group]);
+      const fetchParticipants = async () => {
+        try {
+          const response = await ChatServices.getChatParticipants(chat.id);
+          if (isActual) {
+            setParticipants(response.data.results);
+          }
+        } catch (error) {
+          console.error("Ошибка при получении участников чата:", error);
+        }
+      };
 
-  useEffect(() => {
-    setIsLoading(true);
-    isFirstLoad.current = true;
+      fetchParticipants();
 
-    activeChatId.current = chat.id;
+      return () => {
+        isActual = false;
+      };
+    }, [chat.id, chat.is_group]);
 
-    const loadMessages = async () => {
+    useEffect(() => {
       setIsLoading(true);
+      isFirstLoad.current = true;
+
+      activeChatId.current = chat.id;
+
+      const loadMessages = async () => {
+        setIsLoading(true);
+
+        try {
+          const res = await MessageService.getMessages(chat.id);
+          if (activeChatId.current !== chat.id) return;
+          ChatStore.mergeMessages(chat.id, res.data.results.slice().reverse());
+          setNextCursor(res.data.next);
+          setHasMore(Boolean(res.data.next));
+        } catch (e) {
+          console.error(e);
+          setError(e);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      loadMessages();
+    }, [chat.id]);
+
+    useLayoutEffect(() => {
+      if (!listRef.current) return;
+
+      if (isFirstLoad.current) {
+        listRef.current.scrollTop = listRef.current.scrollHeight;
+        isFirstLoad.current = false;
+      }
+    }, [messages]);
+
+    const loadMoreMessages = async () => {
+      if (!nextCursor || isLoadingMore) return;
+
+      const container = listRef.current;
+      const prevScrollHeight = container.scrollHeight;
+
+      setIsLoadingMore(true);
 
       try {
-        const res = await MessageService.getMessages(chat.id);
-        if (activeChatId.current !== chat.id) return;
-        ChatStore.mergeMessages(chat.id, res.data.results.slice().reverse());
+        const res = await MessageService.getMessagesByUrl(nextCursor);
+
+        ChatStore.mergeMessages(chat.id, res.data.results);
+
         setNextCursor(res.data.next);
         setHasMore(Boolean(res.data.next));
+
+        requestAnimationFrame(() => {
+          const newScrollHeight = container.scrollHeight;
+          container.scrollTop = newScrollHeight - prevScrollHeight;
+        });
       } catch (e) {
         console.error(e);
-        setError(e);
       } finally {
-        setIsLoading(false);
+        setIsLoadingMore(false);
       }
     };
 
-    loadMessages();
-  }, [chat.id]);
-
-  useLayoutEffect(() => {
-    if (!listRef.current) return;
-
-    if (isFirstLoad.current) {
+    useLayoutEffect(() => {
+      if (!listRef.current) return;
       listRef.current.scrollTop = listRef.current.scrollHeight;
-      isFirstLoad.current = false;
-    }
-  }, [messages]);
+    }, [messages.length]);
 
-  const loadMoreMessages = async () => {
-    if (!nextCursor || isLoadingMore) return;
+    useEffect(() => {
+      const container = listRef.current;
+      if (!container) return;
 
-    const container = listRef.current;
-    const prevScrollHeight = container.scrollHeight;
+      const onScroll = () => {
+        if (container.scrollTop <= 0 && hasMore) {
+          loadMoreMessages();
+        }
+      };
 
-    setIsLoadingMore(true);
+      container.addEventListener("scroll", onScroll);
+      return () => container.removeEventListener("scroll", onScroll);
+    }, [hasMore, nextCursor]);
 
-    try {
-      const res = await MessageService.getMessagesByUrl(nextCursor);
+    const sendMessage = async (e) => {
+      setLoadMessage(true);
 
-      ChatStore.mergeMessages(chat.id, res.data.results);
+      try {
+        e.preventDefault();
+        if (!inputMessage.trim()) return;
 
-      setNextCursor(res.data.next);
-      setHasMore(Boolean(res.data.next));
+        const isSent = ChatStore.sendMessage(chat.id, {
+          text: inputMessage,
+        });
+
+        if (!isSent) {
+          throw new Error("WebSocket is not connected");
+        }
+
+        setInputMessage("");
+      } catch (err) {
+        console.error("Ошибка отправки сообщения:", err);
+        notifyError(err, "Не удалось отправить сообщение");
+      } finally {
+        setLoadMessage(false);
+      }
+    };
+
+    const addEmoji = useCallback((emoji) => {
+      const input = inputRef.current;
+      const selectionStart = input?.selectionStart ?? 0;
+      const selectionEnd = input?.selectionEnd ?? selectionStart;
+
+      setInputMessage((currentMessage) => {
+        const nextMessage =
+          currentMessage.slice(0, selectionStart) +
+          emoji +
+          currentMessage.slice(selectionEnd);
+
+        return nextMessage;
+      });
 
       requestAnimationFrame(() => {
-        const newScrollHeight = container.scrollHeight;
-        container.scrollTop = newScrollHeight - prevScrollHeight;
+        inputRef.current?.focus();
+        const nextCursorPosition = selectionStart + emoji.length;
+        inputRef.current?.setSelectionRange(
+          nextCursorPosition,
+          nextCursorPosition,
+        );
       });
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsLoadingMore(false);
-    }
-  };
+    }, []);
 
-  useLayoutEffect(() => {
-    if (!listRef.current) return;
-    listRef.current.scrollTop = listRef.current.scrollHeight;
-  }, [messages.length]);
-
-  useEffect(() => {
-    const container = listRef.current;
-    if (!container) return;
-
-    const onScroll = () => {
-      if (container.scrollTop <= 0 && hasMore) {
-        loadMoreMessages();
-      }
-    };
-
-    container.addEventListener("scroll", onScroll);
-    return () => container.removeEventListener("scroll", onScroll);
-  }, [hasMore, nextCursor]);
-
-  const sendMessage = async (e) => {
-    setLoadMessage(true);
-
-    try {
-      e.preventDefault();
-      if (!inputMessage.trim()) return;
-
-      const isSent = ChatStore.sendMessage(chat.id, {
-        text: inputMessage,
-      });
-
-      if (!isSent) {
-        throw new Error("WebSocket is not connected");
-      }
-
-      setInputMessage("");
-    } catch (err) {
-      console.error("Ошибка отправки сообщения:", err);
-      notifyError(err, "Не удалось отправить сообщение");
-    } finally {
-      setLoadMessage(false);
-    }
-  };
-
-  const addEmoji = useCallback((emoji) => {
-    const input = inputRef.current;
-    const selectionStart = input?.selectionStart ?? 0;
-    const selectionEnd = input?.selectionEnd ?? selectionStart;
-
-    setInputMessage((currentMessage) => {
-      const nextMessage =
-        currentMessage.slice(0, selectionStart) +
-        emoji +
-        currentMessage.slice(selectionEnd);
-
-      return nextMessage;
-    });
-
-    requestAnimationFrame(() => {
-      inputRef.current?.focus();
-      const nextCursorPosition = selectionStart + emoji.length;
-      inputRef.current?.setSelectionRange(nextCursorPosition, nextCursorPosition);
-    });
-  }, []);
-
-  return (
-    <div className="chat_window">
-      <div className="chat">
-        <div className="chat__header">
-          <div className="chat_header_box">
-            {chat.is_group ? (
-              <ChatAvatar src={chat?.avatar} />
-            ) : (
-              <UserAvatar
-                src={otherUser?.avatar}
-                status={otherUser?.status}
-              />
-            )}
-
-            <div className="chat__header_info">
+    return (
+      <div className="chat_window">
+        <div className="chat">
+          <div className="chat__header">
+            <div className="chat_header_box">
               {chat.is_group ? (
-                <p className="chat__header_name">{chat?.name}</p>
+                <ChatAvatar src={chat?.avatar} />
               ) : (
-                <p className="chat__header_name">
-                  {otherUser?.username || otherUser?.login}
-                </p>
+                <UserAvatar
+                  src={otherUser?.avatar}
+                  status={otherUser?.status}
+                />
               )}
-              {!chat.is_group ? (
-                <p className="chat__header_description">
-                  {otherUser?.status === "online"
-                    ? "online"
-                    : (lastOnlineStatus ?? "offline")}
-                </p>
-              ) : (
-                <p className="chat__header_description">
-                  Online: {onlineParticipantsCount}
-                </p>
-              )}
+
+              <div className="chat__header_info">
+                {chat.is_group ? (
+                  <p className="chat__header_name">{chat?.name}</p>
+                ) : (
+                  <p className="chat__header_name">
+                    {otherUser?.username || otherUser?.login}
+                  </p>
+                )}
+                {!chat.is_group ? (
+                  <p className="chat__header_description">
+                    {otherUser?.status === "online"
+                      ? "online"
+                      : (lastOnlineStatus ?? "offline")}
+                  </p>
+                ) : (
+                  <p className="chat__header_description">
+                    Онлайн: {onlineParticipantsCount}
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
 
-          <img
-            src="/voice_chat.png"
-            className={`voice_chat_btn ${
-              String(activeVoiceRoomChatId) === String(chat.id)
-                ? "voice_chat_btn--active"
-                : ""
-            }`}
-            onClick={openVoiceRoom}
-            alt="Open voice room"
-          />
-        </div>
-        <div className="chat__message_list" ref={listRef}>
-          <div className="spacer" />
-
-          {!isLoading && error && (
-            <div className="chat__empty">
-              <p>{error.message || "Ошибка загрузки сообщений"}</p>
-            </div>
-          )}
-
-          {isLoading && (
-            <div className="chat__loader">
-              <Spinner />
-            </div>
-          )}
-
-          {!isLoading && messages.length === 0 && (
-            <div className="chat__empty">
-              <p>Здесь пока нет сообщений</p>
-            </div>
-          )}
-
-          {isLoadingMore && !isLoading && (
-            <div className="chat__top_loader">
-              <Spinner />
-            </div>
-          )}
-
-          {!isLoading &&
-            messages.map((msg, index) => {
-              const currentDate = parseISO(msg.created_at);
-              const prevMessage = messages[index - 1];
-              const prevDate = prevMessage
-                ? parseISO(prevMessage.created_at)
-                : null;
-
-              const showDate = !prevDate || !isSameDay(currentDate, prevDate);
-
-              return (
-                <React.Fragment key={msg.id}>
-                  {showDate && <DateDivider date={currentDate} />}
-                  <Message message={msg} load={loadMessage} />
-                </React.Fragment>
-              );
-            })}
-        </div>
-        <div className="chat__bottom">
-          <div className="chat__input_box" ref={emojiPickerRef}>
-            {isEmojiPickerOpen && (
-              <EmojiPicker
-                activeTab={emojiTab}
-                onTabChange={setEmojiTab}
-                onEmojiSelect={addEmoji}
-              />
-            )}
-            <input
-              ref={inputRef}
-              className="chat__input"
-              type="text"
-              placeholder="Write a message..."
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") sendMessage(e);
-                if (e.key === "Escape") setIsEmojiPickerOpen(false);
-              }}
+            <img
+              src="/voice_chat.png"
+              className={`voice_chat_btn ${
+                String(activeVoiceRoomChatId) === String(chat.id)
+                  ? "voice_chat_btn--active"
+                  : ""
+              }`}
+              onClick={openVoiceRoom}
+              alt="Open voice room"
             />
-            <button
-              className="chat__emoji_btn"
-              type="button"
-              aria-label="Open emoji picker"
-              onClick={() => setIsEmojiPickerOpen((isOpen) => !isOpen)}
-            >
-              <img src="/smile.svg" alt="" />
+          </div>
+          <div className="chat__message_list" ref={listRef}>
+            <div className="spacer" />
+
+            {!isLoading && error && (
+              <div className="chat__empty">
+                <p>{error.message || "Ошибка загрузки сообщений"}</p>
+              </div>
+            )}
+
+            {isLoading && (
+              <div className="chat__loader">
+                <Spinner />
+              </div>
+            )}
+
+            {!isLoading && messages.length === 0 && (
+              <div className="chat__empty">
+                <p>Здесь пока нет сообщений</p>
+              </div>
+            )}
+
+            {isLoadingMore && !isLoading && (
+              <div className="chat__top_loader">
+                <Spinner />
+              </div>
+            )}
+
+            {!isLoading &&
+              messages.map((msg, index) => {
+                const currentDate = parseISO(msg.created_at);
+                const prevMessage = messages[index - 1];
+                const prevDate = prevMessage
+                  ? parseISO(prevMessage.created_at)
+                  : null;
+
+                const showDate = !prevDate || !isSameDay(currentDate, prevDate);
+
+                return (
+                  <React.Fragment key={msg.id}>
+                    {showDate && <DateDivider date={currentDate} />}
+                    <Message message={msg} load={loadMessage} />
+                  </React.Fragment>
+                );
+              })}
+          </div>
+          <div className="chat__bottom">
+            <div className="chat__input_box" ref={emojiPickerRef}>
+              {isEmojiPickerOpen && (
+                <EmojiPicker
+                  activeTab={emojiTab}
+                  onTabChange={setEmojiTab}
+                  onEmojiSelect={addEmoji}
+                />
+              )}
+              <input
+                ref={inputRef}
+                className="chat__input"
+                type="text"
+                placeholder="Написать сообщение..."
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") sendMessage(e);
+                  if (e.key === "Escape") setIsEmojiPickerOpen(false);
+                }}
+              />
+              <button
+                className="chat__emoji_btn"
+                type="button"
+                aria-label="Open emoji picker"
+                onClick={() => setIsEmojiPickerOpen((isOpen) => !isOpen)}
+              >
+                <img src="/smile.svg" alt="" />
+              </button>
+            </div>
+            <button className="chat__send_btn" onClick={sendMessage}>
+              <img src="/paperplane.svg" alt="Send" />
             </button>
           </div>
-          <button className="chat__send_btn" onClick={sendMessage}>
-            <img src="/paperplane.svg" alt="Send" />
-          </button>
         </div>
-      </div>
 
-      {chat.is_group && (
-        <ChatDescription
-          key={chat.id}
-          participants={participants}
-        />
-      )}
-    </div>
-  );
-});
+        {chat.is_group && (
+          <ChatDescription key={chat.id} participants={participants} />
+        )}
+      </div>
+    );
+  },
+);
 
 export default ChatWindow;

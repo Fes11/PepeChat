@@ -39,9 +39,7 @@ const ChatDescription = ({ participants = [] }) => {
         {/* <div className="chat_description__buttons">
           <ChatDescriptionBtn disabled>Descriptions</ChatDescriptionBtn>
           <ChatDescriptionBtn>Attach</ChatDescriptionBtn>
-        </div>
-
-        <Search placeholder="Search..." /> */}
+        </div>*/}
 
         <button
           type="button"
@@ -49,8 +47,9 @@ const ChatDescription = ({ participants = [] }) => {
           aria-expanded={expandedSections.online}
           onClick={() => toggleSection("online")}
         >
-          <span>Online – {onlineParticipants.length}</span>
-          <span className="chat_description__arrow" aria-hidden="true" />
+          <span className="chat_description__status-indicator" />
+          <span>Онлайн {onlineParticipants.length}</span>
+          {/* <span className="chat_description__arrow" aria-hidden="true" /> */}
         </button>
 
         <div
@@ -71,8 +70,9 @@ const ChatDescription = ({ participants = [] }) => {
           aria-expanded={expandedSections.offline}
           onClick={() => toggleSection("offline")}
         >
-          <span>Offline – {offlineParticipants.length}</span>
-          <span className="chat_description__arrow" aria-hidden="true" />
+          <span className="chat_description__status-indicator-offline" />
+          <span>Офлайн {offlineParticipants.length}</span>
+          {/* <span className="chat_description__arrow" aria-hidden="true" /> */}
         </button>
 
         <div

@@ -53,7 +53,7 @@ const SearchUser = ({ onSelectUser, participants }) => {
           type="button"
           onClick={() => setIsEditing(true)}
         >
-          + Add user
+          + Добавить участника
         </button>
       ) : (
         <div className="search_user_field">
@@ -69,7 +69,7 @@ const SearchUser = ({ onSelectUser, participants }) => {
             className="search_user_input"
             type="text"
             name={searchName}
-            placeholder="Search by name or login"
+            placeholder="Поиск по имени или логину"
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="off"
@@ -116,7 +116,6 @@ const SearchUser = ({ onSelectUser, participants }) => {
                   setIsEditing(false);
                 }}
               >
-
                 <UserAvatar
                   src={user.avatar}
                   status={user.status}
@@ -129,9 +128,9 @@ const SearchUser = ({ onSelectUser, participants }) => {
                 </div>
 
                 {isSelected ? (
-                  <span className="search_result_badge">Added</span>
+                  <span className="search_result_badge">Добавлен</span>
                 ) : (
-                  <span className="search_result_add">Add</span>
+                  <span className="search_result_add">Добавить</span>
                 )}
               </button>
             );

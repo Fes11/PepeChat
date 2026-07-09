@@ -264,6 +264,20 @@ a:hover {
   transform: translateY(-1px) rotate(45deg);
 }
 
+.chat_description__status-indicator {
+  background: var(--main-color);
+  border-radius: 50%;
+  width: 8px;
+  height: 8px;
+}
+
+.chat_description__status-indicator-offline {
+  background: var(--faint-text-color);
+  border-radius: 50%;
+  width: 8px;
+  height: 8px;
+}
+
 .chat_list_element {
   display: flex;
   padding: 8px;
@@ -786,7 +800,9 @@ a:hover {
   display: grid;
   grid-template-rows: 1fr;
   overflow: visible;
-  transition: grid-template-rows 0.25s ease, opacity 0.2s ease;
+  transition:
+    grid-template-rows 0.25s ease,
+    opacity 0.2s ease;
 }
 
 .participants_list_shell > .participants_list {
@@ -999,7 +1015,6 @@ a:hover {
   .chat_list_element__last_message {
     max-width: 55vw;
   }
-
 }
 
 @media (max-height: 560px) {

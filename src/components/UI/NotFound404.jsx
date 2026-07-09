@@ -3,7 +3,7 @@ import React, { useState } from "react";
 const NotFound404 = function () {
   return (
     <div className="not_found">
-      <h3>Not Found 404</h3>
+      <h3>Не найдено 404</h3>
     </div>
   );
 };

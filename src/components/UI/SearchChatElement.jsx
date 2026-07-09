@@ -34,7 +34,7 @@ const SearchChatElement = function ({ chat, requiresJoin = false }) {
       <div className={classes.search_result_info}>
         <p className={classes.search_result_username}>{chat.name}</p>
         <p className={classes.search_participants_qty}>
-          Users: {chat.participants_qty}
+          Пользователей: {chat.participants_qty}
         </p>
       </div>
     </div>

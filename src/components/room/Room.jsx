@@ -27,7 +27,9 @@ const Room = function ({
   const [micMuted, setMicMuted] = useState(false);
   const [headphonesMuted, setHeadphonesMuted] = useState(false);
   const [participantVolumes, setParticipantVolumes] = useState({});
-  const [mutedParticipantIds, setMutedParticipantIds] = useState(() => new Set());
+  const [mutedParticipantIds, setMutedParticipantIds] = useState(
+    () => new Set(),
+  );
   const [contextMenu, setContextMenu] = useState(null);
   const [isRoomHovered, setIsRoomHovered] = useState(false);
   const micMutedBeforeHeadphonesRef = useRef(false);
@@ -36,7 +38,8 @@ const Room = function ({
   const selectedParticipant = useMemo(
     () =>
       participants.find(
-        (participant) => String(participant.id) === String(contextMenu?.participantId),
+        (participant) =>
+          String(participant.id) === String(contextMenu?.participantId),
       ),
     [contextMenu?.participantId, participants],
   );

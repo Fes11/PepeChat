@@ -75,7 +75,8 @@ const Search = function (props) {
   const hasLocalResults = results.my_chats.length > 0;
   const hasGlobalResults = results.global.length > 0;
   const hasResults = hasLocalResults || hasGlobalResults;
-  const showResults = isFocused && Boolean(query.trim()) && (hasResults || hasSearched);
+  const showResults =
+    isFocused && Boolean(query.trim()) && (hasResults || hasSearched);
 
   return (
     <div className={classes.search_wrapper}>
@@ -99,6 +100,7 @@ const Search = function (props) {
           spellCheck={false}
           data-form-type="other"
           data-lpignore="true"
+          placeholder="Поиск..."
           readOnly={!isFocused}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -114,7 +116,7 @@ const Search = function (props) {
       {showResults && (
         <div className={classes.search_results}>
           {hasLocalResults && (
-            <p className={classes.search_result_text}>Local results</p>
+            <p className={classes.search_result_text}>Ваши чаты</p>
           )}
 
           {hasLocalResults &&
@@ -127,7 +129,7 @@ const Search = function (props) {
             )}
 
           {hasGlobalResults && (
-            <p className={classes.search_result_text}>Global results</p>
+            <p className={classes.search_result_text}>Все чаты</p>
           )}
 
           {hasGlobalResults &&
@@ -140,7 +142,7 @@ const Search = function (props) {
             )}
 
           {!hasResults && (
-            <p className={classes.search_result_text}>No results found</p>
+            <p className={classes.search_result_text}>Результаты не найдены</p>
           )}
         </div>
       )}

@@ -1,6 +1,6 @@
 .message {
   display: flex;
-  margin-bottom: 15px;
+  margin-bottom: 5px;
   gap: 5px;
   text-align: left;
   max-width: 800px;
@@ -40,7 +40,7 @@
 .other_message {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 15px;
+  margin-bottom: 5px;
   gap: 5px;
   min-width: 0;
 }

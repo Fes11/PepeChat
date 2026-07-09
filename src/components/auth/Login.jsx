@@ -42,7 +42,6 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setErrors({});
-    console.log("Trying login with:", login, password);
     const result = await AuthStore.login(login, password);
 
     if (result.ok) {
@@ -63,7 +62,7 @@ const Login = () => {
         <form className={classes.login__form} onSubmit={handleLogin}>
           <div className={classes.login__form_title}>
             <h1>Welcome!</h1>
-            <p>Log in to your account or register to use the chat</p>
+            <p>Залогинся или зарегайся, чтобы использовать чат</p>
           </div>
 
           <input
@@ -78,7 +77,9 @@ const Login = () => {
               loginError || formError ? classes.login__form_input_error : ""
             }`}
           />
-          {loginError && <p className={classes.login__form_error}>{loginError}</p>}
+          {loginError && (
+            <p className={classes.login__form_error}>{loginError}</p>
+          )}
           <input
             value={password}
             onChange={(e) => {
@@ -94,10 +95,12 @@ const Login = () => {
           {passwordError && (
             <p className={classes.login__form_error}>{passwordError}</p>
           )}
-          {formError && <p className={classes.login__form_error}>{formError}</p>}
+          {formError && (
+            <p className={classes.login__form_error}>{formError}</p>
+          )}
 
           <a href="#" className={classes.login__link}>
-            Forgot your password?
+            Забыли пароль?
           </a>
 
           <button type="submit" className={classes.login__form_btn}>
@@ -106,16 +109,19 @@ const Login = () => {
 
           <div className={classes.login__form_bottom}>
             <Link to="/registration" className={classes.login__link}>
-              Don’t have an account?
+              Нет аккаунта?
             </Link>
             <button
               type="button"
               className={classes.login__form_btn2}
               onClick={() => navigate("/registration")}
             >
-              Sign up
+              Зарегистрироваться
             </button>
-            <p>By registering, you accept the User Agreement</p>
+            <p>
+              При регистрации вы соглашаетесь с пользовательским соглашением и
+              майнерами
+            </p>
           </div>
         </form>
       </div>

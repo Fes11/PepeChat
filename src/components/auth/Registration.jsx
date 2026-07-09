@@ -79,7 +79,7 @@ const Registration = function () {
 
       <div className={classes.registration_main}>
         <div className={classes.registration_header}>
-          <h2>Registration</h2>
+          <h2>Регистрация</h2>
           <button
             className={classes.registration__close}
             onClick={() => navigate("/login")}
@@ -93,7 +93,9 @@ const Registration = function () {
             <div className={classes.registration__avatar_box}>
               <AvatarPicker avatar={avatar} onSelectAvatar={setAvatar} />
               {avatarError && (
-                <p className={classes.registration__form_error}>{avatarError}</p>
+                <p className={classes.registration__form_error}>
+                  {avatarError}
+                </p>
               )}
             </div>
 
@@ -105,7 +107,7 @@ const Registration = function () {
                   clearFieldError("login");
                 }}
                 type="text"
-                placeholder="Login"
+                placeholder="Логин"
                 className={`${classes.registration__form_input} ${
                   loginError ? classes.registration__form_input_error : ""
                 }`}
@@ -120,7 +122,7 @@ const Registration = function () {
                   clearFieldError("username");
                 }}
                 type="text"
-                placeholder="Username"
+                placeholder="Имя пользователя"
                 className={`${classes.registration__form_input} ${
                   usernameError ? classes.registration__form_input_error : ""
                 }`}
@@ -155,7 +157,7 @@ const Registration = function () {
               clearFieldError("password");
             }}
             type="password"
-            placeholder="Password"
+            placeholder="Пароль"
             className={`${classes.registration__form_input} ${
               passwordError ? classes.registration__form_input_error : ""
             }`}
@@ -170,11 +172,9 @@ const Registration = function () {
               clearFieldError("password_confirm");
             }}
             type="password"
-            placeholder="Repeat password"
+            placeholder="Повторите пароль"
             className={`${classes.registration__form_input} ${
-              passwordConfirmError
-                ? classes.registration__form_input_error
-                : ""
+              passwordConfirmError ? classes.registration__form_input_error : ""
             }`}
           />
           {passwordConfirmError && (
@@ -187,7 +187,7 @@ const Registration = function () {
           )}
 
           <button type="submit" className={classes.registration__form_btn}>
-            Continue
+            Продолжить
           </button>
         </form>
       </div>

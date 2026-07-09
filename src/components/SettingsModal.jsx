@@ -6,7 +6,10 @@ import UserServices from "../services/UserService.jsx";
 import { Context } from "../main";
 import { observer } from "mobx-react-lite";
 import { useNavigate } from "react-router-dom";
-import { notifyError, notifySuccess } from "../notifications/notificationService";
+import {
+  notifyError,
+  notifySuccess,
+} from "../notifications/notificationService";
 import {
   ACCENT_COLORS,
   DEFAULT_MAIN_COLOR,
@@ -84,7 +87,7 @@ const SettingsModal = function ({ onClose }) {
 
   const getProfileErrorMessage = (error) => {
     const data = error.response?.data;
-    if (!data) return error.message || "Could not save profile";
+    if (!data) return error.message || "Не удалось сохранить профиль";
     if (typeof data === "string") return data;
     if (data.detail) return data.detail;
 
@@ -97,7 +100,7 @@ const SettingsModal = function ({ onClose }) {
       return `${firstField}: ${firstValue}`;
     }
 
-    return "Could not save profile";
+    return "Не удалось сохранить профиль";
   };
 
   const saveProfile = async (event) => {
@@ -105,7 +108,7 @@ const SettingsModal = function ({ onClose }) {
     setProfileError("");
 
     if ((password || passwordConfirm) && password !== passwordConfirm) {
-      setProfileError("Passwords do not match");
+      setProfileError("Пароли не совпадают");
       return;
     }
 
@@ -136,7 +139,7 @@ const SettingsModal = function ({ onClose }) {
     }
 
     if ([...formData.keys()].length === 0) {
-      notifySuccess("Profile is already up to date");
+      notifySuccess("Профиль обновлен");
       return;
     }
 
@@ -150,7 +153,7 @@ const SettingsModal = function ({ onClose }) {
       setAvatar(null);
       setPassword("");
       setPasswordConfirm("");
-      notifySuccess("Profile updated");
+      notifySuccess("Профиль обновлен");
     } catch (error) {
       const message = getProfileErrorMessage(error);
       setProfileError(message);
@@ -211,13 +214,16 @@ const SettingsModal = function ({ onClose }) {
     MediaStore.noiseGateThreshold,
   ]);
 
-  useEffect(() => () => {
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current);
-    }
-    mediaService.stopTestMicrophone(testStreamRef.current);
-    audioContextRef.current?.close();
-  }, []);
+  useEffect(
+    () => () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+      mediaService.stopTestMicrophone(testStreamRef.current);
+      audioContextRef.current?.close();
+    },
+    [],
+  );
 
   const startMicAnalyzer = async (stream) => {
     const audioContext = new AudioContext({
@@ -262,7 +268,9 @@ const SettingsModal = function ({ onClose }) {
     update();
   };
 
-  const startMicrophoneTest = async (deviceId = MediaStore.selectedMicrophone) => {
+  const startMicrophoneTest = async (
+    deviceId = MediaStore.selectedMicrophone,
+  ) => {
     try {
       const stream = await mediaService.testMicrophone(deviceId, {
         volume: MediaStore.volume,
@@ -274,7 +282,7 @@ const SettingsModal = function ({ onClose }) {
     } catch (error) {
       mediaService.stopTestMicrophone(testStreamRef.current);
       testStreamRef.current = null;
-      console.error("Failed to start microphone test:", error);
+      console.error("Ошибка запуска микрофона:", error);
     }
   };
 
@@ -328,7 +336,7 @@ const SettingsModal = function ({ onClose }) {
         {activeTab === "Profile" && (
           <div className={classes.tabcontent}>
             <div className={classes.tabcontent_header}>
-              <h3>Profile</h3>
+              <h3>Профиль</h3>
             </div>
 
             <form className={classes.tabcontent_body} onSubmit={saveProfile}>
@@ -368,10 +376,10 @@ const SettingsModal = function ({ onClose }) {
                     />
                   </label>
                   <label className={classes.control_label}>
-                    Description
+                    Описание
                     <input
                       type="text"
-                      placeholder="About you"
+                      placeholder="О вас"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       className={classes.settings_input}
@@ -382,25 +390,25 @@ const SettingsModal = function ({ onClose }) {
 
               <div className={classes.settings_section}>
                 <div className={classes.section_header}>
-                  <span>Security</span>
+                  <span>Безопасность</span>
                 </div>
 
                 <div className={classes.profile_fields}>
                   <label className={classes.control_label}>
-                    New password
+                    Новый пароль
                     <input
                       type="password"
-                      placeholder="New password"
+                      placeholder="Новый пароль"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className={classes.settings_input}
                     />
                   </label>
                   <label className={classes.control_label}>
-                    Repeat password
+                    Повторите пароль
                     <input
                       type="password"
-                      placeholder="Repeat password"
+                      placeholder="Повторите пароль"
                       value={passwordConfirm}
                       onChange={(e) => setPasswordConfirm(e.target.value)}
                       className={classes.settings_input}
@@ -419,14 +427,14 @@ const SettingsModal = function ({ onClose }) {
                   className={classes.save_btn}
                   disabled={isSavingProfile}
                 >
-                  {isSavingProfile ? "Saving..." : "Save changes"}
+                  {isSavingProfile ? "Сохранение..." : "Сохранить"}
                 </button>
                 <button
                   type="button"
                   onClick={handleLogout}
                   className={classes.logout}
                 >
-                  Logout
+                  Выйти
                 </button>
               </div>
             </form>
@@ -436,17 +444,16 @@ const SettingsModal = function ({ onClose }) {
         {activeTab === "App" && (
           <div className={classes.tabcontent}>
             <div className={classes.tabcontent_header}>
-              <h3>App</h3>
+              <h3>Приложение</h3>
             </div>
 
             <div className={classes.tabcontent_body}>
-              <p className={classes.settings_label}>Appearance</p>
+              <p className={classes.settings_label}>Внешний вид</p>
 
               <div className={classes.app_settings}>
                 <label className={classes.setting_row}>
                   <span>
-                    <strong>Light theme</strong>
-                    <small>Use bright surfaces and dark text</small>
+                    <strong>Светлая тема</strong>
                   </span>
 
                   <input
@@ -461,8 +468,10 @@ const SettingsModal = function ({ onClose }) {
 
                 <div className={classes.setting_row}>
                   <span>
-                    <strong>Main color</strong>
-                    <small>Accent color for buttons and active states</small>
+                    <strong>Основной цвет</strong>
+                    <small>
+                      Акцентный цвет для кнопок и активных состояний
+                    </small>
                   </span>
 
                   <input
@@ -493,14 +502,14 @@ const SettingsModal = function ({ onClose }) {
                     className={classes.reset_color}
                     onClick={() => setMainColor(DEFAULT_MAIN_COLOR)}
                   >
-                    Reset
+                    Сбросить
                   </button>
                 </div>
 
                 <div className={classes.setting_row}>
                   <span>
-                    <strong>Interface scale</strong>
-                    <small>Adjust the app size on this screen</small>
+                    <strong>Масштаб интерфейса</strong>
+                    <small>Настройте размер приложения на этом экране</small>
                   </span>
 
                   <div className={classes.scale_control}>
@@ -515,7 +524,7 @@ const SettingsModal = function ({ onClose }) {
                     />
                     <strong>{Math.round(uiScale * 100)}%</strong>
                     <button type="button" onClick={() => setUiScale(null)}>
-                      Reset
+                      Сбросить
                     </button>
                   </div>
                 </div>
@@ -527,23 +536,25 @@ const SettingsModal = function ({ onClose }) {
         {activeTab === "Device" && (
           <div className={classes.tabcontent}>
             <div className={classes.tabcontent_header}>
-              <h3>Devices</h3>
+              <h3>Устройства</h3>
             </div>
 
             <div className={classes.tabcontent_body}>
               <div className={classes.settings_section}>
                 <div className={classes.section_header}>
-                  <span>Input</span>
+                  <span>Ввод</span>
                   <button
                     onClick={toggleMicrophoneTest}
                     className={classes.devices_test}
                   >
-                    {isTestingMicrophone ? "Stop test" : "Test microphone"}
+                    {isTestingMicrophone
+                      ? "Остановить тест"
+                      : "Тестировать микрофон"}
                   </button>
                 </div>
 
                 <label className={classes.control_label}>
-                  Microphone
+                  Микрофон
                   <select
                     value={MediaStore.selectedMicrophone || ""}
                     onChange={(e) => changeMicrophone(e.target.value)}
@@ -551,14 +562,14 @@ const SettingsModal = function ({ onClose }) {
                   >
                     {MediaStore.microphones.map((mic) => (
                       <option key={mic.deviceId} value={mic.deviceId}>
-                        {mic.label || "Microphone"}
+                        {mic.label || "Микрофон"}
                       </option>
                     ))}
                   </select>
                 </label>
 
                 <label className={classes.control_label}>
-                  Output
+                  Вывод
                   <select
                     value={MediaStore.selectedDisplay || ""}
                     onChange={(e) => changeSpeaker(e.target.value)}
@@ -574,7 +585,7 @@ const SettingsModal = function ({ onClose }) {
                 </label>
 
                 <label className={classes.slider_row}>
-                  <span>Input gain</span>
+                  <span>Уровень громкости</span>
                   <input
                     type="range"
                     min="0"
@@ -601,7 +612,7 @@ const SettingsModal = function ({ onClose }) {
 
               <div className={classes.settings_section}>
                 <div className={classes.section_header}>
-                  <span>Noise control</span>
+                  <span>Шумоподавление</span>
                 </div>
 
                 <div className={classes.segmented_control}>
@@ -613,7 +624,9 @@ const SettingsModal = function ({ onClose }) {
                           ? classes.active_segment
                           : ""
                       }
-                      onClick={() => MediaStore.changeNoiseSuppressionMode(mode)}
+                      onClick={() =>
+                        MediaStore.changeNoiseSuppressionMode(mode)
+                      }
                     >
                       {mode}
                     </button>
@@ -621,7 +634,7 @@ const SettingsModal = function ({ onClose }) {
                 </div>
 
                 <label className={classes.switch_row}>
-                  <span>Noise gate</span>
+                  <span>Шлюз шума</span>
                   <input
                     type="checkbox"
                     checked={MediaStore.noiseGateEnabled}
@@ -632,7 +645,7 @@ const SettingsModal = function ({ onClose }) {
                 </label>
 
                 <label className={classes.slider_row}>
-                  <span>Sensitivity</span>
+                  <span>Чувствительность</span>
                   <input
                     type="range"
                     min="0.005"
@@ -652,7 +665,7 @@ const SettingsModal = function ({ onClose }) {
                 </label>
 
                 <label className={classes.switch_row}>
-                  <span>Auto gain</span>
+                  <span>Auto усилитель</span>
                   <input
                     type="checkbox"
                     checked={MediaStore.autoGainControl}
