@@ -8,8 +8,16 @@ const getDateLabel = (date) => {
   return format(date, "d MMMM yyyy", { locale: ru });
 };
 
-const DateDivider = ({ date }) => {
-  return <div className={classes.date_divider}>{getDateLabel(date)}</div>;
+const DateDivider = ({ date, isFirst = false }) => {
+  return (
+    <div
+      className={`${classes.date_divider} ${
+        isFirst ? classes.date_divider_first : ""
+      }`}
+    >
+      {getDateLabel(date)}
+    </div>
+  );
 };
 
 export default DateDivider;

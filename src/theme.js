@@ -11,7 +11,7 @@ export const MIN_UI_SCALE = 1;
 export const MAX_UI_SCALE = 1.5;
 export const ACCENT_COLORS = [
   "#7b61ff",
-  "#2f80ed",
+  "#275EE7",
   "#00a878",
   "#f59e0b",
   "#ef4444",
@@ -132,7 +132,7 @@ export const applyThemeSettings = ({ theme, mainColor, uiScale }) => {
           "#ffffff",
           0.9,
         )})`
-      : `linear-gradient(to right, rgba(58, 58, 64, 0.35), ${withAlpha(
+      : `linear-gradient(to right, rgba(32, 32, 32, 0.9), ${withAlpha(
           nextMainColor,
           0.14,
         )})`;
@@ -148,10 +148,7 @@ export const applyThemeSettings = ({ theme, mainColor, uiScale }) => {
     "--main-hover-color",
     mixColors(nextMainColor, hoverMixColor, 0.16),
   );
-  root.style.setProperty(
-    "--main-contrast-color",
-    contrastColor,
-  );
+  root.style.setProperty("--main-contrast-color", contrastColor);
   root.style.setProperty("--main-soft-color", withAlpha(nextMainColor, 0.28));
   root.style.setProperty("--main-faint-color", withAlpha(nextMainColor, 0.16));
   root.style.setProperty(

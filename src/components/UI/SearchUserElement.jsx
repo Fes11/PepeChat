@@ -2,15 +2,24 @@ import React, { useContext } from "react";
 import UserAvatar from "./UserAvatar.jsx";
 import classes from "./Input/Search.module.css";
 import { Context } from "../../main.jsx";
+import { useNavigate } from "react-router-dom";
 
 const SearchUserElement = function ({ user }) {
   const { ChatStore } = useContext(Context);
+  const navigate = useNavigate();
+
+  const handleOpenPrivateChat = async () => {
+    const chat = await ChatStore.openPrivateChat(user);
+    if (chat?.id) {
+      navigate(`/chat/${chat.id}`);
+    }
+  };
 
   return (
     <div
       key={user.id}
       className={classes.search_result_item}
-      onClick={() => ChatStore.openPrivateChat(user)}
+      onClick={handleOpenPrivateChat}
     >
       <UserAvatar
         src={user.avatar}

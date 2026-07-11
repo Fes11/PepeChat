@@ -40,6 +40,10 @@
   color: var(--muted-text-color);
   font-size: 13px;
   font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .close:hover {
@@ -158,6 +162,10 @@
   background: var(--button-soft-bg-color);
   font-size: 13px;
   font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .partchipants__list :global(.participant__remove:hover) {

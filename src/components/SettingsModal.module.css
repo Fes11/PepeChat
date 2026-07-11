@@ -40,7 +40,7 @@
 }
 
 .tablinks:hover {
-  background: var(--hover-bg-color);
+  background: #464646;
   color: var(--text-color);
 }
 
@@ -83,6 +83,9 @@
   top: 12px;
   right: 12px;
   padding: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .close img {
@@ -110,7 +113,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 16px;
+  padding: 16px 26px;
   box-sizing: border-box;
 }
 

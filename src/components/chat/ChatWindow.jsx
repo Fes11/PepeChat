@@ -21,6 +21,7 @@ import DateDivider from "../UI/DateDivider.jsx";
 import { observer } from "mobx-react-lite";
 import { notifyError } from "../../notifications/notificationService.js";
 import emojis from "../../utils/emojis.json";
+import { resolveMediaUrl } from "../../utils/mediaUrl";
 
 const EMOJI_LIST = emojis;
 const EMOJI_INITIAL_COUNT = 120;
@@ -112,10 +113,18 @@ const ChatWindow = observer(
     const inputRef = useRef(null);
     const emojiPickerRef = useRef(null);
     const activeChatId = useRef(chat.id);
+    const isLoadingOlderMessages = useRef(false);
+    const previousScrollHeight = useRef(0);
+    const shouldStickToBottom = useRef(true);
     const [loadMessage, setLoadMessage] = useState(false);
     const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
     const [emojiTab, setEmojiTab] = useState("emoji");
     const [participants, setParticipants] = useState([]);
+    const voiceParticipants = ChatStore.getVoiceParticipants(chat.id);
+    const visibleVoiceAvatars =
+      voiceParticipants.length > 3
+        ? voiceParticipants.slice(0, 2)
+        : voiceParticipants.slice(0, 3);
 
     const getLastOnlineStatus = (last_online) => {
       if (!last_online) return null;
@@ -146,6 +155,9 @@ const ChatWindow = observer(
       setLoadMessage(false);
       setIsEmojiPickerOpen(false);
       setEmojiTab("emoji");
+      isLoadingOlderMessages.current = false;
+      previousScrollHeight.current = 0;
+      shouldStickToBottom.current = true;
     }, [chat.id]);
 
     useEffect(() => {
@@ -217,52 +229,75 @@ const ChatWindow = observer(
       loadMessages();
     }, [chat.id]);
 
-    useLayoutEffect(() => {
-      if (!listRef.current) return;
-
-      if (isFirstLoad.current) {
-        listRef.current.scrollTop = listRef.current.scrollHeight;
-        isFirstLoad.current = false;
-      }
-    }, [messages]);
-
-    const loadMoreMessages = async () => {
+    const loadMoreMessages = useCallback(async () => {
       if (!nextCursor || isLoadingMore) return;
 
       const container = listRef.current;
+      if (!container) return;
+
       const prevScrollHeight = container.scrollHeight;
 
+      isLoadingOlderMessages.current = true;
+      previousScrollHeight.current = prevScrollHeight;
       setIsLoadingMore(true);
 
       try {
         const res = await MessageService.getMessagesByUrl(nextCursor);
 
+        if (activeChatId.current !== chat.id) return;
+
         ChatStore.mergeMessages(chat.id, res.data.results);
 
         setNextCursor(res.data.next);
         setHasMore(Boolean(res.data.next));
-
-        requestAnimationFrame(() => {
-          const newScrollHeight = container.scrollHeight;
-          container.scrollTop = newScrollHeight - prevScrollHeight;
-        });
       } catch (e) {
         console.error(e);
       } finally {
         setIsLoadingMore(false);
       }
-    };
+    }, [ChatStore, chat.id, isLoadingMore, nextCursor]);
 
     useLayoutEffect(() => {
-      if (!listRef.current) return;
-      listRef.current.scrollTop = listRef.current.scrollHeight;
+      const container = listRef.current;
+      if (!container) return;
+
+      if (isFirstLoad.current) {
+        container.scrollTop = container.scrollHeight;
+        isFirstLoad.current = false;
+        shouldStickToBottom.current = true;
+        return;
+      }
+
+      if (isLoadingOlderMessages.current) {
+        container.scrollTop =
+          container.scrollHeight - previousScrollHeight.current;
+        isLoadingOlderMessages.current = false;
+        return;
+      }
+
+      if (shouldStickToBottom.current) {
+        container.scrollTop = container.scrollHeight;
+      }
     }, [messages.length]);
+
+    useLayoutEffect(() => {
+      const container = listRef.current;
+      if (!container || isLoading || isLoadingMore || !hasMore) return;
+
+      if (container.scrollHeight <= container.clientHeight + 1) {
+        loadMoreMessages();
+      }
+    }, [hasMore, isLoading, isLoadingMore, loadMoreMessages, messages.length]);
 
     useEffect(() => {
       const container = listRef.current;
       if (!container) return;
 
       const onScroll = () => {
+        shouldStickToBottom.current =
+          container.scrollHeight - container.scrollTop - container.clientHeight <
+          24;
+
         if (container.scrollTop <= 0 && hasMore) {
           loadMoreMessages();
         }
@@ -270,7 +305,7 @@ const ChatWindow = observer(
 
       container.addEventListener("scroll", onScroll);
       return () => container.removeEventListener("scroll", onScroll);
-    }, [hasMore, nextCursor]);
+    }, [hasMore, loadMoreMessages]);
 
     const sendMessage = async (e) => {
       setLoadMessage(true);
@@ -356,16 +391,45 @@ const ChatWindow = observer(
               </div>
             </div>
 
-            <img
-              src="/voice_chat.png"
-              className={`voice_chat_btn ${
+            <button
+              type="button"
+              className={`chat_list_element__voice chat_header_voice ${
                 String(activeVoiceRoomChatId) === String(chat.id)
-                  ? "voice_chat_btn--active"
+                  ? "chat_header_voice--active"
                   : ""
               }`}
               onClick={openVoiceRoom}
-              alt="Open voice room"
-            />
+              title={`В голосовой комнате: ${voiceParticipants.length}`}
+              aria-label="Открыть голосовую комнату"
+            >
+              {voiceParticipants.length > 0 && (
+                <div className="chat_list_element__voice_avatars">
+                  {visibleVoiceAvatars.map((participant) => (
+                    <img
+                      key={participant.id}
+                      src={
+                        resolveMediaUrl(participant.user?.avatar) ||
+                        "/default.jpg"
+                      }
+                      alt=""
+                      className="chat_list_element__voice_avatar"
+                    />
+                  ))}
+
+                  {voiceParticipants.length > 3 && (
+                    <span className="chat_list_element__voice_count">
+                      {voiceParticipants.length}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              <img
+                src="/voice.svg"
+                alt=""
+                className="chat_list_element__voice_icon"
+              />
+            </button>
           </div>
           <div className="chat__message_list" ref={listRef}>
             <div className="spacer" />
@@ -406,7 +470,9 @@ const ChatWindow = observer(
 
                 return (
                   <React.Fragment key={msg.id}>
-                    {showDate && <DateDivider date={currentDate} />}
+                    {showDate && (
+                      <DateDivider date={currentDate} isFirst={index === 0} />
+                    )}
                     <Message
                       message={msg}
                       load={loadMessage}

@@ -78,6 +78,7 @@ const RoomUser = function ({
     >
       <UserAvatar
         src={participant.user.avatar}
+        wrapperClassName={cls.room_user_avatar_frame}
         className={cls.room_user_avatar}
       />
       <div

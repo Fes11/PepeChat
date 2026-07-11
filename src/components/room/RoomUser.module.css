@@ -1,24 +1,35 @@
 .room_user {
-  width: 90%;
-  height: 70%;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  align-self: start;
+  min-width: 0;
   background: var(--surface-color);
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid transparent;
+  border: 2px solid var(--surface-color);
   border-radius: 15px;
   box-sizing: border-box;
   position: relative;
+  overflow: hidden;
   transition:
     border-color 120ms ease,
     box-shadow 120ms ease,
     background-color 120ms ease;
 }
 
+.room_user .room_user_avatar_frame {
+  width: clamp(54px, 14vmin, 104px);
+  height: clamp(54px, 14vmin, 104px);
+  flex: 0 0 auto;
+}
+
 .room_user_avatar {
   cursor: default;
-  width: 50px !important;
-  height: 50px !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
 }
 
 .room_user_name_row {
@@ -31,7 +42,7 @@
   padding: 4px 10px;
   border-radius: 10px;
   background: var(--button-soft-bg-color);
-  max-width: calc(100% - 20px);
+  max-width: calc(100% - 64px);
   min-width: 0;
   opacity: 0;
   pointer-events: none;
@@ -64,14 +75,14 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 5px;
+  padding: 8px;
   border-radius: 8px;
   background: var(--button-soft-bg-color);
 }
 
 .room_user_status img {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   opacity: 0.72;
 }
 
@@ -81,15 +92,26 @@
 }
 
 .speaking {
-  border-color: var(--main-color);
   box-shadow:
     0 0 0 1px var(--main-color),
     0 0 14px var(--main-color);
 }
 
 @media (max-width: 520px) {
-  .room_user {
-    width: min(100%, 220px);
-    height: 120px;
+  .room_user .room_user_avatar_frame {
+    width: clamp(46px, 18vmin, 74px);
+    height: clamp(46px, 18vmin, 74px);
+  }
+
+  .room_user_name_row {
+    bottom: 8px;
+    left: 8px;
+    max-width: calc(100% - 56px);
+    padding: 4px 8px;
+  }
+
+  .room_user_status {
+    right: 8px;
+    bottom: 8px;
   }
 }

@@ -1,9 +1,3 @@
-.login__link {
-  font-size: 13px;
-  text-decoration: none;
-  color: var(--link-color);
-}
-
 .login {
   max-width: 950px;
   max-height: 525px;

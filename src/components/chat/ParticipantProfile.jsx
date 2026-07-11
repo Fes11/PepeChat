@@ -1,10 +1,21 @@
 import React, { useContext, forwardRef } from "react";
+import { useNavigate } from "react-router-dom";
 import UserAvatar from "../UI/UserAvatar.jsx";
 import { Context } from "../../main";
 
 const ParticipantProfile = forwardRef(({ user, style }, ref) => {
   const { AuthStore } = useContext(Context);
   const { ChatStore } = useContext(Context);
+  const navigate = useNavigate();
+
+  const handleOpenPrivateChat = async (event) => {
+    event.stopPropagation();
+
+    const chat = await ChatStore.openPrivateChat(user);
+    if (chat?.id) {
+      navigate(`/chat/${chat.id}`);
+    }
+  };
 
   return (
     <div className="participant_profile" ref={ref} style={style}>
@@ -28,7 +39,7 @@ const ParticipantProfile = forwardRef(({ user, style }, ref) => {
       {AuthStore.user.id !== user.id && (
         <button
           className="participant_profile_send_mes"
-          onClick={() => ChatStore.openPrivateChat(user)}
+          onClick={handleOpenPrivateChat}
         >
           Написать
         </button>

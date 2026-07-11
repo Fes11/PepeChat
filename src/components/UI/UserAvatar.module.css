@@ -1,21 +1,24 @@
 .user_avatar {
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   cursor: pointer;
   position: relative;
   background: #ffffff10;
   border-radius: 50%;
+  width: 30px;
+  height: 30px;
 }
 
 .user_avatar img {
-  width: 35px;
-  height: 35px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
 }
 
-.status, .status_offline {
+.status,
+.status_offline {
   position: absolute;
-  top: 25px;
+  top: 22px;
   right: -2px;
   width: 12px;
   height: 12px;

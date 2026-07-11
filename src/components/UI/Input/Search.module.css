@@ -4,7 +4,7 @@
 }
 
 .search {
-  margin-top: 8px;
+  margin-top: 12px;
   padding: 6px 12px;
   margin-bottom: 8px;
   margin-left: 5px;
@@ -18,19 +18,65 @@
 
 .search_results {
   position: absolute;
-  top: 40px;
-  left: 6px;
-  width: 95%;
-  background: var(--modal-bg-color);
-  border: 1px solid var(--input-border-color);
-  border-radius: 6px;
-  max-height: 250px;
+  top: calc(100% + 4px);
+  left: 5px;
+  width: calc(100% - 10px);
+  --glass-edge: color-mix(in srgb, var(--text-color) 14%, transparent);
+  --glass-shine: color-mix(in srgb, var(--text-color) 5%, transparent);
+  --glass-panel: color-mix(
+    in srgb,
+    var(--box-bg-color) 90%,
+    rgba(0, 0, 0, 0.48)
+  );
+  --glass-hover: color-mix(in srgb, var(--main-color) 10%, transparent);
+  background:
+    linear-gradient(180deg, var(--glass-shine), transparent 42%),
+    var(--glass-panel);
+  border: 1px solid var(--glass-edge);
+  border-radius: 12px;
+  max-height: min(320px, calc(100vh - 120px));
+  padding: 6px;
+  color: var(--text-color);
+  box-shadow:
+    0 16px 34px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 16%, transparent);
+  backdrop-filter: blur(12px) saturate(130%);
+  -webkit-backdrop-filter: blur(12px) saturate(130%);
   overflow-x: hidden;
+  overflow-y: auto;
   z-index: 200;
 }
 
+.search_results::before {
+  content: "";
+  position: sticky;
+  top: -6px;
+  display: block;
+  height: 1px;
+  margin: -6px -6px 5px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, #ffffff 44%, transparent),
+    transparent
+  );
+  pointer-events: none;
+}
+
+.search_results::-webkit-scrollbar {
+  width: 6px;
+}
+
+.search_results::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.search_results::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text-color) 22%, transparent);
+  border-radius: 999px;
+}
+
 .serach_local {
-  border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   flex-direction: column;
@@ -38,39 +84,80 @@
 
 .search_result_text {
   text-align: left;
-  font-size: 12px;
-  color: var(--muted-text-color);
-  padding: 10px 0px 10px 10px;
-  border-top: 2px solid var(--border-color);
+  font-size: 11px;
+  letter-spacing: 0;
+  color: color-mix(in srgb, var(--text-color) 62%, transparent);
+  padding: 8px 8px 6px;
+  margin: 2px 0;
   width: 100%;
+  box-sizing: border-box;
+  font-weight: 700;
 }
 
 .search_result_item {
   position: relative;
-  padding: 8px 5px;
+  min-height: 48px;
+  padding: 8px;
   display: flex;
   width: 100%;
-  gap: 8px;
+  gap: 10px;
   text-align: left;
-  align-items: flex-start;
+  align-items: center;
   cursor: pointer;
   overflow: hidden;
   box-sizing: border-box;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  color: var(--text-color);
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.search_result_item::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, #ffffff 8%, transparent),
+    transparent 45%
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease;
 }
 
 .search_result_item:hover {
-  background: var(--hover-bg-color);
+  background:
+    linear-gradient(120deg, var(--glass-hover), transparent 74%),
+    color-mix(in srgb, var(--hover-bg-color) 56%, rgba(0, 0, 0, 0.12));
+  border-color: color-mix(in srgb, var(--main-color) 22%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #ffffff 12%, transparent),
+    0 8px 18px rgba(0, 0, 0, 0.16);
+  transform: translateY(-1px);
+}
+
+.search_result_item:hover::before {
+  opacity: 1;
 }
 
 .search_participants_qty {
   font-size: 12px;
-  color: var(--muted-text-color);
+  color: color-mix(in srgb, var(--muted-text-color) 88%, var(--text-color));
+}
+
+.search_result_info {
+  min-width: 0;
 }
 
 .search_result_username {
   font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 5px;
+  font-weight: 700;
+  margin-bottom: 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -80,7 +167,7 @@
 .search_result_login {
   font-size: 12px;
   font-weight: 300;
-  color: var(--muted-text-color);
+  color: color-mix(in srgb, var(--muted-text-color) 88%, var(--text-color));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

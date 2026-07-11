@@ -5,24 +5,21 @@
   text-align: left;
   max-width: 800px;
   min-width: 0;
-}
-
-.last_message {
-  margin-bottom: 60px;
+  padding-right: 40px;
+  align-items: flex-end;
 }
 
 .message__bubble {
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 500;
   background: var(--main-color);
   color: var(--main-contrast-color);
-  padding: 0px 10px;
   border-radius: 10px 10px 10px 0px;
   display: flex;
   align-items: center;
   position: relative;
-  padding-right: 50px;
-  max-width: min(800px, 82vw);
+  padding: 8px 55px 8px 10px;
+  max-width: min(600px, 70vw);
   min-width: 0;
   overflow-wrap: anywhere;
   line-height: 1.35;
@@ -44,26 +41,48 @@
 .other_message {
   display: flex;
   justify-content: flex-end;
+  flex-direction: row;
   margin-bottom: 5px;
   gap: 5px;
   min-width: 0;
+  align-items: flex-end;
+  padding-left: 40px;
 }
 
 .other_message__bubble {
   position: relative;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 500;
   background: var(--message-other-bg-color);
   padding: 0px 10px;
   border-radius: 10px 10px 0px 10px;
   display: flex;
   align-items: center;
-  padding-right: 50px;
+  padding: 8px 55px 8px 10px;
   text-align: left;
-  max-width: min(800px, 82vw);
+  max-width: min(600px, 70vw);
   min-width: 0;
   overflow-wrap: anywhere;
   line-height: 1.35;
+}
+
+.last_message {
+  margin-bottom: 60px;
+}
+
+@container (min-width: 901px) {
+  .message {
+    padding-right: 0px;
+  }
+
+  .other_message {
+    flex-direction: row-reverse;
+    padding-left: 0px;
+  }
+
+  .other_message__bubble {
+    border-radius: 10px 10px 10px 0px;
+  }
 }
 
 @media (max-width: 760px) {

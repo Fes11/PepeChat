@@ -7,14 +7,27 @@ import { observer } from "mobx-react-lite";
 import { useNavigate } from "react-router-dom";
 import { resolveMediaUrl } from "../../utils/mediaUrl";
 
+const getUserDisplayName = (user) =>
+  user?.username || user?.login || user?.name || "Пользователь";
+
 const ChatListElement = observer(({ chat, isSelected, isLast }) => {
-  const { ChatStore } = useContext(Context);
+  const { AuthStore, ChatStore } = useContext(Context);
   const navigate = useNavigate();
   const lastMessage = ChatStore.getLastMessage(chat.id);
+  const chatLastMessage = lastMessage || chat.last_message;
   const last_message_time =
-    lastMessage?.created_at || chat.last_message?.created_at;
-  const last_message_text =
-    lastMessage?.text || chat.last_message?.text || "Сообщений пока нет";
+    chatLastMessage?.created_at;
+  const lastMessageAuthor = chatLastMessage?.author?.user;
+  const isOwnLastMessage =
+    lastMessageAuthor?.id != null
+    && String(lastMessageAuthor.id) === String(AuthStore?.user?.id);
+  const lastMessagePrefix = isOwnLastMessage
+    ? "Вы"
+    : getUserDisplayName(lastMessageAuthor);
+  const lastMessageText = chatLastMessage?.text;
+  const last_message_text = lastMessageText
+    ? `${lastMessagePrefix}: ${lastMessageText}`
+    : "Сообщений пока нет";
   const voiceParticipants = ChatStore.getVoiceParticipants(chat.id);
   const hasVoiceParticipants = voiceParticipants.length > 0;
   const visibleVoiceAvatars =

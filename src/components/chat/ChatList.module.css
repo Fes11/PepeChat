@@ -10,6 +10,7 @@
   gap: 8px;
   position: relative;
   overflow: hidden;
+  border-radius: var(--main-border-radius);
 }
 
 .chat_list__content {
@@ -28,6 +29,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 5px;
   padding: 8px;
   border-radius: 8px;
   border: 1px solid var(--shadow-border-color);
@@ -46,7 +48,8 @@
 }
 
 .chat_list__btn img {
-  margin-right: 5px;
+  width: 14px;
+  height: 14px;
 }
 
 .chat_list__btn:hover {

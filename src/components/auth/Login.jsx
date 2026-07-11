@@ -99,18 +99,11 @@ const Login = () => {
             <p className={classes.login__form_error}>{formError}</p>
           )}
 
-          <a href="#" className={classes.login__link}>
-            Забыли пароль?
-          </a>
-
           <button type="submit" className={classes.login__form_btn}>
             Continue
           </button>
 
           <div className={classes.login__form_bottom}>
-            <Link to="/registration" className={classes.login__link}>
-              Нет аккаунта?
-            </Link>
             <button
               type="button"
               className={classes.login__form_btn2}

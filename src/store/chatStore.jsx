@@ -168,6 +168,10 @@ export default class ChatStore {
         this.handleMessagesRead(data);
       }
 
+      if (data.type === "chat.created") {
+        this.ensureChatLoaded(data.chat_id, 0);
+      }
+
       if (data.type === "presence.changed") {
         this.handlePresenceChanged(data);
       }
@@ -528,16 +532,19 @@ export default class ChatStore {
     const requestId = this.openChatRequestId + 1;
     this.openChatRequestId = requestId;
     const res = await ChatService.openPrivateChat(user.id);
+    const chat = res.data;
 
     runInAction(() => {
       if (requestId !== this.openChatRequestId) return;
 
       this.selectedChat = {
-        id: res.data.id,
-        data: { ...res.data, unread_count: 0 },
+        id: chat.id,
+        data: { ...chat, unread_count: 0 },
       };
-      this.upsertChat(res.data, { unreadCount: 0 });
+      this.upsertChat(chat, { unreadCount: 0 });
     });
+
+    return chat;
   }
 
   async joinAndOpenChat(chatId) {

@@ -9,6 +9,16 @@ import Spinner from "../UI/Spiner";
 const DEFAULT_USER_VOLUME = 1;
 const VOLUME_STEP = 5;
 
+const getRoomGridClass = (participantsCount) => {
+  if (participantsCount <= 1) return cls.room_users_list_single;
+  if (participantsCount === 2) return cls.room_users_list_duo;
+  if (participantsCount <= 4) return cls.room_users_list_grid_2;
+  if (participantsCount <= 9) return cls.room_users_list_grid_3;
+  if (participantsCount <= 16) return cls.room_users_list_grid_4;
+
+  return cls.room_users_list_dense;
+};
+
 const Room = function ({
   onLeaveRoom,
   onHide,
@@ -34,6 +44,7 @@ const Room = function ({
   const [isRoomHovered, setIsRoomHovered] = useState(false);
   const micMutedBeforeHeadphonesRef = useRef(false);
   const showRoomUi = isJoining || isRoomHovered || Boolean(contextMenu);
+  const roomGridClass = getRoomGridClass(participants.length);
 
   const selectedParticipant = useMemo(
     () =>
@@ -191,7 +202,7 @@ const Room = function ({
         <p></p>
       </div>
 
-      <div className={cls.room_users_list}>
+      <div className={`${cls.room_users_list} ${roomGridClass}`}>
         {participants.map((participant) => (
           <RoomUser
             key={participant.id}
