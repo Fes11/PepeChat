@@ -21,6 +21,7 @@ import DateDivider from "../UI/DateDivider.jsx";
 import { observer } from "mobx-react-lite";
 import { notifyError } from "../../notifications/notificationService.js";
 import { resolveMediaUrl } from "../../utils/mediaUrl";
+import ContextMenu from "../UI/ContextMenu";
 
 const ChatWindow = observer(
   ({ chat, activeVoiceRoomChatId, onOpenVoiceRoom }) => {
@@ -69,6 +70,15 @@ const ChatWindow = observer(
     }).length;
 
     const isFirstLoad = useRef(true);
+
+    const [contextMenu, setContextMenu] = useState(null);
+    const selectedMessage = useMemo(
+      () =>
+        messages.find(
+          (message) => String(message.id) === String(contextMenu?.messageId),
+        ),
+      [contextMenu?.messageId, messages],
+    );
 
     useEffect(() => {
       setInputMessage("");
@@ -219,7 +229,9 @@ const ChatWindow = observer(
 
       const onScroll = () => {
         shouldStickToBottom.current =
-          container.scrollHeight - container.scrollTop - container.clientHeight <
+          container.scrollHeight -
+            container.scrollTop -
+            container.clientHeight <
           24;
 
         if (container.scrollTop <= 0 && hasMore) {
@@ -278,6 +290,20 @@ const ChatWindow = observer(
         );
       });
     }, []);
+
+    const contextMenuItems = useMemo(() => {
+      if (!selectedMessage) return [];
+
+      const messageId = selectedMessage.id;
+
+      return [
+        {
+          id: "delete",
+          label: "Удалить сообщение",
+          onSelect: () => MessageService.deleteMessage(messageId),
+        },
+      ];
+    }, [ChatStore, selectedMessage]);
 
     return (
       <div className="chat_window">
@@ -406,6 +432,15 @@ const ChatWindow = observer(
                 );
               })}
           </div>
+
+          <ContextMenu
+            isOpen={Boolean(contextMenu && selectedMessage)}
+            x={contextMenu?.x}
+            y={contextMenu?.y}
+            items={contextMenuItems}
+            onClose={closeContextMenu}
+          />
+
           <div className="chat__bottom">
             <div className="chat__input_box" ref={emojiPickerRef}>
               {isEmojiPickerOpen && (

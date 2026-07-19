@@ -44,9 +44,9 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "REPLACE_WITH_YOUR_TAURI_UPDATER_PUBLIC_KEY",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDlDNzY5MjNDRUVBMUY4MzgKUldRNCtLSHVQSkoybk02eGFRVEYzMnlRMHJvSGZvaG1MTUcyZHQ4cmJ3YjN5ZGFYRU5UekZIUTEK",
       "endpoints": [
-        "https://updates.example.com/pepechat/{{target}}/{{arch}}/{{current_version}}"
+        "https://github.com/Fes11/PepeChat/releases/latest/download/latest.json"
       ],
       "windows": { "installMode": "passive" }
     }
