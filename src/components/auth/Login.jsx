@@ -65,6 +65,13 @@ const Login = () => {
             <p>Залогинся или зарегайся, чтобы использовать чат</p>
           </div>
 
+          {passwordError && (
+            <p className={classes.login__form_error}>{passwordError}</p>
+          )}
+          {formError && (
+            <p className={classes.login__form_error}>{formError}</p>
+          )}
+
           <input
             value={login}
             onChange={(e) => {
@@ -92,12 +99,6 @@ const Login = () => {
               passwordError || formError ? classes.login__form_input_error : ""
             }`}
           />
-          {passwordError && (
-            <p className={classes.login__form_error}>{passwordError}</p>
-          )}
-          {formError && (
-            <p className={classes.login__form_error}>{formError}</p>
-          )}
 
           <button type="submit" className={classes.login__form_btn}>
             Continue

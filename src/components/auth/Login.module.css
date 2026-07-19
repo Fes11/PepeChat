@@ -47,7 +47,7 @@
 }
 
 .login__form_btn {
-  background: var(--button-soft-bg-color);
+  background: var(--box-bg-color);
   padding: 16px 0;
   font-size: 16px;
   font-weight: bolder;

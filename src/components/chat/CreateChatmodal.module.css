@@ -59,14 +59,10 @@
   border-bottom: 1px solid var(--border-color);
 }
 
-.description :global(.avatar_picker) {
+.avatarPicker {
   width: 108px;
   height: 118px;
   margin-right: 0;
-}
-
-.description :global(.avatar_placeholder),
-.description :global(.avatar_preview) {
   border-radius: 8px;
   border: 1px solid var(--border-color);
   box-sizing: border-box;

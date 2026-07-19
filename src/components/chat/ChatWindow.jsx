@@ -5,7 +5,6 @@ import React, {
   useLayoutEffect,
   useContext,
   useCallback,
-  memo,
 } from "react";
 import { Context } from "../../main.jsx";
 import MessageService from "../../services/MessageService";
@@ -15,88 +14,13 @@ import ChatDescription from "./ChatDescription.jsx";
 import Spinner from "../UI/Spiner.jsx";
 import ChatAvatar from "../UI/ChatAvatar.jsx";
 import UserAvatar from "../UI/UserAvatar.jsx";
+import EmojiPicker from "../UI/EmojiPicker/EmojiPicker.jsx";
 import { parseISO, isSameDay, formatDistanceToNow } from "date-fns";
 import { enUS } from "date-fns/locale";
 import DateDivider from "../UI/DateDivider.jsx";
 import { observer } from "mobx-react-lite";
 import { notifyError } from "../../notifications/notificationService.js";
-import emojis from "../../utils/emojis.json";
 import { resolveMediaUrl } from "../../utils/mediaUrl";
-
-const EMOJI_LIST = emojis;
-const EMOJI_INITIAL_COUNT = 120;
-const EMOJI_RENDER_STEP = 120;
-
-const EmojiPicker = memo(({ activeTab, onTabChange, onEmojiSelect }) => {
-  const [visibleEmojiCount, setVisibleEmojiCount] =
-    useState(EMOJI_INITIAL_COUNT);
-
-  useEffect(() => {
-    if (activeTab !== "emoji") return;
-
-    setVisibleEmojiCount(EMOJI_INITIAL_COUNT);
-
-    let frameId = null;
-    const growEmojiList = () => {
-      setVisibleEmojiCount((currentCount) => {
-        if (currentCount >= EMOJI_LIST.length) return currentCount;
-        const nextCount = Math.min(
-          currentCount + EMOJI_RENDER_STEP,
-          EMOJI_LIST.length,
-        );
-        frameId = requestAnimationFrame(growEmojiList);
-        return nextCount;
-      });
-    };
-
-    frameId = requestAnimationFrame(growEmojiList);
-    return () => {
-      if (frameId) cancelAnimationFrame(frameId);
-    };
-  }, [activeTab]);
-
-  return (
-    <div className="chat__emoji_picker">
-      <div className="chat__emoji_tabs">
-        <button
-          className={`chat__emoji_tab ${
-            activeTab === "emoji" ? "chat__emoji_tab--active" : ""
-          }`}
-          type="button"
-          onClick={() => onTabChange("emoji")}
-        >
-          Emoji
-        </button>
-        <button
-          className={`chat__emoji_tab ${
-            activeTab === "stickers" ? "chat__emoji_tab--active" : ""
-          }`}
-          type="button"
-          onClick={() => onTabChange("stickers")}
-        >
-          Стикеры
-        </button>
-      </div>
-
-      {activeTab === "emoji" ? (
-        <div className="chat__emoji_grid">
-          {EMOJI_LIST.slice(0, visibleEmojiCount).map((emoji, index) => (
-            <button
-              className="chat__emoji_item"
-              type="button"
-              key={`${emoji}-${index}`}
-              onClick={() => onEmojiSelect(emoji)}
-            >
-              {emoji}
-            </button>
-          ))}
-        </div>
-      ) : (
-        <div className="chat__stickers_empty">Стикеры появятся позже</div>
-      )}
-    </div>
-  );
-});
 
 const ChatWindow = observer(
   ({ chat, activeVoiceRoomChatId, onOpenVoiceRoom }) => {

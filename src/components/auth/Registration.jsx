@@ -1,7 +1,7 @@
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import classes from "./Registration.module.css";
-import AvatarPicker from "../chat/AvatarPicker";
+import AvatarPicker from "../UI/AvatarPicker/AvatarPicker";
 import { Context } from "../../main";
 
 const getErrorMessage = (errors, field) => {
@@ -89,6 +89,15 @@ const Registration = function () {
         </div>
 
         <form onSubmit={sendRegistration}>
+          {passwordConfirmError && (
+            <p className={classes.registration__form_error}>
+              {passwordConfirmError}
+            </p>
+          )}
+          {formError && (
+            <p className={classes.registration__form_error}>{formError}</p>
+          )}
+
           <div className={classes.registration__form_header}>
             <div className={classes.registration__avatar_box}>
               <AvatarPicker avatar={avatar} onSelectAvatar={setAvatar} />
@@ -177,14 +186,6 @@ const Registration = function () {
               passwordConfirmError ? classes.registration__form_input_error : ""
             }`}
           />
-          {passwordConfirmError && (
-            <p className={classes.registration__form_error}>
-              {passwordConfirmError}
-            </p>
-          )}
-          {formError && (
-            <p className={classes.registration__form_error}>{formError}</p>
-          )}
 
           <button type="submit" className={classes.registration__form_btn}>
             Продолжить

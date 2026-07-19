@@ -16,9 +16,9 @@ class MediaStore {
 
   volume = 1;
   autoGainControl = false;
-  noiseSuppressionMode = "strong";
+  noiseSuppressionMode = "light";
   noiseGateEnabled = true;
-  noiseGateThreshold = 0.025;
+  noiseGateThreshold = 0.035;
 
   constructor() {
     makeAutoObservable(this);

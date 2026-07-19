@@ -1,5 +1,5 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import ChatList from "./ChatList.jsx";
 import ChatWindow from "./ChatWindow.jsx";
 import Room from "../room/Room.jsx";
@@ -7,23 +7,37 @@ import { Context } from "../../main.jsx";
 import { observer } from "mobx-react-lite";
 
 const ACTIVE_VOICE_ROOM_CHAT_ID_KEY = "activeVoiceRoomChatId";
+const LAST_OPEN_CHAT_ID_KEY = "lastOpenChatId";
 
 const ChatPage = observer(() => {
   const { ChatStore } = useContext(Context);
+  const navigate = useNavigate();
   const selectedChat = ChatStore?.selectedChat;
   const selectedChatData = selectedChat?.data ?? null;
   const selectedChatId = selectedChatData?.id ?? selectedChat?.id ?? null;
   const { id } = useParams();
   const routeChatId = id ? String(id) : null;
   const shouldShowSelectedChat =
+    routeChatId &&
     selectedChatData &&
-    (!routeChatId || String(selectedChatId) === routeChatId);
+    String(selectedChatId) === routeChatId;
   const [activeVoiceRoomChatId, setActiveVoiceRoomChatId] = useState(() => {
     return sessionStorage.getItem(ACTIVE_VOICE_ROOM_CHAT_ID_KEY);
   });
   const [isVoiceRoomOpen, setIsVoiceRoomOpen] = useState(() => {
     return Boolean(sessionStorage.getItem(ACTIVE_VOICE_ROOM_CHAT_ID_KEY));
   });
+  const voiceRoomRef = useRef(null);
+
+  useEffect(() => {
+    if (routeChatId) {
+      sessionStorage.setItem(LAST_OPEN_CHAT_ID_KEY, routeChatId);
+      return;
+    }
+
+    const lastOpenChatId = sessionStorage.getItem(LAST_OPEN_CHAT_ID_KEY);
+    if (lastOpenChatId) navigate(`/chat/${lastOpenChatId}`, { replace: true });
+  }, [routeChatId, navigate]);
 
   const activeVoiceChat = useMemo(() => {
     return ChatStore.chats.find(
@@ -50,16 +64,36 @@ const ChatPage = observer(() => {
     setIsVoiceRoomOpen(false);
   };
 
-  useEffect(() => {
-    if (id && ChatStore.chats.length > 0) {
-      if (String(selectedChatId) === String(id)) return;
+  const leaveVoiceRoomFromProfile = () => {
+    voiceRoomRef.current?.leave();
+  };
 
-      const chat = ChatStore.chats.find((c) => String(c.id) === String(id));
-      if (chat) {
-        ChatStore.openChat(chat);
+  useEffect(() => {
+    if (!routeChatId || String(selectedChatId) === routeChatId) return;
+
+    let cancelled = false;
+
+    const selectRouteChat = async () => {
+      let chat = ChatStore.chats.find(
+        (item) => String(item.id) === routeChatId,
+      );
+
+      if (!chat) {
+        await ChatStore.ensureChatLoaded(routeChatId, 0);
+        chat = ChatStore.chats.find(
+          (item) => String(item.id) === routeChatId,
+        );
       }
-    }
-  }, [id, selectedChatId, ChatStore, ChatStore.chats]);
+
+      if (!cancelled && chat) ChatStore.openChat(chat);
+    };
+
+    selectRouteChat();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [routeChatId, selectedChatId, ChatStore]);
 
   useEffect(() => {
     if (!activeVoiceRoomChatId || !selectedChatId) return;
@@ -75,7 +109,7 @@ const ChatPage = observer(() => {
         activeVoiceRoomChatId={activeVoiceRoomChatId}
         activeVoiceRoomName={activeVoiceRoomName}
         onOpenVoiceRoomPanel={() => setIsVoiceRoomOpen(true)}
-        onLeaveVoiceRoom={leaveVoiceRoom}
+        onLeaveVoiceRoom={leaveVoiceRoomFromProfile}
       />
 
       <div className="chat_page_main">
@@ -94,6 +128,7 @@ const ChatPage = observer(() => {
 
         {activeVoiceRoomChatId && (
           <Room
+            ref={voiceRoomRef}
             key={activeVoiceRoomChatId}
             chatId={activeVoiceRoomChatId}
             isOpen={isVoiceRoomOpen}

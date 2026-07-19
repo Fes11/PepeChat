@@ -39,19 +39,13 @@ api.interceptors.response.use(
       }
       
       // Если уже идет обновление, ждем его
-      if (!refreshPromise) {
-        refreshPromise = refreshAccessToken(refreshToken);
-      }
-      
       try {
-        const newToken = await refreshPromise;
+        const newToken = await refreshAccessToken(refreshToken);
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return api(originalRequest);
       } catch (refreshError) {
         redirectToLogin();
         return Promise.reject(refreshError);
-      } finally {
-        refreshPromise = null;
       }
     }
 
@@ -71,20 +65,28 @@ export async function refreshAccessToken(
     throw new Error("Refresh token is missing");
   }
 
-  try {
+  if (refreshPromise) {
+    return refreshPromise;
+  }
+
+  refreshPromise = (async () => {
     const response = await axios.post(`${BASE_URL}/api/users/token/refresh/`, {
       refresh: refreshToken,
     });
-    
+
     const newToken = response.data.access;
     localStorage.setItem("token", newToken);
+    if (response.data.refresh) {
+      localStorage.setItem("refresh", response.data.refresh);
+    }
     api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
-    
-    console.log("Token refreshed");
     return newToken;
-  } catch (error) {
-    console.error("Refresh failed:", error);
-    throw error;
+  })();
+
+  try {
+    return await refreshPromise;
+  } finally {
+    refreshPromise = null;
   }
 }
 

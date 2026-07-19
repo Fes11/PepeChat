@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect, useRef } from "react";
 import classes from "./SettingsModal.module.css";
-import AvatarPicker from "../components/chat/AvatarPicker.jsx";
+import AvatarPicker from "./UI/AvatarPicker/AvatarPicker.jsx";
 import { mediaService } from "../services/MediaService";
 import UserServices from "../services/UserService.jsx";
 import { Context } from "../main";
@@ -17,6 +17,7 @@ import {
   MIN_UI_SCALE,
   useThemeSettings,
 } from "../theme";
+import { useUpdater } from "../updates/UpdateProvider";
 
 const SettingsModal = function ({ onClose }) {
   const navigate = useNavigate();
@@ -37,6 +38,7 @@ const SettingsModal = function ({ onClose }) {
   const { theme, mainColor, uiScale, setTheme, setMainColor, setUiScale } =
     useThemeSettings();
   const [pendingMainColor, setPendingMainColor] = useState(mainColor);
+  const updater = useUpdater();
   const tabs = ["Profile", "App", "Device"];
   const testStreamRef = useRef(null);
   const audioContextRef = useRef(null);
@@ -544,6 +546,40 @@ const SettingsModal = function ({ onClose }) {
                     </button>
                   </div>
                 </div>
+              </div>
+
+              <p className={classes.settings_label}>Обновления</p>
+              <div className={classes.update_card} aria-live="polite">
+                <div className={classes.update_header}>
+                  <span>
+                    <strong>PepeChat {updater.currentVersion && `v${updater.currentVersion}`}</strong>
+                    <small>
+                      {updater.status === "checking" && "Проверяем обновления…"}
+                      {updater.status === "upToDate" && "Установлена последняя версия"}
+                      {updater.status === "available" && `Доступна версия ${updater.nextVersion}`}
+                      {updater.status === "downloading" && "Загрузка и установка…"}
+                      {updater.status === "installed" && "Обновление установлено"}
+                      {updater.status === "error" && updater.error}
+                      {updater.status === "idle" && (updater.supported ? "Автоматическая проверка включена" : "Доступно только в десктопном приложении")}
+                    </small>
+                  </span>
+                  {updater.status === "available" ? (
+                    <button type="button" onClick={updater.installUpdate}>Установить</button>
+                  ) : updater.status === "installed" ? (
+                    <button type="button" onClick={updater.relaunch}>Перезапустить</button>
+                  ) : (
+                    <button type="button" disabled={!updater.supported || updater.status === "checking" || updater.status === "downloading"} onClick={() => updater.checkForUpdates()}>
+                      {updater.status === "error" ? "Повторить" : "Проверить"}
+                    </button>
+                  )}
+                </div>
+                {updater.status === "downloading" && (
+                  <div className={classes.update_progress}>
+                    <progress value={updater.downloaded} max={updater.total || undefined} />
+                    <span>{updater.total ? `${Math.round((updater.downloaded / updater.total) * 100)}%` : `${(updater.downloaded / 1024 / 1024).toFixed(1)} МБ`}</span>
+                  </div>
+                )}
+                {updater.status === "available" && updater.notes && <p className={classes.update_notes}>{updater.notes}</p>}
               </div>
             </div>
           </div>

@@ -1,7 +1,7 @@
 import { makeAutoObservable } from "mobx";
 import AuthServices from "../services/AuthService";
 import UserServices from "../services/UserService";
-import { api } from "../api";
+import { refreshAccessToken } from "../api";
 
 const normalizeAuthErrors = (error) => {
   const data = error.response?.data;
@@ -134,11 +134,7 @@ export default class authStore {
         return;
       }
 
-      const response = await api.post("/api/users/token/refresh/", {
-        refresh,
-      });
-
-      localStorage.setItem("token", response.data.access);
+      await refreshAccessToken(refresh);
       this.setAuth(true);
 
       const userResponse = await UserServices.getProfile();

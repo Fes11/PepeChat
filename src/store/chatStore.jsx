@@ -1,102 +1,97 @@
 import { makeAutoObservable, runInAction } from "mobx";
 import ChatService from "../services/ChatService";
-import { refreshAccessToken, redirectToLogin } from "../api";
-import { WS_BASE_URL } from "../config/env";
+import ChatSocketService from "../services/ChatSocketService";
+import ChatActivityStore from "./chatActivityStore";
+import ChatMessagesStore from "./chatMessagesStore";
 
-const HEARTBEAT_INTERVAL = 20_000;
 const normalizeId = (id) => String(id);
+const sameId = (left, right) => normalizeId(left) === normalizeId(right);
 
 export default class ChatStore {
   selectedChat = null;
   isOpening = false;
-  socket = null;
   isConnected = false;
   chats = [];
-  messagesByChat = {};
-  lastMessageByChat = {};
   currentUser = null;
   loadingChatIds = new Set();
-  socketToken = null;
-  reconnectTimer = null;
-  shouldReconnect = false;
-  pendingReadsByChat = new Map();
-  lastReadRequestByChat = {};
-  presenceByUserId = {};
-  voiceParticipantsByChatId = {};
   presenceListener = null;
-  heartbeatTimer = null;
   openChatRequestId = 0;
 
-  setCurrentUser(user) {
-    this.currentUser = user;
-  }
-
-  setPresenceListener(listener) {
-    this.presenceListener = listener;
-  }
-
   constructor() {
-    makeAutoObservable(this);
+    this.messages = new ChatMessagesStore();
+    this.activity = new ChatActivityStore();
+    this.socketService = new ChatSocketService({
+      // Keep callback ownership here: these closures always dispatch to the
+      // current ChatStore instance, independently of MobX method decoration.
+      onConnectionChange: (isConnected) => this.setConnectionState(isConnected),
+      onMessage: (data) => this.handleSocketMessage(data),
+      onOpen: () => this.flushPendingReads(),
+    });
+
+    makeAutoObservable(this, {
+      messages: false,
+      activity: false,
+      socketService: false,
+    }, { autoBind: true });
   }
 
-  sendWS(data) {
-    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) return false;
-    this.socket.send(JSON.stringify(data));
-    return true;
-  }
+  // Compatibility accessors keep the existing ChatStore public API intact.
+  get socket() { return this.socketService.socket; }
+  get messagesByChat() { return this.messages.messagesByChat; }
+  get lastMessageByChat() { return this.messages.lastMessageByChat; }
+  get pendingReadsByChat() { return this.messages.pendingReadsByChat; }
+  get lastReadRequestByChat() { return this.messages.lastReadRequestByChat; }
+  get presenceByUserId() { return this.activity.presenceByUserId; }
+  get voiceParticipantsByChatId() { return this.activity.voiceParticipantsByChatId; }
 
   get sortedChats() {
     return this.chats.slice().sort((a, b) => {
-      const aTime = this.lastMessageByChat[a.id]?.created_at || a.created_at;
-      const bTime = this.lastMessageByChat[b.id]?.created_at || b.created_at;
+      const aTime = this.getLastMessage(a.id)?.created_at || a.created_at;
+      const bTime = this.getLastMessage(b.id)?.created_at || b.created_at;
       return new Date(bTime) - new Date(aTime);
     });
   }
 
-  dedupeChats() {
-    const uniqueById = new Map();
+  setCurrentUser(user) { this.currentUser = user; }
+  setPresenceListener(listener) { this.presenceListener = listener; }
+  setConnectionState(isConnected) { this.isConnected = isConnected; }
 
-    this.chats.forEach((chat) => {
-      if (!chat?.id) return;
+  connect(token) { this.socketService.connect(token); }
+  disconnect() { this.socketService.disconnect(); }
+  sendWS(data) { return this.socketService.send(data); }
+  sendPresenceHeartbeat() { return this.socketService.sendPresenceHeartbeat(); }
 
-      const chatId = normalizeId(chat.id);
-      const existing = uniqueById.get(chatId);
-      uniqueById.set(chatId, { ...existing, ...chat });
-    });
-
-    this.chats = Array.from(uniqueById.values());
+  handleSocketMessage(data) {
+    const handlers = {
+      message: () => this.handleIncomingMessage(data.chat_id, data.payload, data.unread_count),
+      messages_read: () => this.handleMessagesRead(data),
+      "chat.created": () => this.ensureChatLoaded(data.chat_id, 0),
+      "presence.changed": () => this.handlePresenceChanged(data),
+      "voice_room.state": () => this.handleVoiceRoomState(data),
+    };
+    handlers[data.type]?.();
   }
 
-  upsertChat(chat, options = {}) {
-    if (!chat?.id) return;
+  upsertChat(chat, { prepend = true, unreadCount = chat?.unread_count } = {}) {
+    if (chat?.id == null) return;
 
-    const { prepend = true, unreadCount = chat.unread_count } = options;
-    const chatId = normalizeId(chat.id);
-    const existingIndex = this.chats.findIndex(
-      (item) => normalizeId(item.id) === chatId,
-    );
-    const existing = existingIndex >= 0 ? this.chats[existingIndex] : null;
-    const chatsWithoutCurrent = this.chats.filter(
-      (item) => normalizeId(item.id) !== chatId,
-    );
+    const index = this.chats.findIndex((item) => sameId(item.id, chat.id));
+    const existing = index >= 0 ? this.chats[index] : null;
     const nextChat = {
       ...existing,
       ...chat,
-      unread_count:
-        normalizeId(this.selectedChat?.id) === chatId
-          ? 0
-          : (unreadCount ?? existing?.unread_count ?? chat.unread_count ?? 0),
+      unread_count: sameId(this.selectedChat?.id, chat.id)
+        ? 0
+        : (unreadCount ?? existing?.unread_count ?? 0),
     };
+    const remaining = this.chats.filter((item) => !sameId(item.id, chat.id));
 
-    if (prepend || existingIndex < 0) {
-      this.chats = [nextChat, ...chatsWithoutCurrent];
+    if (prepend || index < 0) {
+      this.chats = [nextChat, ...remaining];
     } else {
-      const nextChats = [...chatsWithoutCurrent];
-      nextChats.splice(existingIndex, 0, nextChat);
-      this.chats = nextChats;
+      remaining.splice(index, 0, nextChat);
+      this.chats = remaining;
     }
-
-    this.dedupeChats();
   }
 
   setChats(chats) {
@@ -104,270 +99,33 @@ export default class ChatStore {
       this.chats.map((chat) => [normalizeId(chat.id), chat]),
     );
     const uniqueChats = new Map();
-
     chats.forEach((chat) => {
-      const chatId = normalizeId(chat.id);
-      const existing = existingById.get(chatId);
-      const mergedChat = {
+      const existing = existingById.get(normalizeId(chat.id));
+      uniqueChats.set(normalizeId(chat.id), {
         ...existing,
         ...chat,
-        unread_count:
-          normalizeId(this.selectedChat?.id) === chatId
-            ? 0
-            : (existing?.unread_count ?? chat.unread_count ?? 0),
-      };
+        unread_count: sameId(this.selectedChat?.id, chat.id)
+          ? 0
+          : (existing?.unread_count ?? chat.unread_count ?? 0),
+      });
 
-      uniqueChats.set(chatId, mergedChat);
-
-      if (chat.last_message) {
-        const currentLastMessage = this.lastMessageByChat[chat.id];
-        if (
-          !currentLastMessage
-          || new Date(chat.last_message.created_at)
-            > new Date(currentLastMessage.created_at)
-        ) {
-          this.lastMessageByChat[chat.id] = chat.last_message;
-        }
+      const currentLast = this.getLastMessage(chat.id);
+      if (chat.last_message && (!currentLast
+        || new Date(chat.last_message.created_at) > new Date(currentLast.created_at))) {
+        this.setLastMessage(chat.id, chat.last_message);
       }
     });
-
     this.chats = Array.from(uniqueChats.values());
-    this.dedupeChats();
-  }
-
-  connect(token) {
-    if (this.socket || !token) return;
-
-    this.socketToken = token;
-    this.shouldReconnect = true;
-
-    const wsUrl = `${WS_BASE_URL}/ws/`;
-    this.socket = new WebSocket(wsUrl, ["access-token", token]);
-
-    this.socket.onopen = () => {
-      console.log("✅ WebSocket connected");
-      this.isConnected = true;
-      this.startHeartbeat();
-      this.sendPresenceHeartbeat();
-      this.flushPendingReads();
-    };
-
-    this.socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      console.log("📩 WS message:", data);
-
-      if (data.type === "message") {
-        this.handleIncomingMessage(
-          data.chat_id,
-          data.payload,
-          data.unread_count,
-        );
-      }
-
-      if (data.type === "messages_read") {
-        this.handleMessagesRead(data);
-      }
-
-      if (data.type === "chat.created") {
-        this.ensureChatLoaded(data.chat_id, 0);
-      }
-
-      if (data.type === "presence.changed") {
-        this.handlePresenceChanged(data);
-      }
-
-      if (data.type === "voice_room.state") {
-        this.handleVoiceRoomState(data);
-      }
-    };
-
-    this.socket.onclose = (event) => {
-      console.log("❌ WebSocket disconnected");
-      this.isConnected = false;
-      this.socket = null;
-      this.stopHeartbeat();
-
-      if (this.shouldReconnect && !this.reconnectTimer) {
-        this.scheduleReconnect(event.code);
-      }
-    };
-
-    this.socket.onerror = (err) => {
-      console.error("WebSocket error", err);
-    };
-  }
-
-  disconnect() {
-    this.shouldReconnect = false;
-    this.socketToken = null;
-
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
-    }
-
-    this.stopHeartbeat();
-
-    if (this.socket) {
-      this.socket.close();
-      this.socket = null;
-    }
-  }
-
-  async scheduleReconnect(closeCode) {
-    if (closeCode === 4401) {
-      try {
-        this.socketToken = await refreshAccessToken();
-      } catch (error) {
-        this.shouldReconnect = false;
-        redirectToLogin();
-        return;
-      }
-    }
-
-    this.reconnectTimer = setTimeout(() => {
-      this.reconnectTimer = null;
-      this.connect(this.socketToken);
-    }, 1000);
-  }
-
-  startHeartbeat() {
-    this.stopHeartbeat();
-    this.heartbeatTimer = setInterval(
-      () => this.sendPresenceHeartbeat(),
-      HEARTBEAT_INTERVAL,
-    );
-  }
-
-  stopHeartbeat() {
-    if (this.heartbeatTimer) {
-      clearInterval(this.heartbeatTimer);
-      this.heartbeatTimer = null;
-    }
-  }
-
-  sendPresenceHeartbeat() {
-    return this.sendWS({ action: "presence.heartbeat" });
-  }
-
-  addMessage(chatId, message) {
-    if (!this.messagesByChat[chatId]) {
-      this.messagesByChat[chatId] = [];
-    }
-
-    const messageId = normalizeId(message.id);
-    if (
-      this.messagesByChat[chatId].some(
-        (item) => normalizeId(item.id) === messageId,
-      )
-    ) {
-      return;
-    }
-
-    this.messagesByChat[chatId].push(message);
-  }
-
-  setMessages(chatId, messages) {
-    const uniqueMessages = new Map();
-
-    messages.forEach((message) => {
-      const messageId = normalizeId(message.id);
-      const existing = uniqueMessages.get(messageId);
-      uniqueMessages.set(messageId, {
-        ...existing,
-        ...message,
-        is_read: Boolean(existing?.is_read || message.is_read),
-      });
-    });
-
-    this.messagesByChat[chatId] = Array.from(uniqueMessages.values()).sort(
-      (a, b) => new Date(a.created_at) - new Date(b.created_at),
-    );
-  }
-
-  mergeMessages(chatId, messages) {
-    const merged = new Map();
-
-    this.getMessages(chatId).forEach((message) =>
-      merged.set(normalizeId(message.id), message),
-    );
-    messages.forEach((message) => {
-      const messageId = normalizeId(message.id);
-      const existing = merged.get(messageId);
-      merged.set(messageId, {
-        ...existing,
-        ...message,
-        is_read: Boolean(existing?.is_read || message.is_read),
-      });
-    });
-
-    this.messagesByChat[chatId] = Array.from(merged.values()).sort(
-      (a, b) => new Date(a.created_at) - new Date(b.created_at),
-    );
-  }
-
-  getMessages(chatId) {
-    return this.messagesByChat[chatId] || [];
-  }
-
-  sendMessage(chatId, message) {
-    return this.sendWS({
-      action: "send_message",
-      chat_id: chatId,
-      message,
-    });
-  }
-
-  setLastMessage(chatId, message) {
-    this.lastMessageByChat[chatId] = message;
-  }
-
-  getLastMessage(chatId) {
-    return this.lastMessageByChat[chatId] || null;
-  }
-
-  setVoiceParticipants(chatId, participants = []) {
-    if (!chatId) return;
-
-    this.voiceParticipantsByChatId[chatId] = participants;
-  }
-
-  getVoiceParticipants(chatId) {
-    return this.voiceParticipantsByChatId[chatId] || [];
-  }
-
-  clearVoiceParticipants(chatId) {
-    if (!chatId) return;
-
-    delete this.voiceParticipantsByChatId[chatId];
-  }
-
-  handleVoiceRoomState(data) {
-    const { chat_id: chatId, participants = [] } = data;
-
-    this.setVoiceParticipants(chatId, participants);
   }
 
   updateChat(chatId, changes) {
-    const normalizedChatId = normalizeId(chatId);
-    const chatIndex = this.chats.findIndex(
-      (chat) => normalizeId(chat.id) === normalizedChatId,
-    );
-    const chat = this.chats[chatIndex];
-    const chatChanged = chat
-      && Object.entries(changes).some(([key, value]) => chat[key] !== value);
-
-    if (chatChanged) {
-      this.chats[chatIndex] = { ...chat, ...changes };
-      this.dedupeChats();
+    const index = this.chats.findIndex((chat) => sameId(chat.id, chatId));
+    if (index >= 0 && Object.entries(changes).some(([key, value]) => this.chats[index][key] !== value)) {
+      this.chats[index] = { ...this.chats[index], ...changes };
     }
 
-    const selectedChatChanged = normalizeId(this.selectedChat?.id) === normalizedChatId
-      && Object.entries(changes).some(
-        ([key, value]) => this.selectedChat.data[key] !== value,
-      );
-
-    if (selectedChatChanged) {
+    if (sameId(this.selectedChat?.id, chatId)
+      && Object.entries(changes).some(([key, value]) => this.selectedChat.data[key] !== value)) {
       this.selectedChat = {
         ...this.selectedChat,
         data: { ...this.selectedChat.data, ...changes },
@@ -376,85 +134,67 @@ export default class ChatStore {
   }
 
   setUnreadCount(chatId, unreadCount) {
-    const normalizedChatId = normalizeId(chatId);
-    const normalizedCount = Math.max(0, unreadCount);
-    const chat = this.chats.find(
-      (item) => normalizeId(item.id) === normalizedChatId,
-    );
-
-    if (
-      (chat?.unread_count ?? 0) === normalizedCount
-      && (
-        normalizeId(this.selectedChat?.id) !== normalizedChatId
-        || (this.selectedChat.data.unread_count ?? 0) === normalizedCount
-      )
-    ) {
-      return;
-    }
-
-    this.updateChat(chatId, {
-      unread_count: normalizedCount,
-    });
+    const count = Math.max(0, unreadCount);
+    const chat = this.chats.find((item) => sameId(item.id, chatId));
+    const selectedCount = sameId(this.selectedChat?.id, chatId)
+      ? this.selectedChat.data.unread_count ?? 0
+      : count;
+    if ((chat?.unread_count ?? 0) === count && selectedCount === count) return;
+    this.updateChat(chatId, { unread_count: count });
   }
 
-  incrementUnreadCount(chatId) {
-    const chat = this.chats.find(
-      (item) => normalizeId(item.id) === normalizeId(chatId),
-    );
-    if (!chat) return;
+  addMessage(chatId, message) { this.messages.addMessage(chatId, message); }
+  setMessages(chatId, messages) { this.messages.setMessages(chatId, messages); }
+  mergeMessages(chatId, messages) { this.messages.mergeMessages(chatId, messages); }
+  getMessages(chatId) { return this.messages.getMessages(chatId); }
+  setLastMessage(chatId, message) { this.messages.setLastMessage(chatId, message); }
+  getLastMessage(chatId) { return this.messages.getLastMessage(chatId); }
 
-    this.setUnreadCount(chatId, (chat.unread_count || 0) + 1);
+  sendMessage(chatId, message) {
+    return this.sendWS({ action: "send_message", chat_id: chatId, message });
+  }
+
+  setVoiceParticipants(chatId, participants = []) {
+    this.activity.setVoiceParticipants(chatId, participants);
+  }
+  getVoiceParticipants(chatId) { return this.activity.getVoiceParticipants(chatId); }
+  clearVoiceParticipants(chatId) { this.activity.clearVoiceParticipants(chatId); }
+  getUserPresence(user) { return this.activity.getUserPresence(user); }
+
+  handleVoiceRoomState({ chat_id: chatId, participants = [] }) {
+    this.setVoiceParticipants(chatId, participants);
   }
 
   markChatRead(chatId, upToMessageId = null, force = false) {
-    const chat = this.chats.find(
-      (item) => normalizeId(item.id) === normalizeId(chatId),
-    );
-    const targetMessageId = upToMessageId
-      || this.getLastMessage(chatId)?.id
-      || this.getMessages(chatId).at(-1)?.id
-      || null;
-    const hasUnreadMessages = (chat?.unread_count || 0) > 0;
+    const chat = this.chats.find((item) => sameId(item.id, chatId));
+    const targetId = upToMessageId ?? this.getLastMessage(chatId)?.id
+      ?? this.getMessages(chatId).at(-1)?.id ?? null;
 
-    if (!force && !hasUnreadMessages && upToMessageId == null) {
-      return false;
-    }
-    if (
-      targetMessageId != null
-      && (this.lastReadRequestByChat[chatId] || 0) >= targetMessageId
-    ) {
+    if (!force && (chat?.unread_count || 0) === 0 && upToMessageId == null) return false;
+    if (targetId != null && (this.lastReadRequestByChat[chatId] || 0) >= targetId) {
       this.setUnreadCount(chatId, 0);
       return false;
     }
 
     this.setUnreadCount(chatId, 0);
-
-    const payload = {
-      action: "read_messages",
-      chat_id: chatId,
-      up_to_message_id: targetMessageId,
-    };
-
-    if (this.sendWS(payload)) {
-      if (targetMessageId != null) {
-        this.lastReadRequestByChat[chatId] = targetMessageId;
-      }
-      this.pendingReadsByChat.delete(chatId);
-      return true;
+    const payload = { action: "read_messages", chat_id: chatId, up_to_message_id: targetId };
+    if (!this.sendWS(payload)) {
+      this.pendingReadsByChat.set(chatId, payload);
+      return false;
     }
 
-    this.pendingReadsByChat.set(chatId, payload);
-    return false;
+    if (targetId != null) this.lastReadRequestByChat[chatId] = targetId;
+    this.pendingReadsByChat.delete(chatId);
+    return true;
   }
 
   flushPendingReads() {
-    this.pendingReadsByChat.forEach((payload, chatId) => {
-      if (this.sendWS(payload)) {
-        if (payload.up_to_message_id != null) {
-          this.lastReadRequestByChat[chatId] = payload.up_to_message_id;
-        }
-        this.pendingReadsByChat.delete(chatId);
+    [...this.pendingReadsByChat.entries()].forEach(([chatId, payload]) => {
+      if (!this.sendWS(payload)) return;
+      if (payload.up_to_message_id != null) {
+        this.lastReadRequestByChat[chatId] = payload.up_to_message_id;
       }
+      this.pendingReadsByChat.delete(chatId);
     });
   }
 
@@ -463,195 +203,101 @@ export default class ChatStore {
     this.setLastMessage(chatId, message);
     this.ensureChatLoaded(chatId, unreadCount);
 
-    const isOwnMessage = message.author?.user?.id === this.currentUser?.id;
-    if (isOwnMessage) {
+    if (message.author?.user?.id === this.currentUser?.id) {
       this.setUnreadCount(chatId, 0);
-      return;
-    }
-
-    if (normalizeId(this.selectedChat?.id) === normalizeId(chatId)) {
+    } else if (sameId(this.selectedChat?.id, chatId)) {
       this.setUnreadCount(chatId, unreadCount ?? 1);
       this.markChatRead(chatId, message.id);
     } else {
-      this.setUnreadCount(
-        chatId,
-        unreadCount ?? ((this.chats.find(
-          (chat) => normalizeId(chat.id) === normalizeId(chatId),
-        )?.unread_count || 0) + 1),
-      );
+      const chat = this.chats.find((item) => sameId(item.id, chatId));
+      this.setUnreadCount(chatId, unreadCount ?? (chat?.unread_count || 0) + 1);
     }
-  }
-
-  async ensureChatLoaded(chatId, unreadCount = null) {
-    if (
-      this.chats.some((chat) => normalizeId(chat.id) === normalizeId(chatId)) ||
-      this.loadingChatIds.has(chatId)
-    ) {
-      return;
-    }
-
-    this.loadingChatIds.add(chatId);
-
-    try {
-      const response = await ChatService.getChat(chatId);
-      const chat = response.data;
-
-      if (chat) {
-        runInAction(() => {
-          this.upsertChat(chat, { unreadCount });
-        });
-      }
-    } catch (error) {
-      console.error("Failed to load new chat:", error);
-    } finally {
-      runInAction(() => {
-        this.loadingChatIds.delete(chatId);
-      });
-    }
-  }
-
-  openChat(chat) {
-    this.openChatRequestId += 1;
-    const unreadCount = chat.unread_count || 0;
-
-    runInAction(() => {
-      this.selectedChat = {
-        id: chat.id,
-        data: { ...chat, unread_count: 0 },
-      };
-      this.upsertChat(chat, { unreadCount: 0 });
-      this.setUnreadCount(chat.id, 0);
-    });
-
-    if (unreadCount > 0) {
-      this.markChatRead(chat.id, null, true);
-    }
-  }
-
-  async openPrivateChat(user) {
-    const requestId = this.openChatRequestId + 1;
-    this.openChatRequestId = requestId;
-    const res = await ChatService.openPrivateChat(user.id);
-    const chat = res.data;
-
-    runInAction(() => {
-      if (requestId !== this.openChatRequestId) return;
-
-      this.selectedChat = {
-        id: chat.id,
-        data: { ...chat, unread_count: 0 },
-      };
-      this.upsertChat(chat, { unreadCount: 0 });
-    });
-
-    return chat;
-  }
-
-  async joinAndOpenChat(chatId) {
-    if (this.isOpening) return;
-
-    const requestId = this.openChatRequestId + 1;
-    this.openChatRequestId = requestId;
-    this.isOpening = true;
-
-    try {
-      await ChatService.joinChat(chatId);
-      const response = await ChatService.getChat(chatId);
-      if (requestId !== this.openChatRequestId) return;
-
-      this.openChat(response.data);
-    } finally {
-      runInAction(() => {
-        this.isOpening = false;
-      });
-    }
-  }
-
-  removeChat(chatId) {
-    runInAction(() => {
-      this.chats = this.chats.filter(
-        (c) => normalizeId(c.id) !== normalizeId(chatId),
-      );
-    });
-  }
-
-  reset() {
-    this.selectedChat = null;
-    this.isOpening = false;
-    this.isConnected = false;
-    this.chats = [];
-    this.messagesByChat = {};
-    this.lastMessageByChat = {};
-    this.loadingChatIds.clear();
-    this.pendingReadsByChat.clear();
-    this.lastReadRequestByChat = {};
-    this.presenceByUserId = {};
-    this.voiceParticipantsByChatId = {};
-    // this.disconnect();
   }
 
   handleMessagesRead(data) {
-    const { chat_id, user_id, last_read_message_id } = data;
-
-    if (user_id === this.currentUser?.id) {
-      this.lastReadRequestByChat[chat_id] = Math.max(
-        this.lastReadRequestByChat[chat_id] || 0,
-        last_read_message_id || 0,
-      );
-      this.setUnreadCount(chat_id, 0);
-    }
-
-    const messages = this.messagesByChat[chat_id];
-    if (!messages || last_read_message_id == null) return;
-
-    if (user_id === this.currentUser?.id) return;
-
-    this.messagesByChat[chat_id] = messages.map((msg) =>
-      msg.id <= last_read_message_id
-      && msg.author?.user?.id === this.currentUser?.id
-        ? { ...msg, is_read: true }
-        : msg,
-    );
+    const { ownRead } = this.messages.handleMessagesRead(data, this.currentUser?.id);
+    if (ownRead) this.setUnreadCount(data.chat_id, 0);
   }
 
   handlePresenceChanged(data) {
     const { user_id: userId, status, last_seen: lastSeen } = data;
     const presence = { status, last_online: lastSeen };
+    this.activity.setPresence(userId, presence);
 
-    this.presenceByUserId[userId] = presence;
-
-    if (this.currentUser?.id === userId) {
-      this.currentUser = { ...this.currentUser, ...presence };
-    }
-
-    this.chats = this.chats.map((chat) => {
-      if (chat.other_user?.id !== userId) return chat;
-      return {
-        ...chat,
-        other_user: { ...chat.other_user, ...presence },
-      };
-    });
-    this.dedupeChats();
+    if (this.currentUser?.id === userId) this.currentUser = { ...this.currentUser, ...presence };
+    this.chats = this.chats.map((chat) => chat.other_user?.id === userId
+      ? { ...chat, other_user: { ...chat.other_user, ...presence } }
+      : chat);
 
     if (this.selectedChat?.data?.other_user?.id === userId) {
       this.selectedChat = {
         ...this.selectedChat,
         data: {
           ...this.selectedChat.data,
-          other_user: {
-            ...this.selectedChat.data.other_user,
-            ...presence,
-          },
+          other_user: { ...this.selectedChat.data.other_user, ...presence },
         },
       };
     }
-
     this.presenceListener?.(data);
   }
 
-  getUserPresence(user) {
-    if (!user) return user;
-    const presence = this.presenceByUserId[user.id];
-    return presence ? { ...user, ...presence } : user;
+  async ensureChatLoaded(chatId, unreadCount = null) {
+    const key = normalizeId(chatId);
+    if (this.chats.some((chat) => sameId(chat.id, chatId)) || this.loadingChatIds.has(key)) return;
+    this.loadingChatIds.add(key);
+
+    try {
+      const { data: chat } = await ChatService.getChat(chatId);
+      if (chat) runInAction(() => this.upsertChat(chat, { unreadCount }));
+    } catch (error) {
+      console.error("Failed to load new chat", error);
+    } finally {
+      runInAction(() => this.loadingChatIds.delete(key));
+    }
+  }
+
+  openChat(chat) {
+    this.openChatRequestId += 1;
+    const unreadCount = chat.unread_count || 0;
+    this.selectedChat = { id: chat.id, data: { ...chat, unread_count: 0 } };
+    this.upsertChat(chat, { unreadCount: 0 });
+    if (unreadCount > 0) this.markChatRead(chat.id, null, true);
+  }
+
+  async openPrivateChat(user) {
+    const requestId = ++this.openChatRequestId;
+    const { data: chat } = await ChatService.openPrivateChat(user.id);
+    runInAction(() => {
+      if (requestId !== this.openChatRequestId) return;
+      this.selectedChat = { id: chat.id, data: { ...chat, unread_count: 0 } };
+      this.upsertChat(chat, { unreadCount: 0 });
+    });
+    return chat;
+  }
+
+  async joinAndOpenChat(chatId) {
+    if (this.isOpening) return;
+    const requestId = ++this.openChatRequestId;
+    this.isOpening = true;
+    try {
+      await ChatService.joinChat(chatId);
+      const { data: chat } = await ChatService.getChat(chatId);
+      if (requestId === this.openChatRequestId) this.openChat(chat);
+    } finally {
+      runInAction(() => { this.isOpening = false; });
+    }
+  }
+
+  removeChat(chatId) {
+    this.chats = this.chats.filter((chat) => !sameId(chat.id, chatId));
+  }
+
+  reset() {
+    this.selectedChat = null;
+    this.isOpening = false;
+    this.chats = [];
+    this.loadingChatIds.clear();
+    this.messages.reset();
+    this.activity.reset();
   }
 }

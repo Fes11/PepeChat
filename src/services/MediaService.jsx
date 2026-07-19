@@ -68,7 +68,7 @@ export const mediaService = {
       audioSettings = {},
     } = options;
     const noiseSuppressionMode =
-      audioSettings.noiseSuppressionMode ?? "strong";
+      audioSettings.noiseSuppressionMode ?? "light";
     const audioConstraints = {
       ...DEFAULT_AUDIO_CONSTRAINTS,
       autoGainControl: audioSettings.autoGainControl ?? false,
@@ -89,7 +89,7 @@ export const mediaService = {
           volume,
           noiseSuppressionMode,
           noiseGateEnabled: audioSettings.noiseGateEnabled ?? true,
-          noiseGateThreshold: audioSettings.noiseGateThreshold ?? 0.025,
+          noiseGateThreshold: audioSettings.noiseGateThreshold ?? 0.035,
         },
       );
 

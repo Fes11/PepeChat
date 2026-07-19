@@ -14,6 +14,7 @@ import ChatServices from "../../services/ChatService.jsx";
 import classes from "./ChatList.module.css";
 import { Context } from "../../main.jsx";
 import { observer } from "mobx-react-lite";
+import { useNavigate, useParams } from "react-router-dom";
 
 const ChatList = observer(
   ({
@@ -23,6 +24,8 @@ const ChatList = observer(
     onLeaveVoiceRoom,
   }) => {
     const { ChatStore } = useContext(Context);
+    const navigate = useNavigate();
+    const { id: routeChatId } = useParams();
     const [modal, setModal] = useState(false);
     const [loading, setLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);
@@ -57,7 +60,8 @@ const ChatList = observer(
     }, [fetchChats]);
 
     const handleChatCreated = (newChat) => {
-      ChatStore.openChat(newChat);
+      ChatStore.upsertChat(newChat);
+      navigate(`/chat/${newChat.id}`);
     };
 
     useEffect(() => {
@@ -98,7 +102,7 @@ const ChatList = observer(
                 key={chat.id}
                 chat={chat}
                 isSelected={
-                  String(chat.id) === String(ChatStore.selectedChat?.data?.id)
+                  String(chat.id) === String(routeChatId)
                 }
                 isLast={idx === sortedChats.length - 1}
               />

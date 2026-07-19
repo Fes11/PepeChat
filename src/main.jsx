@@ -8,6 +8,7 @@ import messagesStore from "./store/messagesStore";
 import mediaStore from "./store/mediaStore";
 import { initThemeSettings } from "./theme";
 import { NotificationProvider } from "./notifications/NotificationProvider";
+import { UpdateProvider } from "./updates/UpdateProvider";
 
 const ChatStore = new chatStore();
 const AuthStore = new authStore(ChatStore);
@@ -41,7 +42,9 @@ window._root.render(
     >
       <BrowserRouter>
         <NotificationProvider>
-          <App />
+          <UpdateProvider>
+            <App />
+          </UpdateProvider>
         </NotificationProvider>
       </BrowserRouter>
     </Context.Provider>

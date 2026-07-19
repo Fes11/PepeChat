@@ -38,8 +38,8 @@
   --message-time-color: rgba(255, 255, 255, 0.72);
   --border-color: #3a3a40;
   --shadow-border-color: rgba(255, 255, 255, 0.05);
-  --raised-light-color: rgba(255, 255, 255, 0.1);
-  --raised-dark-color: rgba(185, 185, 185, 0.3);
+  --raised-light-color: rgba(255, 255, 255, 0.05);
+  --raised-dark-color: rgba(107, 107, 107, 0.3);
   --overlay-color: rgba(0, 0, 0, 0.3);
   --empty-badge-bg-color: rgba(0, 0, 0, 0.1);
   --message-other-bg-color: rgba(255, 255, 255, 0.1);
@@ -416,7 +416,7 @@ body.tray-menu-window #root {
 .chat_list_element__title {
   display: block;
   font-size: 13px;
-  max-width: 100%;
+  max-width: 90%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -666,79 +666,6 @@ body.tray-menu-window #root {
   width: 20px;
   height: 20px;
   opacity: 0.72;
-}
-
-.chat__emoji_picker {
-  position: absolute;
-  right: 0;
-  bottom: calc(100% + 10px);
-  width: min(320px, calc(100vw / var(--ui-scale) - 96px));
-  max-height: min(360px, calc(100vh / var(--ui-scale) - 160px));
-  overflow: hidden;
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-  background: var(--modal-bg-color);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
-  z-index: 20;
-  contain: layout paint style;
-}
-
-.chat__emoji_tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
-  padding: 8px;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.chat__emoji_tab {
-  height: 32px;
-  border-radius: var(--main-border-radius);
-  background: transparent;
-  color: var(--muted-text-color);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.chat__emoji_tab:hover,
-.chat__emoji_tab--active {
-  background: var(--hover-bg-color);
-  color: var(--text-color);
-}
-
-.chat__emoji_grid {
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 2px;
-  padding: 8px;
-  max-height: 292px;
-  overflow-y: auto;
-}
-
-.chat__emoji_item {
-  aspect-ratio: 1;
-  min-width: 0;
-  border-radius: 6px;
-  background: transparent;
-  font-size: 22px;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.chat__emoji_item:hover {
-  background: var(--hover-bg-color);
-}
-
-.chat__stickers_empty {
-  height: 180px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  color: var(--muted-text-color);
-  font-size: 13px;
 }
 
 .chat__send_btn {
@@ -1148,10 +1075,6 @@ body.tray-menu-window #root {
     width: 30px;
     height: 30px;
     right: 7px;
-  }
-
-  .chat__emoji_picker {
-    width: min(300px, calc(100vw - 76px));
   }
 
   .chat__send_btn {

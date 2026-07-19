@@ -1,4 +1,11 @@
-import React, { useContext, useMemo, useRef, useState } from "react";
+import React, {
+  forwardRef,
+  useContext,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import cls from "./Room.module.css";
 import RoomUser from "./RoomUser";
 import { useVoiceRoom } from "../../hooks/useVoiceRoom";
@@ -19,13 +26,13 @@ const getRoomGridClass = (participantsCount) => {
   return cls.room_users_list_dense;
 };
 
-const Room = function ({
+const Room = forwardRef(function Room({
   onLeaveRoom,
   onHide,
   chatId,
   isOpen = true,
   preserveChatDescription = false,
-}) {
+}, ref) {
   const { AuthStore, ChatStore } = useContext(Context);
   const {
     participants,
@@ -144,6 +151,8 @@ const Room = function ({
     disconnect();
     onLeaveRoom();
   };
+
+  useImperativeHandle(ref, () => ({ leave: leaveRoom }));
 
   const toggleMic = () => {
     if (headphonesMuted) {
@@ -276,6 +285,6 @@ const Room = function ({
       </div>
     </div>
   );
-};
+});
 
 export default Room;

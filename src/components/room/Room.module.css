@@ -121,10 +121,9 @@
 
 .room_activity_panel {
   padding: 10px 20px;
-  background: var(--bg-color);
+  background: var(--surface-color);
   border: 1px solid transparent;
   border-radius: 25px;
-  backdrop-filter: blur(200px);
   position: absolute;
   bottom: 20px;
   left: 50%;
@@ -137,10 +136,9 @@
   flex-wrap: wrap;
   justify-content: center;
   z-index: 4;
-  transition:
-    opacity 0.3s ease,
-    transform 0.3s ease,
-    border-color 0.3s ease;
+  box-shadow:
+    -1px -1px 0 var(--raised-light-color),
+    1px 1px 0 var(--raised-dark-color);
 }
 
 .room_activity_panel_visible {
@@ -156,11 +154,16 @@
   justify-content: center;
   align-items: center;
   line-height: 1;
+  background: var(--input-bg-color);
 }
 
 .room_activity_btn img {
   width: 20px;
   height: 20px;
+}
+
+.room_activity_btn:hover {
+  background: var(--hover-bg-color);
 }
 
 @media (max-width: 520px), (max-height: 520px) {

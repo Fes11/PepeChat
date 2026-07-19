@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import classes from "./CreateChatModal.module.css";
 import SearchUser from "./SearchUser.jsx";
-import AvatarPicker from "./AvatarPicker.jsx";
+import AvatarPicker from "../UI/AvatarPicker/AvatarPicker.jsx";
 import Participant from "./Participant.jsx";
 import ChatService from "../../services/ChatService";
 import { notifySuccess } from "../../notifications/notificationService";
@@ -72,7 +72,11 @@ const CreateChatModal = ({ onChatCreated, onClose }) => {
       </div>
 
       <div className={classes.description}>
-        <AvatarPicker avatar={avatar} onSelectAvatar={setAvatar} />
+        <AvatarPicker
+          avatar={avatar}
+          onSelectAvatar={setAvatar}
+          className={classes.avatarPicker}
+        />
 
         <div className={classes.input_box}>
           <label className={classes.field_label} htmlFor="chat-title">

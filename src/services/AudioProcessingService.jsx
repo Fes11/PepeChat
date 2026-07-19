@@ -13,9 +13,9 @@ export const audioProcessingService = {
   async createProcessedMicrophoneStream(inputStream, options = {}) {
     const {
       volume = 1,
-      noiseSuppressionMode = "strong",
+      noiseSuppressionMode = "light",
       noiseGateEnabled = true,
-      noiseGateThreshold = 0.025,
+      noiseGateThreshold = 0.035,
     } = options;
     const AudioContextClass = getAudioContextClass();
 
