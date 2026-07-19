@@ -88,6 +88,12 @@ fn quit_from_tray(app: tauri::AppHandle) {
 
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            let _ = show_main_window_inner(app);
+        }))
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             show_main_window,
             hide_tray_menu,

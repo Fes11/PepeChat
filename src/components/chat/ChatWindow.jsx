@@ -5,6 +5,7 @@ import React, {
   useLayoutEffect,
   useContext,
   useCallback,
+  useMemo,
 } from "react";
 import { Context } from "../../main.jsx";
 import MessageService from "../../services/MessageService";
@@ -72,6 +73,7 @@ const ChatWindow = observer(
     const isFirstLoad = useRef(true);
 
     const [contextMenu, setContextMenu] = useState(null);
+    const [deletingMessageId, setDeletingMessageId] = useState(null);
     const selectedMessage = useMemo(
       () =>
         messages.find(
@@ -89,6 +91,8 @@ const ChatWindow = observer(
       setLoadMessage(false);
       setIsEmojiPickerOpen(false);
       setEmojiTab("emoji");
+      setContextMenu(null);
+      setDeletingMessageId(null);
       isLoadingOlderMessages.current = false;
       previousScrollHeight.current = 0;
       shouldStickToBottom.current = true;
@@ -291,19 +295,53 @@ const ChatWindow = observer(
       });
     }, []);
 
+    const openContextMenu = useCallback((event, message) => {
+      event.preventDefault();
+      setContextMenu({
+        x: event.clientX,
+        y: event.clientY,
+        messageId: message.id,
+      });
+    }, []);
+
+    const closeContextMenu = useCallback(() => setContextMenu(null), []);
+
+    const deleteMessage = useCallback(
+      async (messageId) => {
+        if (deletingMessageId != null) return;
+
+        setDeletingMessageId(messageId);
+        try {
+          await MessageService.deleteMessage(chat.id, messageId);
+          ChatStore.removeMessage(chat.id, messageId);
+        } catch (error) {
+          console.error("Ошибка удаления сообщения:", error);
+          notifyError(error, "Не удалось удалить сообщение");
+        } finally {
+          setDeletingMessageId(null);
+        }
+      },
+      [ChatStore, chat.id, deletingMessageId],
+    );
+
     const contextMenuItems = useMemo(() => {
       if (!selectedMessage) return [];
 
       const messageId = selectedMessage.id;
+      const isOwnMessage =
+        String(selectedMessage.author?.user?.id) ===
+        String(ChatStore.currentUser?.id);
 
       return [
         {
           id: "delete",
-          label: "Удалить сообщение",
-          onSelect: () => MessageService.deleteMessage(messageId),
+          label: isOwnMessage ? "Удалить" : "Удалить у себя",
+          danger: true,
+          disabled: deletingMessageId != null,
+          onSelect: () => deleteMessage(messageId),
         },
       ];
-    }, [ChatStore, selectedMessage]);
+    }, [deleteMessage, deletingMessageId, selectedMessage]);
 
     return (
       <div className="chat_window">
@@ -427,6 +465,7 @@ const ChatWindow = observer(
                       message={msg}
                       load={loadMessage}
                       isLastInList={index === messages.length - 1}
+                      onContextMenu={openContextMenu}
                     />
                   </React.Fragment>
                 );

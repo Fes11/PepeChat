@@ -48,6 +48,14 @@ export default class ChatMessagesStore {
     return this.messagesByChat[chatId] || [];
   }
 
+  removeMessage(chatId, messageId) {
+    const id = normalizeId(messageId);
+    this.messagesByChat[chatId] = this.getMessages(chatId).filter(
+      (message) => normalizeId(message.id) !== id,
+    );
+    this.lastMessageByChat[chatId] = this.messagesByChat[chatId].at(-1) || null;
+  }
+
   setLastMessage(chatId, message) {
     this.lastMessageByChat[chatId] = message;
   }

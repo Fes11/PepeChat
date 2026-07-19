@@ -31,6 +31,15 @@
     }
   },
   "bundle": {
+    "windows": {
+      "nsis": {
+        "installerIcon": "icons/icon.ico",
+        "headerImage": "installer/header.bmp",
+        "sidebarImage": "installer/sidebar.bmp",
+        "installMode": "currentUser",
+        "languages": ["Russian"]
+      }
+    },
     "active": true,
     "createUpdaterArtifacts": true,
     "targets": "all",

@@ -146,6 +146,7 @@ export default class ChatStore {
   addMessage(chatId, message) { this.messages.addMessage(chatId, message); }
   setMessages(chatId, messages) { this.messages.setMessages(chatId, messages); }
   mergeMessages(chatId, messages) { this.messages.mergeMessages(chatId, messages); }
+  removeMessage(chatId, messageId) { this.messages.removeMessage(chatId, messageId); }
   getMessages(chatId) { return this.messages.getMessages(chatId); }
   setLastMessage(chatId, message) { this.messages.setLastMessage(chatId, message); }
   getLastMessage(chatId) { return this.messages.getLastMessage(chatId); }

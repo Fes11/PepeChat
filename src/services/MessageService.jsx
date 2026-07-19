@@ -14,6 +14,6 @@ export default class MessageService {
   }
 
   static async deleteMessage(chat_id, message_id) {
-    return api.post(`/api/chats/${chat_id}/messages/${message_id}`);
+    return api.delete(`/api/chats/${chat_id}/messages/${message_id}/`);
   }
 }

@@ -5,14 +5,22 @@ import { Context } from "../../main";
 import { format, parseISO } from "date-fns";
 import ReadMessageCheck from "../chat/ReadMessageCheck";
 
-const Message = function ({ message, load, isLastInList = false }) {
+const Message = function ({
+  message,
+  load,
+  isLastInList = false,
+  onContextMenu,
+}) {
   const { AuthStore } = useContext(Context);
   const message_time = format(parseISO(message.created_at), "HH:mm");
   const lastMessageClass = isLastInList ? ` ${classes.last_message}` : "";
 
   if (message.author?.user?.id !== AuthStore?.user?.id) {
     return (
-      <div className={`${classes.other_message}${lastMessageClass}`}>
+      <div
+        className={`${classes.other_message}${lastMessageClass}`}
+        onContextMenu={(event) => onContextMenu?.(event, message)}
+      >
         <div className={classes.other_message__bubble}>
           {message?.text}
           <div className={classes.message__time}>{message_time}</div>
@@ -22,7 +30,10 @@ const Message = function ({ message, load, isLastInList = false }) {
     );
   } else {
     return (
-      <div className={`${classes.message}${lastMessageClass}`}>
+      <div
+        className={`${classes.message}${lastMessageClass}`}
+        onContextMenu={(event) => onContextMenu?.(event, message)}
+      >
         <UserAvatar src={message.author?.user.avatar} />
 
         <div className={classes.message__bubble}>
