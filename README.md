@@ -1,119 +1,92 @@
-# PepeChat
+# PepeChat Client
 
-**PepeChat** — это современный мессенджер, который сочетает в себе лучшие черты Discord и Telegram с акцентом удобство использования.
+Клиент PepeChat на React 19, Vite 7 и Tauri 2. Один код интерфейса используется для браузерного и desktop-варианта приложения.
 
-**Дата начала разработки:** 12 июня 2024 года
+## Требования
 
-### Ключевые особенности:
+Для web-разработки:
 
-- **💬 Умный чат** — интерфейс, превосходящий Discord по эргономике
-- **🌐 Публичные чаты** — функция просмотра популярных открытых чатов
-- **🔍 Умный поиск** — расширенная система фильтрации и поиска каналов
+- Node.js 20 или новее;
+- npm;
+- запущенный PepeChat API.
 
-### Технологический стек:
+Для desktop-разработки дополнительно нужны Rust toolchain и системные зависимости Tauri 2 для целевой ОС.
 
-**Frontend (Tauri + React):**
-
-- **Tauri 2** — кроссплатформенный фреймворк для десктопных приложений
-- **React 19** — современный UI-фреймворк
-- **React Router v7** — навигация и роутинг
-- **MobX 6** — управление состоянием приложения
-- **Axios** — HTTP-клиент с интерцепторами
-- **Vite** — быстрая сборка и dev-сервер
-- **WebRTC** — технология для голосовых звонков
-
-**Backend:**
-
-- **Django** — мощный Python-фреймворк
-- **WebSocket** — реальное время для чатов и звонков
-- **Django REST Framework** — API для мобильного и веб-клиентов
-
-**Desktop:**
-
-- **Rust** — нативная производительность через Tauri
-- **window-vibrancy** — современные визуальные эффекты
-
----
-
-**PepeChat** is a modern messenger combining the best features of Discord and Telegram with a focus on communication quality and user experience.
-
-**Development start date:** June 12, 2024
-
-### Key Features:
-
-- **💬 Smart Chat** — interface surpassing Discord in ergonomics
-- **🎙️ Voice Calls** — high-quality communication powered by WebRTC with mesh network architecture
-- **🌐 Public Chats** — unique feature for browsing popular open chats
-- **🔍 Smart Search** — advanced filtering and channel discovery system
-
-### Technology Stack:
-
-**Frontend (Tauri + React):**
-
-- **Tauri 2** — cross-platform desktop application framework
-- **React 19** — modern UI framework
-- **React Router v7** — navigation and routing
-- **MobX 6** — application state management
-- **Axios** — HTTP client with interceptors
-- **Vite** — fast build tool and dev server
-- **WebRTC** — voice calling technology
-
-**Backend:**
-
-- **Django** — powerful Python framework
-- **WebSocket** — real-time communication for chats and calls
-- **Django REST Framework** — API for mobile and web clients
-
-**Desktop:**
-
-- **Rust** — native performance through Tauri
-- **window-vibrancy** — modern visual effects
-
----
-
-### Дизайн (Design)
-
-<img src='screenshot/design.jpg'></img>
-
-### Текущая стадия разработки интерфейса (Current stage of interface development)
-
-<img src='screenshot/13.11.2024.PNG'></img>
-
-### Структура проекта (Project Structure)
-
-```
-PepeChat/
-├── src/
-│   ├── api/                      # API клиенты и WebSocket соединения
-│   ├── components/               # React компоненты
-│   ├── hooks/                    # Бизнес-логика и кастомные хуки
-│   ├── services/                 # Сервисы для работы с API
-│   ├── store/                    # MobX хранилища
-│   ├── style/                    # Глобальные стили
-│   ├── App.jsx                   # Корневой компонент
-│   └── main.jsx                  # Точка входа
-├── src-tauri/                    # Tauri backend на Rust
-│   ├── src/                      # Rust исходный код
-│   ├── Cargo.toml                # Rust зависимости
-│   └── tauri.conf.json           # Tauri конфигурация
-├── public/                       # Статические ресурсы
-├── screenshot/                   # Скриншоты интерфейса
-└── package.json                  # Node.js зависимости
-```
-
-### Быстрый старт (Quick Start)
+## Установка
 
 ```bash
-# Установка зависимостей
 npm install
+```
 
-# Запуск в режиме разработки
+## Переменные окружения
+
+Создайте или измените `.env.development`:
+
+```dotenv
+VITE_API_URL=http://127.0.0.1:8000
+VITE_WS_URL=ws://127.0.0.1:8000
+```
+
+Доступные параметры:
+
+| Переменная              | Назначение                                                                       |
+| ----------------------- | -------------------------------------------------------------------------------- |
+| `VITE_API_URL`          | Базовый адрес REST API                                                           |
+| `VITE_WS_URL`           | Базовый адрес WebSocket                                                          |
+| `VITE_ICE_SERVERS_JSON` | Необязательный JSON-массив `RTCIceServer[]` или объект `{ "iceServers": [...] }` |
+
+## Команды
+
+### Web
+
+```bash
+# Dev-сервер на http://127.0.0.1:1420
+npm run dev
+
+# Production-сборка в dist/
+npm run build
+
+# Локальный просмотр production-сборки
+npm run preview
+```
+
+### Desktop
+
+```bash
+# Tauri dev
 npm run tauri dev
 
-# Сборка релизной версии
+# Установщик/desktop bundle
 npm run tauri build
 ```
 
-### Лицензия (License)
+Версия приложения задаётся в `src-tauri/tauri.conf.json` и `src-tauri/Cargo.toml`. Updater получает подписанный манифест и артефакты из GitHub Releases.
 
-Проект находится в разработке. Все права защищены.
+## Структура
+
+```text
+frontend/
+├── public/                     # Статические изображения, иконки и audio worklet
+├── src/
+│   ├── api/                    # Axios и WebSocket-клиенты
+│   ├── components/             # React UI
+│   ├── config/                 # Переменные окружения
+│   ├── hooks/                  # WebRTC, voice room и audio hooks
+│   ├── notifications/          # Toast-уведомления
+│   ├── services/               # REST, media и локальный кэш
+│   ├── store/                  # MobX stores
+│   ├── style/                  # Глобальные стили
+│   ├── updates/                # Tauri updater provider
+│   ├── utils/                  # Ошибки, media URL и вспомогательные данные
+│   ├── App.jsx                 # Маршруты и восстановление сессии
+│   └── main.jsx                # Providers и инициализация stores
+├── src-tauri/                  # Rust/Tauri backend, capabilities и icons
+├── screenshot/                # Скриншоты проекта
+├── ARCHITECTURE.md             # Подробности voice/WebRTC архитектуры
+├── package.json
+└── vite.config.js
+```
+
+## Скриншот
+
+![Интерфейс PepeChat](screenshot/21.07.2026.PNG)

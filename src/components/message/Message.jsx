@@ -7,7 +7,6 @@ import ReadMessageCheck from "../chat/ReadMessageCheck";
 
 const Message = function ({
   message,
-  load,
   isLastInList = false,
   onContextMenu,
 }) {
@@ -40,7 +39,10 @@ const Message = function ({
           {message?.text}
           <div className={classes.message__time}>
             {message_time}
-            <ReadMessageCheck isRead={message.is_read} load={load} />
+            <ReadMessageCheck
+              isRead={message.is_read}
+              deliveryStatus={message.delivery_status}
+            />
           </div>
         </div>
       </div>

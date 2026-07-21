@@ -26,13 +26,16 @@ const getRoomGridClass = (participantsCount) => {
   return cls.room_users_list_dense;
 };
 
-const Room = forwardRef(function Room({
-  onLeaveRoom,
-  onHide,
-  chatId,
-  isOpen = true,
-  preserveChatDescription = false,
-}, ref) {
+const Room = forwardRef(function Room(
+  {
+    onLeaveRoom,
+    onHide,
+    chatId,
+    isOpen = true,
+    preserveChatDescription = false,
+  },
+  ref,
+) {
   const { AuthStore, ChatStore } = useContext(Context);
   const {
     participants,
@@ -51,15 +54,19 @@ const Room = forwardRef(function Room({
   const [isRoomHovered, setIsRoomHovered] = useState(false);
   const micMutedBeforeHeadphonesRef = useRef(false);
   const showRoomUi = isJoining || isRoomHovered || Boolean(contextMenu);
-  const roomGridClass = getRoomGridClass(participants.length);
+  const displayedParticipants = useMemo(
+    () => [...participants],
+    [participants],
+  );
+  const roomGridClass = getRoomGridClass(displayedParticipants.length);
 
   const selectedParticipant = useMemo(
     () =>
-      participants.find(
+      displayedParticipants.find(
         (participant) =>
           String(participant.id) === String(contextMenu?.participantId),
       ),
-    [contextMenu?.participantId, participants],
+    [contextMenu?.participantId, displayedParticipants],
   );
 
   const isCurrentUserParticipant = (participant) =>
@@ -199,7 +206,7 @@ const Room = forwardRef(function Room({
       }}
     >
       <button
-        className={cls.hide_btn}
+        className={`${cls.hide_btn} ${showRoomUi ? cls.hide_btn_visible : ""}`}
         type="button"
         onClick={onHide}
         title="Свернуть голосовую комнату"
@@ -212,7 +219,7 @@ const Room = forwardRef(function Room({
       </div>
 
       <div className={`${cls.room_users_list} ${roomGridClass}`}>
-        {participants.map((participant) => (
+        {displayedParticipants.map((participant) => (
           <RoomUser
             key={participant.id}
             participant={participant}

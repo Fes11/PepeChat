@@ -6,27 +6,7 @@ export const NOTIFICATION_TYPES = {
   INFO: "info",
 };
 
-const getErrorMessage = (error) => {
-  if (!error) return "Произошла ошибка";
-
-  if (typeof error === "string") return error;
-
-  const data = error.response?.data;
-
-  if (typeof data === "string") return data;
-
-  if (data?.detail) return data.detail;
-  if (data?.message) return data.message;
-  if (typeof data?.error === "string") return data.error;
-  if (data?.error?.message) return data.error.message;
-
-  if (data && typeof data === "object") {
-    const firstValue = Object.values(data).flat()[0];
-    if (firstValue) return String(firstValue);
-  }
-
-  return error.message || "Произошла ошибка";
-};
+import { getErrorMessage } from "../utils/errors";
 
 export const subscribeToNotifications = (listener) => {
   listeners.add(listener);
@@ -52,7 +32,7 @@ export const notify = ({
 export const notifyError = (error, fallbackMessage) =>
   notify({
     type: NOTIFICATION_TYPES.ERROR,
-    message: fallbackMessage || getErrorMessage(error),
+    message: getErrorMessage(error, fallbackMessage),
   });
 
 export const notifySuccess = (message) =>

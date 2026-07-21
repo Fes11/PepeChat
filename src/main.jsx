@@ -6,16 +6,20 @@ import authStore from "./store/authStore";
 import chatStore from "./store/chatStore";
 import messagesStore from "./store/messagesStore";
 import mediaStore from "./store/mediaStore";
+import ConnectionStoreClass from "./store/connectionStore";
+import { setApiConnectionListener } from "./api";
 import { initThemeSettings } from "./theme";
 import { NotificationProvider } from "./notifications/NotificationProvider";
 import { UpdateProvider } from "./updates/UpdateProvider";
 
-const ChatStore = new chatStore();
+const ConnectionStore = new ConnectionStoreClass();
+const ChatStore = new chatStore(ConnectionStore);
 const AuthStore = new authStore(ChatStore);
 const MessagesStore = new messagesStore();
 const MediaStore = new mediaStore();
 
 initThemeSettings();
+setApiConnectionListener(ConnectionStore.setApiAvailable);
 
 export const Context = createContext({});
 
@@ -38,7 +42,7 @@ if (!window._root) {
 window._root.render(
   <React.StrictMode>
     <Context.Provider
-      value={{ AuthStore, ChatStore, MessagesStore, MediaStore }}
+      value={{ AuthStore, ChatStore, MessagesStore, MediaStore, ConnectionStore }}
     >
       <BrowserRouter>
         <NotificationProvider>

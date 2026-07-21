@@ -74,18 +74,21 @@ const ChatPage = observer(() => {
     let cancelled = false;
 
     const selectRouteChat = async () => {
-      let chat = ChatStore.chats.find(
-        (item) => String(item.id) === routeChatId,
-      );
+      const chat =
+        ChatStore.chats.find((item) => String(item.id) === routeChatId) ??
+        (await ChatStore.ensureChatLoaded(routeChatId, 0));
 
-      if (!chat) {
-        await ChatStore.ensureChatLoaded(routeChatId, 0);
-        chat = ChatStore.chats.find(
-          (item) => String(item.id) === routeChatId,
-        );
+      if (cancelled) return;
+
+      if (chat) {
+        ChatStore.openChat(chat);
+        return;
       }
 
-      if (!cancelled && chat) ChatStore.openChat(chat);
+      if (sessionStorage.getItem(LAST_OPEN_CHAT_ID_KEY) === routeChatId) {
+        sessionStorage.removeItem(LAST_OPEN_CHAT_ID_KEY);
+      }
+      navigate("/chat", { replace: true });
     };
 
     selectRouteChat();
@@ -93,7 +96,7 @@ const ChatPage = observer(() => {
     return () => {
       cancelled = true;
     };
-  }, [routeChatId, selectedChatId, ChatStore]);
+  }, [routeChatId, selectedChatId, ChatStore, navigate]);
 
   useEffect(() => {
     if (!activeVoiceRoomChatId || !selectedChatId) return;

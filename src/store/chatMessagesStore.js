@@ -4,6 +4,18 @@ const normalizeId = (id) => String(id);
 const sortByCreatedAt = (messages) => messages.sort(
   (a, b) => new Date(a.created_at) - new Date(b.created_at),
 );
+const MAX_CACHED_MESSAGES_PER_CHAT = 300;
+const OPTIMISTIC_MATCH_WINDOW_MS = 2 * 60 * 1000;
+
+const isTemporaryMessage = (message) =>
+  message.delivery_status === "pending"
+  || message.delivery_status === "failed"
+  || normalizeId(message.id).startsWith("temp:");
+
+const sameMessageContent = (left, right) =>
+  left.text === right.text
+  && (left.sticker ?? null) === (right.sticker ?? null)
+  && normalizeId(left.author?.user?.id) === normalizeId(right.author?.user?.id);
 
 export default class ChatMessagesStore {
   messagesByChat = {};
@@ -16,14 +28,13 @@ export default class ChatMessagesStore {
   }
 
   addMessage(chatId, message) {
-    const messages = this.getMessages(chatId);
-    const messageId = normalizeId(message.id);
-    if (messages.some((item) => normalizeId(item.id) === messageId)) return;
-    this.messagesByChat[chatId] = [...messages, message];
+    this.messagesByChat[chatId] = this.merge(this.getMessages(chatId), [message]);
   }
 
   setMessages(chatId, messages) {
-    this.messagesByChat[chatId] = this.merge([], messages);
+    const localOnly = this.getMessages(chatId).filter((message) =>
+      message.delivery_status === "pending" || message.delivery_status === "failed");
+    this.messagesByChat[chatId] = this.merge(localOnly, messages);
   }
 
   mergeMessages(chatId, messages) {
@@ -31,17 +42,56 @@ export default class ChatMessagesStore {
   }
 
   merge(currentMessages, newMessages) {
-    const merged = new Map();
-    [...currentMessages, ...newMessages].forEach((message) => {
-      const id = normalizeId(message.id);
-      const existing = merged.get(id);
-      merged.set(id, {
+    const merged = [];
+    [...currentMessages, ...newMessages].forEach((rawMessage) => {
+      let message = rawMessage;
+
+      // Compatibility with servers that do not echo client_id yet. A server
+      // message can safely replace only a close, content-identical optimistic
+      // message from the same author.
+      if (message.id != null
+        && !normalizeId(message.id).startsWith("temp:")
+        && !message.client_id) {
+        const serverTime = new Date(message.created_at).getTime();
+        const optimistic = merged
+          .filter((item) => isTemporaryMessage(item) && sameMessageContent(item, message))
+          .map((item) => ({
+            item,
+            distance: Math.abs(new Date(item.created_at).getTime() - serverTime),
+          }))
+          .filter(({ distance }) => Number.isFinite(distance) && distance <= OPTIMISTIC_MATCH_WINDOW_MS)
+          .sort((left, right) => left.distance - right.distance)[0]?.item;
+
+        if (optimistic?.client_id) {
+          message = { ...message, client_id: optimistic.client_id };
+        }
+      }
+
+      const index = merged.findIndex((item) =>
+        (message.id != null && item.id != null && normalizeId(item.id) === normalizeId(message.id))
+        || (message.client_id && item.client_id === message.client_id));
+      const existing = index >= 0 ? merged[index] : null;
+      const next = {
         ...existing,
         ...message,
+        delivery_status: message.id != null && !normalizeId(message.id).startsWith("temp:")
+          ? "sent"
+          : (message.delivery_status ?? existing?.delivery_status),
         is_read: Boolean(existing?.is_read || message.is_read),
-      });
+      };
+      if (index >= 0) merged[index] = next;
+      else merged.push(next);
     });
-    return sortByCreatedAt(Array.from(merged.values()));
+    return sortByCreatedAt(merged);
+  }
+
+  setDeliveryStatus(chatId, clientId, deliveryStatus) {
+    const messages = this.getMessages(chatId);
+    const index = messages.findIndex((message) => message.client_id === clientId);
+    if (index < 0 || messages[index].delivery_status === deliveryStatus) return;
+    const next = messages.slice();
+    next[index] = { ...next[index], delivery_status: deliveryStatus };
+    this.messagesByChat[chatId] = next;
   }
 
   getMessages(chatId) {
@@ -62,6 +112,31 @@ export default class ChatMessagesStore {
 
   getLastMessage(chatId) {
     return this.lastMessageByChat[chatId] || null;
+  }
+
+  hydrate(snapshot = {}) {
+    this.messagesByChat = Object.fromEntries(
+      Object.entries(snapshot.messagesByChat || {}).map(([chatId, messages]) => [
+        chatId,
+        messages.map((message) => message.delivery_status === "pending"
+          ? { ...message, delivery_status: "failed" }
+          : message),
+      ]),
+    );
+    this.lastMessageByChat = snapshot.lastMessageByChat || {};
+  }
+
+  toJSON() {
+    const messagesByChat = Object.fromEntries(
+      Object.entries(this.messagesByChat).map(([chatId, messages]) => [
+        chatId,
+        messages.slice(-MAX_CACHED_MESSAGES_PER_CHAT),
+      ]),
+    );
+    return {
+      messagesByChat,
+      lastMessageByChat: this.lastMessageByChat,
+    };
   }
 
   handleMessagesRead(data, currentUserId) {

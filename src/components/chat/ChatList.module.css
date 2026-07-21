@@ -62,6 +62,12 @@
   min-height: 0;
 }
 
+.chat__list__scroll :global(.chat_list_element),
+.chat__list__scroll :global(.chat_list_element *) {
+  animation: none;
+  transition: none;
+}
+
 .chat_list__loader {
   min-height: 48px;
   display: flex;

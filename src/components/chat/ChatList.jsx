@@ -43,7 +43,9 @@ const ChatList = observer(
 
       try {
         const response = await ChatServices.getChats(pageRef.current);
-        ChatStore.setChats([...ChatStore.chats, ...response.data.results]);
+        ChatStore.setChats(pageRef.current === 1
+          ? response.data.results
+          : [...ChatStore.chats, ...response.data.results]);
 
         setHasMore(!!response.data.next);
         pageRef.current++;
@@ -57,6 +59,8 @@ const ChatList = observer(
 
     useEffect(() => {
       fetchChats();
+      window.addEventListener("online", fetchChats);
+      return () => window.removeEventListener("online", fetchChats);
     }, [fetchChats]);
 
     const handleChatCreated = (newChat) => {

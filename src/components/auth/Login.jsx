@@ -4,20 +4,7 @@ import { Context } from "../../main";
 import classes from "./Login.module.css";
 import { observer } from "mobx-react-lite";
 import { Link } from "react-router-dom";
-
-const getErrorMessage = (errors, field) => {
-  const value = errors[field];
-
-  if (Array.isArray(value)) {
-    return value.join(" ");
-  }
-
-  if (typeof value === "string") {
-    return value;
-  }
-
-  return "";
-};
+import { getFieldError } from "../../utils/errors";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -26,10 +13,11 @@ const Login = () => {
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const loginError = getErrorMessage(errors, "login");
-  const passwordError = getErrorMessage(errors, "password");
-  const formError = getErrorMessage(errors, "non_field_errors");
+  const loginError = getFieldError(errors, "login");
+  const passwordError = getFieldError(errors, "password");
+  const formError = getFieldError(errors, "non_field_errors");
 
   const clearFieldError = (field) => {
     setErrors((prev) => ({
@@ -41,14 +29,30 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setErrors({});
-    const result = await AuthStore.login(login, password);
+    if (isSubmitting) return;
 
-    if (result.ok) {
-      MediaStore.initializeDevices({ requestMicrophone: true });
-      navigate("/chat/"); // переход после успешного входа
-    } else {
-      setErrors(result.errors);
+    const clientErrors = {};
+    if (!login.trim()) clientErrors.login = ["Введите логин."];
+    if (!password) clientErrors.password = ["Введите пароль."];
+    if (Object.keys(clientErrors).length) {
+      setErrors(clientErrors);
+      return;
+    }
+
+    setErrors({});
+    setIsSubmitting(true);
+
+    try {
+      const result = await AuthStore.login(login, password);
+
+      if (result.ok) {
+        MediaStore.initializeDevices({ requestMicrophone: true });
+        navigate("/chat/"); // переход после успешного входа
+      } else {
+        setErrors(result.errors);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -59,7 +63,7 @@ const Login = () => {
       </div>
 
       <div className={classes.login__main}>
-        <form className={classes.login__form} onSubmit={handleLogin}>
+        <form className={classes.login__form} onSubmit={handleLogin} noValidate>
           <div className={classes.login__form_title}>
             <h1>Welcome!</h1>
             <p>Залогинся или зарегайся, чтобы использовать чат</p>
@@ -100,8 +104,17 @@ const Login = () => {
             }`}
           />
 
-          <button type="submit" className={classes.login__form_btn}>
-            Continue
+          <button
+            type="submit"
+            className={classes.login__form_btn}
+            disabled={isSubmitting}
+            aria-busy={isSubmitting}
+          >
+            {isSubmitting ? (
+              <span className={classes.login__form_loader} aria-label="Выполняется вход" />
+            ) : (
+              "Continue"
+            )}
           </button>
 
           <div className={classes.login__form_bottom}>

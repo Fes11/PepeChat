@@ -3,9 +3,16 @@ import ChatService from "../services/ChatService";
 import ChatSocketService from "../services/ChatSocketService";
 import ChatActivityStore from "./chatActivityStore";
 import ChatMessagesStore from "./chatMessagesStore";
+import LocalCacheService from "../services/LocalCacheService";
 
 const normalizeId = (id) => String(id);
 const sameId = (left, right) => normalizeId(left) === normalizeId(right);
+const CHAT_SESSION_KEYS = ["lastOpenChatId", "activeVoiceRoomChatId"];
+const createClientId = () => globalThis.crypto?.randomUUID?.()
+  ?? "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (char) => {
+    const value = Math.floor(Math.random() * 16);
+    return (char === "x" ? value : (value & 0x3) | 0x8).toString(16);
+  });
 
 export default class ChatStore {
   selectedChat = null;
@@ -13,17 +20,25 @@ export default class ChatStore {
   isConnected = false;
   chats = [];
   currentUser = null;
-  loadingChatIds = new Set();
+  chatLoadRequests = new Map();
+  chatLoadGeneration = 0;
   presenceListener = null;
   openChatRequestId = 0;
+  accountId = null;
+  cacheWriteTimer = null;
+  cacheWritePromise = Promise.resolve();
 
-  constructor() {
+  constructor(connectionStore) {
+    this.connectionStore = connectionStore;
     this.messages = new ChatMessagesStore();
     this.activity = new ChatActivityStore();
     this.socketService = new ChatSocketService({
       // Keep callback ownership here: these closures always dispatch to the
       // current ChatStore instance, independently of MobX method decoration.
-      onConnectionChange: (isConnected) => this.setConnectionState(isConnected),
+      onConnectionChange: (isConnected) => {
+        this.setConnectionState(isConnected);
+        this.connectionStore?.setWebsocketConnected(isConnected);
+      },
       onMessage: (data) => this.handleSocketMessage(data),
       onOpen: () => this.flushPendingReads(),
     });
@@ -32,6 +47,11 @@ export default class ChatStore {
       messages: false,
       activity: false,
       socketService: false,
+      chatLoadRequests: false,
+      chatLoadGeneration: false,
+      connectionStore: false,
+      cacheWriteTimer: false,
+      cacheWritePromise: false,
     }, { autoBind: true });
   }
 
@@ -56,14 +76,25 @@ export default class ChatStore {
   setPresenceListener(listener) { this.presenceListener = listener; }
   setConnectionState(isConnected) { this.isConnected = isConnected; }
 
-  connect(token) { this.socketService.connect(token); }
-  disconnect() { this.socketService.disconnect(); }
+  connect(token) {
+    this.connectionStore?.setWebsocketExpected(Boolean(token));
+    this.socketService.connect(token);
+  }
+  disconnect() {
+    this.connectionStore?.setWebsocketExpected(false);
+    this.socketService.disconnect();
+  }
   sendWS(data) { return this.socketService.send(data); }
   sendPresenceHeartbeat() { return this.socketService.sendPresenceHeartbeat(); }
 
   handleSocketMessage(data) {
     const handlers = {
-      message: () => this.handleIncomingMessage(data.chat_id, data.payload, data.unread_count),
+      message: () => this.handleIncomingMessage(
+        data.chat_id,
+        data.client_id ? { ...data.payload, client_id: data.client_id } : data.payload,
+        data.unread_count,
+      ),
+      error: () => this.handleMessageError(data),
       messages_read: () => this.handleMessagesRead(data),
       "chat.created": () => this.ensureChatLoaded(data.chat_id, 0),
       "presence.changed": () => this.handlePresenceChanged(data),
@@ -92,6 +123,7 @@ export default class ChatStore {
       remaining.splice(index, 0, nextChat);
       this.chats = remaining;
     }
+    this.scheduleCacheWrite();
   }
 
   setChats(chats) {
@@ -116,6 +148,7 @@ export default class ChatStore {
       }
     });
     this.chats = Array.from(uniqueChats.values());
+    this.scheduleCacheWrite();
   }
 
   updateChat(chatId, changes) {
@@ -131,6 +164,7 @@ export default class ChatStore {
         data: { ...this.selectedChat.data, ...changes },
       };
     }
+    this.scheduleCacheWrite();
   }
 
   setUnreadCount(chatId, unreadCount) {
@@ -143,16 +177,44 @@ export default class ChatStore {
     this.updateChat(chatId, { unread_count: count });
   }
 
-  addMessage(chatId, message) { this.messages.addMessage(chatId, message); }
-  setMessages(chatId, messages) { this.messages.setMessages(chatId, messages); }
-  mergeMessages(chatId, messages) { this.messages.mergeMessages(chatId, messages); }
-  removeMessage(chatId, messageId) { this.messages.removeMessage(chatId, messageId); }
+  addMessage(chatId, message) { this.messages.addMessage(chatId, message); this.scheduleCacheWrite(); }
+  setMessages(chatId, messages) { this.messages.setMessages(chatId, messages); this.scheduleCacheWrite(); }
+  mergeMessages(chatId, messages) { this.messages.mergeMessages(chatId, messages); this.scheduleCacheWrite(); }
+  removeMessage(chatId, messageId) { this.messages.removeMessage(chatId, messageId); this.scheduleCacheWrite(); }
   getMessages(chatId) { return this.messages.getMessages(chatId); }
-  setLastMessage(chatId, message) { this.messages.setLastMessage(chatId, message); }
+  setLastMessage(chatId, message) { this.messages.setLastMessage(chatId, message); this.scheduleCacheWrite(); }
   getLastMessage(chatId) { return this.messages.getLastMessage(chatId); }
 
   sendMessage(chatId, message) {
-    return this.sendWS({ action: "send_message", chat_id: chatId, message });
+    const clientId = createClientId();
+    const optimisticMessage = {
+      ...message,
+      id: `temp:${clientId}`,
+      client_id: clientId,
+      chat: chatId,
+      author: { user: this.currentUser },
+      created_at: new Date().toISOString(),
+      is_read: false,
+      delivery_status: "pending",
+    };
+    this.addMessage(chatId, optimisticMessage);
+    this.setLastMessage(chatId, optimisticMessage);
+
+    if (!this.sendWS({ action: "send_message", chat_id: chatId, client_id: clientId, message })) {
+      this.handleMessageError({ chat_id: chatId, client_id: clientId });
+      return false;
+    }
+    return true;
+  }
+
+  handleMessageError(data) {
+    if (!data.client_id || data.chat_id == null) return;
+    this.messages.setDeliveryStatus(data.chat_id, data.client_id, "failed");
+    const lastMessage = this.getLastMessage(data.chat_id);
+    if (lastMessage?.client_id === data.client_id) {
+      this.setLastMessage(data.chat_id, { ...lastMessage, delivery_status: "failed" });
+    }
+    this.scheduleCacheWrite();
   }
 
   setVoiceParticipants(chatId, participants = []) {
@@ -244,17 +306,31 @@ export default class ChatStore {
 
   async ensureChatLoaded(chatId, unreadCount = null) {
     const key = normalizeId(chatId);
-    if (this.chats.some((chat) => sameId(chat.id, chatId)) || this.loadingChatIds.has(key)) return;
-    this.loadingChatIds.add(key);
+    const existingChat = this.chats.find((chat) => sameId(chat.id, chatId));
+    if (existingChat) return existingChat;
 
-    try {
-      const { data: chat } = await ChatService.getChat(chatId);
-      if (chat) runInAction(() => this.upsertChat(chat, { unreadCount }));
-    } catch (error) {
-      console.error("Failed to load new chat", error);
-    } finally {
-      runInAction(() => this.loadingChatIds.delete(key));
-    }
+    const pendingRequest = this.chatLoadRequests.get(key);
+    if (pendingRequest) return pendingRequest;
+
+    const generation = this.chatLoadGeneration;
+    const request = ChatService.getChat(chatId)
+      .then(({ data: chat }) => {
+        if (generation !== this.chatLoadGeneration) return null;
+        if (chat) runInAction(() => this.upsertChat(chat, { unreadCount }));
+        return chat ?? null;
+      })
+      .catch((error) => {
+        console.error("Failed to load chat", error);
+        return null;
+      })
+      .finally(() => {
+        if (this.chatLoadRequests.get(key) === request) {
+          this.chatLoadRequests.delete(key);
+        }
+      });
+
+    this.chatLoadRequests.set(key, request);
+    return request;
   }
 
   openChat(chat) {
@@ -291,14 +367,55 @@ export default class ChatStore {
 
   removeChat(chatId) {
     this.chats = this.chats.filter((chat) => !sameId(chat.id, chatId));
+    this.scheduleCacheWrite();
+  }
+
+  async useAccount(accountId, cachedProfile = null) {
+    if (this.accountId != null && !sameId(this.accountId, accountId)) this.reset();
+    this.accountId = accountId;
+    const snapshot = await LocalCacheService.read(accountId);
+    if (!snapshot) return cachedProfile;
+    runInAction(() => {
+      this.chats = Array.isArray(snapshot.chats) ? snapshot.chats : [];
+      this.messages.hydrate(snapshot.messages);
+    });
+    return snapshot.profile ?? cachedProfile;
+  }
+
+  setCachedProfile(profile) {
+    this.currentUser = profile;
+    this.scheduleCacheWrite();
+  }
+
+  scheduleCacheWrite() {
+    if (this.accountId == null) return;
+    clearTimeout(this.cacheWriteTimer);
+    this.cacheWriteTimer = setTimeout(() => this.persistCache(), 150);
+  }
+
+  persistCache() {
+    this.cacheWriteTimer = null;
+    const accountId = this.accountId;
+    const snapshot = {
+      profile: this.currentUser,
+      chats: this.chats,
+      messages: this.messages.toJSON(),
+    };
+    this.cacheWritePromise = this.cacheWritePromise
+      .then(() => LocalCacheService.write(accountId, snapshot));
+    return this.cacheWritePromise;
   }
 
   reset() {
+    clearTimeout(this.cacheWriteTimer);
+    this.cacheWriteTimer = null;
     this.selectedChat = null;
     this.isOpening = false;
     this.chats = [];
-    this.loadingChatIds.clear();
+    this.chatLoadGeneration += 1;
+    this.chatLoadRequests.clear();
     this.messages.reset();
     this.activity.reset();
+    CHAT_SESSION_KEYS.forEach((key) => sessionStorage.removeItem(key));
   }
 }

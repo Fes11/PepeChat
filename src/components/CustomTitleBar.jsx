@@ -1,4 +1,7 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { useContext } from "react";
+import { observer } from "mobx-react-lite";
+import { Context } from "../main";
 
 const runWindowAction = (actionName) => {
   try {
@@ -19,7 +22,15 @@ const stopWindowDrag = (event) => {
   event.stopPropagation();
 };
 
-const CustomTitleBar = () => {
+const CONNECTION_LABELS = {
+  connected: "Подключено",
+  reconnecting: "Переподключение",
+  offline: "Нет сети",
+};
+
+const CustomTitleBar = observer(() => {
+  const { ConnectionStore } = useContext(Context);
+  const status = ConnectionStore.status;
   const startDragging = (event) => {
     if (event.button !== 0) {
       return;
@@ -42,6 +53,14 @@ const CustomTitleBar = () => {
       <div className="custom_title_bar__brand" data-tauri-drag-region>
         <img className="custom_title_bar__logo" src="/logo.svg" alt="" />
         <span className="custom_title_bar__title">PepeChat</span>
+        <span
+          className={`connection_status connection_status--${status}`}
+          title={CONNECTION_LABELS[status]}
+          aria-label={`Состояние подключения: ${CONNECTION_LABELS[status]}`}
+        >
+          <span className="connection_status__dot" aria-hidden="true" />
+          <span className="connection_status__label">{CONNECTION_LABELS[status]}</span>
+        </span>
       </div>
       <div
         className="custom_title_bar__controls"
@@ -78,6 +97,6 @@ const CustomTitleBar = () => {
       </div>
     </header>
   );
-};
+});
 
 export default CustomTitleBar;

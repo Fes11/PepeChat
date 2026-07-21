@@ -71,10 +71,34 @@
   width: 100%;
   box-sizing: border-box;
   margin-top: 10px;
+  min-height: 51px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.registration__form_btn:hover {
+.registration__form_btn:hover:not(:disabled) {
   background: var(--main-hover-color);
+}
+
+.registration__form_btn:disabled {
+  cursor: wait;
+  opacity: 0.75;
+}
+
+.registration__form_loader {
+  width: 18px;
+  height: 18px;
+  border: 2px solid color-mix(in srgb, var(--main-contrast-color) 35%, transparent);
+  border-top-color: var(--main-contrast-color);
+  border-radius: 50%;
+  animation: registration-button-spin 0.7s linear infinite;
+}
+
+@keyframes registration-button-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .registration__form_input {

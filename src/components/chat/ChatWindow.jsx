@@ -21,8 +21,11 @@ import { enUS } from "date-fns/locale";
 import DateDivider from "../UI/DateDivider.jsx";
 import { observer } from "mobx-react-lite";
 import { notifyError } from "../../notifications/notificationService.js";
+import { getErrorMessage } from "../../utils/errors.js";
 import { resolveMediaUrl } from "../../utils/mediaUrl";
 import ContextMenu from "../UI/ContextMenu";
+
+const MAX_INPUT_HEIGHT = 200;
 
 const ChatWindow = observer(
   ({ chat, activeVoiceRoomChatId, onOpenVoiceRoom }) => {
@@ -42,7 +45,6 @@ const ChatWindow = observer(
     const isLoadingOlderMessages = useRef(false);
     const previousScrollHeight = useRef(0);
     const shouldStickToBottom = useRef(true);
-    const [loadMessage, setLoadMessage] = useState(false);
     const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
     const [emojiTab, setEmojiTab] = useState("emoji");
     const [participants, setParticipants] = useState([]);
@@ -88,7 +90,6 @@ const ChatWindow = observer(
       setNextCursor(null);
       setHasMore(true);
       setIsLoadingMore(false);
-      setLoadMessage(false);
       setIsEmojiPickerOpen(false);
       setEmojiTab("emoji");
       setContextMenu(null);
@@ -97,6 +98,22 @@ const ChatWindow = observer(
       previousScrollHeight.current = 0;
       shouldStickToBottom.current = true;
     }, [chat.id]);
+
+    const resizeMessageInput = useCallback(() => {
+      const input = inputRef.current;
+      if (!input) return;
+
+      input.style.height = "auto";
+      const contentHeight = input.scrollHeight;
+      const nextHeight = Math.min(contentHeight, MAX_INPUT_HEIGHT);
+      input.style.height = `${nextHeight}px`;
+      input.style.overflowY =
+        contentHeight >= MAX_INPUT_HEIGHT ? "auto" : "hidden";
+    }, []);
+
+    useLayoutEffect(() => {
+      resizeMessageInput();
+    }, [inputMessage, resizeMessageInput]);
 
     useEffect(() => {
       if (!isEmojiPickerOpen) return;
@@ -142,13 +159,14 @@ const ChatWindow = observer(
     }, [chat.id, chat.is_group]);
 
     useEffect(() => {
-      setIsLoading(true);
+      const hasCachedMessages = ChatStore.getMessages(chat.id).length > 0;
+      setIsLoading(!hasCachedMessages);
       isFirstLoad.current = true;
 
       activeChatId.current = chat.id;
 
       const loadMessages = async () => {
-        setIsLoading(true);
+        setIsLoading(!hasCachedMessages);
 
         try {
           const res = await MessageService.getMessages(chat.id);
@@ -158,14 +176,14 @@ const ChatWindow = observer(
           setHasMore(Boolean(res.data.next));
         } catch (e) {
           console.error(e);
-          setError(e);
+          if (!hasCachedMessages) setError(e);
         } finally {
           setIsLoading(false);
         }
       };
 
       loadMessages();
-    }, [chat.id]);
+    }, [ChatStore, chat.id]);
 
     const loadMoreMessages = useCallback(async () => {
       if (!nextCursor || isLoadingMore) return;
@@ -248,8 +266,6 @@ const ChatWindow = observer(
     }, [hasMore, loadMoreMessages]);
 
     const sendMessage = async (e) => {
-      setLoadMessage(true);
-
       try {
         e.preventDefault();
         if (!inputMessage.trim()) return;
@@ -258,16 +274,23 @@ const ChatWindow = observer(
           text: inputMessage,
         });
 
-        if (!isSent) {
-          throw new Error("WebSocket is not connected");
-        }
-
         setInputMessage("");
+        if (!isSent) notifyError(new Error("WebSocket is not connected"), "Сообщение не доставлено");
       } catch (err) {
         console.error("Ошибка отправки сообщения:", err);
         notifyError(err, "Не удалось отправить сообщение");
-      } finally {
-        setLoadMessage(false);
+      }
+    };
+
+    const handleMessageKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setIsEmojiPickerOpen(false);
+        return;
+      }
+
+      if (event.key === "Enter" && !event.ctrlKey && !event.isComposing) {
+        event.preventDefault();
+        sendMessage(event);
       }
     };
 
@@ -424,7 +447,7 @@ const ChatWindow = observer(
 
             {!isLoading && error && (
               <div className="chat__empty">
-                <p>{error.message || "Ошибка загрузки сообщений"}</p>
+                <p>{getErrorMessage(error, "Не удалось загрузить сообщения.")}</p>
               </div>
             )}
 
@@ -457,13 +480,12 @@ const ChatWindow = observer(
                 const showDate = !prevDate || !isSameDay(currentDate, prevDate);
 
                 return (
-                  <React.Fragment key={msg.id}>
+                  <React.Fragment key={msg.client_id || msg.id}>
                     {showDate && (
                       <DateDivider date={currentDate} isFirst={index === 0} />
                     )}
                     <Message
                       message={msg}
-                      load={loadMessage}
                       isLastInList={index === messages.length - 1}
                       onContextMenu={openContextMenu}
                     />
@@ -489,17 +511,14 @@ const ChatWindow = observer(
                   onEmojiSelect={addEmoji}
                 />
               )}
-              <input
+              <textarea
                 ref={inputRef}
                 className="chat__input"
-                type="text"
                 placeholder="Написать сообщение..."
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") sendMessage(e);
-                  if (e.key === "Escape") setIsEmojiPickerOpen(false);
-                }}
+                onKeyDown={handleMessageKeyDown}
+                rows={1}
               />
               <button
                 className="chat__emoji_btn"

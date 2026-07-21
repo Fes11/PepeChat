@@ -9,6 +9,9 @@ export const api = axios.create({
   withCredentials: true,
 });
 
+let connectionListener = null;
+export const setApiConnectionListener = (listener) => { connectionListener = listener; };
+
 // Request interceptor
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
@@ -22,8 +25,13 @@ let refreshPromise = null;
 
 // Response interceptor
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    connectionListener?.(true);
+    return response;
+  },
   async (error) => {
+    if (error.response) connectionListener?.(true);
+    else connectionListener?.(false);
     const originalRequest = error.config;
     
     // Если 401 и не повторная попытка
@@ -70,9 +78,16 @@ export async function refreshAccessToken(
   }
 
   refreshPromise = (async () => {
-    const response = await axios.post(`${BASE_URL}/api/users/token/refresh/`, {
-      refresh: refreshToken,
-    });
+    let response;
+    try {
+      response = await axios.post(`${BASE_URL}/api/users/token/refresh/`, {
+        refresh: refreshToken,
+      });
+      connectionListener?.(true);
+    } catch (error) {
+      connectionListener?.(Boolean(error.response));
+      throw error;
+    }
 
     const newToken = response.data.access;
     localStorage.setItem("token", newToken);

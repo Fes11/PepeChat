@@ -18,6 +18,7 @@ import {
   useThemeSettings,
 } from "../theme";
 import { useUpdater } from "../updates/UpdateProvider";
+import { getErrorMessage } from "../utils/errors";
 
 const SettingsModal = function ({ onClose }) {
   const navigate = useNavigate();
@@ -92,24 +93,6 @@ const SettingsModal = function ({ onClose }) {
     AuthStore.user.descriptions,
   ]);
 
-  const getProfileErrorMessage = (error) => {
-    const data = error.response?.data;
-    if (!data) return error.message || "Не удалось сохранить профиль";
-    if (typeof data === "string") return data;
-    if (data.detail) return data.detail;
-
-    const firstField = Object.keys(data)[0];
-    const firstValue = data[firstField];
-    if (Array.isArray(firstValue)) {
-      return `${firstField}: ${firstValue[0]}`;
-    }
-    if (firstValue) {
-      return `${firstField}: ${firstValue}`;
-    }
-
-    return "Не удалось сохранить профиль";
-  };
-
   const saveProfile = async (event) => {
     event.preventDefault();
     setProfileError("");
@@ -162,7 +145,7 @@ const SettingsModal = function ({ onClose }) {
       setPasswordConfirm("");
       notifySuccess("Профиль обновлен");
     } catch (error) {
-      const message = getProfileErrorMessage(error);
+      const message = getErrorMessage(error, "Не удалось сохранить профиль.");
       setProfileError(message);
       notifyError(error, message);
     } finally {

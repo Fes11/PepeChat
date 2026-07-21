@@ -53,10 +53,34 @@
   font-weight: bolder;
   border-radius: 10px;
   cursor: pointer;
+  min-height: 51px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.login__form_btn:hover {
+.login__form_btn:hover:not(:disabled) {
   background: var(--hover-bg-color);
+}
+
+.login__form_btn:disabled {
+  cursor: wait;
+  opacity: 0.75;
+}
+
+.login__form_loader {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--spinner-track-color);
+  border-top-color: var(--text-color);
+  border-radius: 50%;
+  animation: login-button-spin 0.7s linear infinite;
+}
+
+@keyframes login-button-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .login__form_btn2 {
@@ -76,7 +100,7 @@
 .login__form_title {
   margin: auto;
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 22px;
 }
 
 .login__form_title p {

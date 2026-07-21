@@ -3,20 +3,7 @@ import { useNavigate } from "react-router-dom";
 import classes from "./Registration.module.css";
 import AvatarPicker from "../UI/AvatarPicker/AvatarPicker";
 import { Context } from "../../main";
-
-const getErrorMessage = (errors, field) => {
-  const value = errors[field];
-
-  if (Array.isArray(value)) {
-    return value.join(" ");
-  }
-
-  if (typeof value === "string") {
-    return value;
-  }
-
-  return "";
-};
+import { getFieldError } from "../../utils/errors";
 
 const Registration = function () {
   const navigate = useNavigate();
@@ -29,14 +16,15 @@ const Registration = function () {
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const loginError = getErrorMessage(errors, "login");
-  const usernameError = getErrorMessage(errors, "username");
-  const emailError = getErrorMessage(errors, "email");
-  const passwordError = getErrorMessage(errors, "password");
-  const passwordConfirmError = getErrorMessage(errors, "password_confirm");
-  const avatarError = getErrorMessage(errors, "avatar");
-  const formError = getErrorMessage(errors, "non_field_errors");
+  const loginError = getFieldError(errors, "login");
+  const usernameError = getFieldError(errors, "username");
+  const emailError = getFieldError(errors, "email");
+  const passwordError = getFieldError(errors, "password");
+  const passwordConfirmError = getFieldError(errors, "password_confirm");
+  const avatarError = getFieldError(errors, "avatar");
+  const formError = getFieldError(errors, "non_field_errors");
 
   const clearFieldError = (field) => {
     setErrors((prev) => ({
@@ -48,26 +36,51 @@ const Registration = function () {
 
   const sendRegistration = async (e) => {
     e.preventDefault();
-    setErrors({});
+    if (isSubmitting) return;
 
-    const formData = new FormData();
-    formData.append("login", login);
-    formData.append("username", username);
-    formData.append("email", email);
-    formData.append("password", password);
-    formData.append("password_confirm", passwordConfirm);
-
-    if (avatar) {
-      formData.append("avatar", avatar);
+    const clientErrors = {};
+    if (!login.trim()) clientErrors.login = ["Введите логин."];
+    if (!email.trim()) {
+      clientErrors.email = ["Введите email."];
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      clientErrors.email = ["Некорректный формат email."];
+    }
+    if (!password) clientErrors.password = ["Введите пароль."];
+    if (!passwordConfirm) {
+      clientErrors.password_confirm = ["Повторите пароль."];
+    } else if (password !== passwordConfirm) {
+      clientErrors.password_confirm = ["Пароли не совпадают."];
+    }
+    if (Object.keys(clientErrors).length) {
+      setErrors(clientErrors);
+      return;
     }
 
-    const result = await AuthStore.registration(formData);
+    setErrors({});
+    setIsSubmitting(true);
 
-    if (result.ok) {
-      MediaStore.initializeDevices({ requestMicrophone: true });
-      navigate("/chat/");
-    } else {
-      setErrors(result.errors);
+    try {
+      const formData = new FormData();
+      formData.append("login", login);
+      formData.append("username", username);
+      formData.append("email", email);
+      formData.append("password", password);
+      formData.append("password_confirm", passwordConfirm);
+
+      if (avatar) {
+        formData.append("avatar", avatar);
+      }
+
+      const result = await AuthStore.registration(formData);
+
+      if (result.ok) {
+        MediaStore.initializeDevices({ requestMicrophone: true });
+        navigate("/chat/");
+      } else {
+        setErrors(result.errors);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -88,7 +101,7 @@ const Registration = function () {
           </button>
         </div>
 
-        <form onSubmit={sendRegistration}>
+        <form onSubmit={sendRegistration} noValidate>
           {passwordConfirmError && (
             <p className={classes.registration__form_error}>
               {passwordConfirmError}
@@ -187,8 +200,20 @@ const Registration = function () {
             }`}
           />
 
-          <button type="submit" className={classes.registration__form_btn}>
-            Продолжить
+          <button
+            type="submit"
+            className={classes.registration__form_btn}
+            disabled={isSubmitting}
+            aria-busy={isSubmitting}
+          >
+            {isSubmitting ? (
+              <span
+                className={classes.registration__form_loader}
+                aria-label="Выполняется регистрация"
+              />
+            ) : (
+              "Продолжить"
+            )}
           </button>
         </form>
       </div>

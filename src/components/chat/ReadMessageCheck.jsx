@@ -1,9 +1,12 @@
-import React, { useState } from "react";
-import Spinner from "../UI/Spiner";
+import React from "react";
 
-const ReadMessageCheck = ({ isRead, load }) => {
-  if (load) {
-    return <Spinner />;
+const ReadMessageCheck = ({ isRead, deliveryStatus }) => {
+  if (deliveryStatus === "pending") {
+    return <span className="message_delivery_pending" title="Отправляется" aria-label="Отправляется" />;
+  }
+
+  if (deliveryStatus === "failed") {
+    return <span className="message_delivery_failed" title="Не доставлено" aria-label="Не доставлено">!</span>;
   }
 
   if (isRead) {

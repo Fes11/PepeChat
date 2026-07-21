@@ -1,4 +1,6 @@
 .room {
+  container-name: voice-room;
+  container-type: inline-size;
   background: var(--box-bg-color);
   border-radius: 10px;
   width: 100%;
@@ -28,19 +30,11 @@
   width: auto;
 }
 
-.room_header {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px;
-}
-
 .hide_btn {
   position: absolute;
-  background: var(--button-soft-bg-color);
-  width: 30px;
-  height: 30px;
+  background: var(--active-bg-color);
+  width: 36px;
+  height: 36px;
   right: 15px;
   top: 10px;
   border-radius: 50%;
@@ -48,6 +42,20 @@
   align-items: center;
   justify-content: center;
   z-index: 2;
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-6px);
+  transition:
+    opacity 400ms ease,
+    transform 400ms ease,
+    background-color 160ms ease;
+}
+
+.hide_btn_visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
 }
 
 .hide_btn:hover {
@@ -66,17 +74,18 @@
 
   flex: 1 1 auto;
   min-height: 0;
-  padding: 20px 20px 128px;
+  padding: 20px 20px 100px 20px;
   width: 100%;
   display: grid;
   gap: var(--room-tile-gap);
-  grid-auto-rows: auto;
+  grid-auto-rows: max-content;
   align-items: start;
   justify-content: center;
-  align-content: center;
+  align-content: safe center;
   box-sizing: border-box;
   overflow-x: hidden;
   overflow-y: auto;
+  overscroll-behavior: contain;
   scrollbar-gutter: stable;
 }
 
@@ -97,14 +106,19 @@
 }
 
 .room_users_list_grid_4 {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .room_users_list_dense {
-  grid-template-columns: repeat(
-    auto-fit,
-    minmax(min(var(--room-tile-min-width), 100%), 1fr)
-  );
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@container voice-room (max-width: 1400px) {
+  .room_users_list_grid_3,
+  .room_users_list_grid_4,
+  .room_users_list_dense {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .room_loader {
@@ -121,7 +135,7 @@
 
 .room_activity_panel {
   padding: 10px 20px;
-  background: var(--surface-color);
+  background: var(--room-activity-panel);
   border: 1px solid transparent;
   border-radius: 25px;
   position: absolute;
@@ -136,9 +150,16 @@
   flex-wrap: wrap;
   justify-content: center;
   z-index: 4;
+  backdrop-filter: blur(30px);
   box-shadow:
     -1px -1px 0 var(--raised-light-color),
-    1px 1px 0 var(--raised-dark-color);
+    1px 1px 0 var(--raised-dark-color),
+    2px 2px 4px rgba(0, 0, 0, 0.1),
+    3px 3px 1px rgba(0, 0, 0, 0.4);
+  transition:
+    opacity 400ms ease,
+    transform 400ms ease,
+    background-color 160ms ease;
 }
 
 .room_activity_panel_visible {
@@ -204,10 +225,7 @@
 
 @media (max-width: 430px) {
   .room_users_list_duo,
-  .room_users_list_grid_2,
-  .room_users_list_grid_3,
-  .room_users_list_grid_4,
-  .room_users_list_dense {
+  .room_users_list_grid_2 {
     grid-template-columns: minmax(0, 1fr);
   }
 }

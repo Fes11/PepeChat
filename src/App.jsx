@@ -10,7 +10,6 @@ import CustomTitleBar from "./components/CustomTitleBar";
 import Login from "./components/auth/Login";
 import Registration from "./components/auth/Registration";
 import ChatPage from "./components/chat/ChatPage";
-import NotFound404 from "./components/UI/NotFound404";
 
 const isTrayMenuWindow = () =>
   new URLSearchParams(window.location.search).get("tray") === "menu";
@@ -19,10 +18,12 @@ const MainApp = observer(() => {
   const { ChatStore, AuthStore, MediaStore } = useContext(Context);
 
   useEffect(() => {
-    const init = async () => {
-      await AuthStore.checkAuth();
+    let isCurrent = true;
 
-      if (AuthStore.isAuth) {
+    const init = async () => {
+      await AuthStore.initializeAuth();
+
+      if (isCurrent && AuthStore.isAuth) {
         MediaStore.initializeDevices({ requestMicrophone: true });
 
         const token = localStorage.getItem("token");
@@ -33,14 +34,20 @@ const MainApp = observer(() => {
     };
 
     init();
-  }, []);
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [AuthStore, ChatStore, MediaStore]);
 
   return (
     <div className="app_shell">
       <CustomTitleBar />
       <main className="container">
-        {AuthStore.isLoading ? (
-          <Spinner />
+        {AuthStore.isInitializing ? (
+          <div role="status" aria-label="Загрузка приложения">
+            <Spinner />
+          </div>
         ) : (
           <Routes>
             <Route
@@ -59,7 +66,15 @@ const MainApp = observer(() => {
                 AuthStore.isAuth ? <ChatPage /> : <Navigate to="/login" />
               }
             />
-            <Route path="*" element={<ChatPage />} />
+            <Route
+              path="*"
+              element={
+                <Navigate
+                  to={AuthStore.isAuth ? "/chat" : "/login"}
+                  replace
+                />
+              }
+            />
           </Routes>
         )}
       </main>
