@@ -288,6 +288,8 @@ body.tray-menu-window #root {
 .chat_page_main {
   --chat-description-width: clamp(160px, 20vw, 210px);
   --chat-content-gap: 8px;
+  container-name: chat-page-main;
+  container-type: inline-size;
   flex: 1 1 auto;
   width: 100%;
   height: 100%;

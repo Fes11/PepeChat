@@ -113,6 +113,13 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.room_users_list_focused {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: safe center;
+}
+
 @container voice-room (max-width: 1400px) {
   .room_users_list_grid_3,
   .room_users_list_grid_4,
@@ -214,6 +221,12 @@
   }
 }
 
+@container chat-page-main (max-width: 830px) {
+  .room_preserve_description {
+    right: 0;
+  }
+}
+
 @media (max-width: 760px) {
   .room_users_list_duo,
   .room_users_list_grid_2,
@@ -252,6 +265,19 @@
 
 .muted:hover {
   background: rgba(237, 66, 69, 0.26);
+}
+
+.active {
+  background: color-mix(in srgb, var(--main-color) 32%, var(--input-bg-color));
+}
+
+.room_activity_btn span {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
 }
 
 .room_activity_btn[aria-disabled="true"] {

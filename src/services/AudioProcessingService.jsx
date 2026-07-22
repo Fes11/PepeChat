@@ -40,6 +40,8 @@ export const audioProcessingService = {
     const gateAnalyser = audioContext.createAnalyser();
     const gateGain = audioContext.createGain();
     const gainNode = audioContext.createGain();
+    const splitter = audioContext.createChannelSplitter(2);
+    const stereoMerger = audioContext.createChannelMerger(2);
 
     highpass.type = "highpass";
     highpass.frequency.value = HIGHPASS_FREQUENCY;
@@ -79,7 +81,13 @@ export const audioProcessingService = {
     compressor.connect(gateAnalyser);
     compressor.connect(gateGain);
     gateGain.connect(gainNode);
-    gainNode.connect(destination);
+    // Some WebView2/audio-worklet combinations expose a two-channel signal
+    // with voice only in channel 0. Duplicate that channel explicitly so a
+    // mono microphone is centered in headphones instead of playing on the left.
+    gainNode.connect(splitter);
+    splitter.connect(stereoMerger, 0, 0);
+    splitter.connect(stereoMerger, 0, 1);
+    stereoMerger.connect(destination);
 
     const gateData = new Uint8Array(gateAnalyser.fftSize);
     const gateThreshold =
@@ -123,6 +131,8 @@ export const audioProcessingService = {
         gateAnalyser,
         gateGain,
         gainNode,
+        splitter,
+        stereoMerger,
       ].forEach((node) => node?.disconnect?.());
       audioContext.close().catch(() => {});
     };

@@ -60,7 +60,10 @@ npm run tauri dev
 npm run tauri build
 ```
 
-Версия приложения задаётся в `src-tauri/tauri.conf.json` и `src-tauri/Cargo.toml`. Updater получает подписанный манифест и артефакты из GitHub Releases.
+Версия приложения задаётся только в `src-tauri/Cargo.toml`. Если поле `version` отсутствует в
+`src-tauri/tauri.conf.json`, Tauri автоматически использует версию Cargo-пакета. `latest.json`
+создаётся во время подписанной release-сборки, поэтому менять его версию вручную не нужно.
+Updater получает подписанный манифест и артефакты из GitHub Releases.
 
 ## Структура
 

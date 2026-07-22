@@ -82,6 +82,11 @@ class MediaStore {
   setCamera(id) {
     this.selectedCamera = id;
     localStorage.setItem("camera", id);
+    window.dispatchEvent(
+      new CustomEvent("pepechat:camerachange", {
+        detail: { deviceId: id },
+      }),
+    );
   }
 
   setDisplay(id) {

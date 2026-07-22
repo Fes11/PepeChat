@@ -42,21 +42,36 @@ const Room = forwardRef(function Room(
     isJoining,
     setMicEnabled,
     setHeadphonesMuted: setRemoteHeadphonesMuted,
+    setCameraEnabled,
+    setScreenShareEnabled,
     disconnect,
   } = useVoiceRoom(chatId);
   const [micMuted, setMicMuted] = useState(false);
   const [headphonesMuted, setHeadphonesMuted] = useState(false);
+  const [cameraEnabled, setCameraEnabledState] = useState(false);
+  const [screenShareEnabled, setScreenShareEnabledState] = useState(false);
   const [participantVolumes, setParticipantVolumes] = useState({});
   const [mutedParticipantIds, setMutedParticipantIds] = useState(
     () => new Set(),
   );
   const [contextMenu, setContextMenu] = useState(null);
   const [isRoomHovered, setIsRoomHovered] = useState(false);
+  const [focusedParticipantId, setFocusedParticipantId] = useState(null);
   const micMutedBeforeHeadphonesRef = useRef(false);
   const showRoomUi = isJoining || isRoomHovered || Boolean(contextMenu);
-  const displayedParticipants = useMemo(
-    () => [...participants],
-    [participants],
+  const displayedParticipants = useMemo(() => {
+    const next = [...participants];
+    if (focusedParticipantId == null) return next;
+
+    return next.sort((left, right) => {
+      const leftFocused = String(left.id) === String(focusedParticipantId);
+      const rightFocused = String(right.id) === String(focusedParticipantId);
+      return Number(rightFocused) - Number(leftFocused);
+    });
+  }, [focusedParticipantId, participants]);
+  const hasFocusedParticipant = displayedParticipants.some(
+    (participant) =>
+      String(participant.id) === String(focusedParticipantId),
   );
   const roomGridClass = getRoomGridClass(displayedParticipants.length);
 
@@ -190,6 +205,27 @@ const Room = forwardRef(function Room(
     }
   };
 
+  const toggleCamera = async () => {
+    const next = !cameraEnabled;
+    try {
+      await setCameraEnabled(next);
+      setCameraEnabledState(next);
+    } catch (error) {
+      console.warn("[VoiceRoom] Cannot toggle camera", error);
+    }
+  };
+
+  const toggleScreenShare = async () => {
+    const next = !screenShareEnabled;
+    try {
+      await setScreenShareEnabled(next);
+      setScreenShareEnabledState(next);
+    } catch (error) {
+      console.warn("[VoiceRoom] Cannot toggle screen share", error);
+      setScreenShareEnabledState(false);
+    }
+  };
+
   return (
     <div
       className={`${cls.room} ${
@@ -218,7 +254,11 @@ const Room = forwardRef(function Room(
         <p></p>
       </div>
 
-      <div className={`${cls.room_users_list} ${roomGridClass}`}>
+      <div
+        className={`${cls.room_users_list} ${
+          hasFocusedParticipant ? cls.room_users_list_focused : roomGridClass
+        }`}
+      >
         {displayedParticipants.map((participant) => (
           <RoomUser
             key={participant.id}
@@ -227,6 +267,20 @@ const Room = forwardRef(function Room(
             userMuted={mutedParticipantIds.has(participant.id)}
             volume={getParticipantVolume(participant.id)}
             showDetails={showRoomUi}
+            isFocused={
+              String(participant.id) === String(focusedParticipantId)
+            }
+            isCompact={
+              hasFocusedParticipant &&
+              String(participant.id) !== String(focusedParticipantId)
+            }
+            onSelect={() =>
+              setFocusedParticipantId((current) =>
+                String(current) === String(participant.id)
+                  ? null
+                  : participant.id,
+              )
+            }
             onContextMenu={(event) =>
               openParticipantContextMenu(event, participant)
             }
@@ -281,6 +335,28 @@ const Room = forwardRef(function Room(
           aria-disabled={headphonesMuted}
         >
           <img src={micMuted ? "/mic-off.svg" : "/mic.svg"} alt="mic" />
+        </button>
+
+        <button
+          className={`${cls.room_activity_btn} ${cameraEnabled ? cls.active : ""}`}
+          onClick={toggleCamera}
+          title={cameraEnabled ? "Выключить камеру" : "Включить камеру"}
+        >
+          <span aria-hidden="true">
+            <img src="/camera.svg" />
+          </span>
+        </button>
+
+        <button
+          className={`${cls.room_activity_btn} ${screenShareEnabled ? cls.active : ""}`}
+          onClick={toggleScreenShare}
+          title={
+            screenShareEnabled ? "Остановить демонстрацию" : "Показать экран"
+          }
+        >
+          <span aria-hidden="true">
+            <img src="/monitor.svg" />
+          </span>
         </button>
 
         <button

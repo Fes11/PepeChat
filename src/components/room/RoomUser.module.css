@@ -35,6 +35,38 @@
   object-fit: cover;
 }
 
+.room_user:focus-visible {
+  outline: 2px solid var(--main-color);
+  outline-offset: 2px;
+}
+
+.room_user_focused {
+  flex: 1 0 100%;
+  width: 100%;
+  max-width: none;
+  justify-self: stretch;
+}
+
+.room_user_compact {
+  flex: 0 1 330px;
+  width: min(330px, 100%);
+}
+
+.room_user_video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease;
+}
+
+.room_user_video_visible {
+  opacity: 1;
+}
+
 .room_user_name_row {
   position: absolute;
   bottom: 10px;

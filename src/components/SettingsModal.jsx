@@ -19,6 +19,7 @@ import {
 } from "../theme";
 import { useUpdater } from "../updates/UpdateProvider";
 import { getErrorMessage } from "../utils/errors";
+import { invoke } from "@tauri-apps/api/core";
 
 const SettingsModal = function ({ onClose }) {
   const navigate = useNavigate();
@@ -31,6 +32,8 @@ const SettingsModal = function ({ onClose }) {
   const [profileError, setProfileError] = useState("");
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isTestingMicrophone, setIsTestingMicrophone] = useState(false);
+  const [isResettingMediaPermissions, setIsResettingMediaPermissions] =
+    useState(false);
   const [micLevel, setMicLevel] = useState(0);
   const { AuthStore, MediaStore } = useContext(Context);
   const login = AuthStore.user.login || "Login";
@@ -299,6 +302,10 @@ const SettingsModal = function ({ onClose }) {
     MediaStore.setDisplay(deviceId);
   };
 
+  const changeCamera = (deviceId) => {
+    MediaStore.setCamera(deviceId);
+  };
+
   const handleLogout = async () => {
     await AuthStore.logout();
     navigate("/login", { replace: true });
@@ -306,6 +313,54 @@ const SettingsModal = function ({ onClose }) {
 
   const applyMainColor = () => {
     setMainColor(pendingMainColor);
+  };
+
+  const requestMediaPermission = async (constraints) => {
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    mediaService.stopStream(stream);
+  };
+
+  const resetMediaPermissions = async () => {
+    if (!window.__TAURI_INTERNALS__) {
+      notifyError(null, "Сброс разрешений доступен только в приложении PepeChat.");
+      return;
+    }
+
+    try {
+      setIsResettingMediaPermissions(true);
+      await invoke("reset_media_permissions");
+
+      // WebView2 applies SetPermissionState asynchronously.
+      await new Promise((resolve) => setTimeout(resolve, 250));
+
+      const results = await Promise.allSettled([
+        requestMediaPermission({ audio: true }),
+        requestMediaPermission({ video: true }),
+      ]);
+      const [microphone, camera] = results;
+
+      await MediaStore.initializeDevices({ requestMicrophone: false });
+
+      if (microphone.status === "fulfilled" && camera.status === "fulfilled") {
+        notifySuccess("Доступ к микрофону и камере обновлён.");
+      } else if (microphone.status === "fulfilled") {
+        notifySuccess("Доступ к микрофону обновлён. Камера недоступна или запрещена.");
+      } else if (camera.status === "fulfilled") {
+        notifySuccess("Доступ к камере обновлён. Микрофон недоступен или запрещён.");
+      } else {
+        throw new Error(
+          "Доступ не предоставлен. Проверьте настройки конфиденциальности Windows.",
+        );
+      }
+    } catch (error) {
+      console.error("Failed to reset media permissions:", error);
+      notifyError(
+        error,
+        getErrorMessage(error, "Не удалось повторно запросить разрешения."),
+      );
+    } finally {
+      setIsResettingMediaPermissions(false);
+    }
   };
 
   return (
@@ -531,6 +586,25 @@ const SettingsModal = function ({ onClose }) {
                 </div>
               </div>
 
+              <p className={classes.settings_label}>Конфиденциальность</p>
+              <div className={classes.permission_card}>
+                <span>
+                  <strong>Микрофон и камера</strong>
+                  <small>
+                    Сбросить решение WebView и снова показать системные запросы доступа.
+                  </small>
+                </span>
+                <button
+                  type="button"
+                  onClick={resetMediaPermissions}
+                  disabled={isResettingMediaPermissions}
+                >
+                  {isResettingMediaPermissions
+                    ? "Запрашиваем…"
+                    : "Запросить заново"}
+                </button>
+              </div>
+
               <p className={classes.settings_label}>Обновления</p>
               <div className={classes.update_card} aria-live="polite">
                 <div className={classes.update_header}>
@@ -598,6 +672,22 @@ const SettingsModal = function ({ onClose }) {
                     {MediaStore.microphones.map((mic) => (
                       <option key={mic.deviceId} value={mic.deviceId}>
                         {mic.label || "Микрофон"}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className={classes.control_label}>
+                  Камера
+                  <select
+                    value={MediaStore.selectedCamera || ""}
+                    onChange={(e) => changeCamera(e.target.value)}
+                    className={classes.devices_select}
+                  >
+                    <option value="">Системная камера по умолчанию</option>
+                    {MediaStore.cameras.map((camera) => (
+                      <option key={camera.deviceId} value={camera.deviceId}>
+                        {camera.label || "Камера"}
                       </option>
                     ))}
                   </select>
