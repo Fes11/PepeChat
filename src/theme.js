@@ -125,17 +125,6 @@ export const applyThemeSettings = ({ theme, mainColor, uiScale }) => {
   const nextUiScale = normalizeUiScale(uiScale);
   const contrastColor = getContrastColor(nextMainColor);
   const hoverMixColor = nextTheme === "light" ? "#000000" : "#ffffff";
-  const chatInputBg =
-    nextTheme === "light"
-      ? `linear-gradient(to right, rgba(255, 255, 255, 0.82), ${mixColors(
-          nextMainColor,
-          "#ffffff",
-          0.9,
-        )})`
-      : `linear-gradient(to right, rgba(32, 32, 32, 0.9), ${withAlpha(
-          nextMainColor,
-          0.14,
-        )})`;
 
   root.dataset.theme = nextTheme;
   if (nextUiScale === null) {
@@ -155,7 +144,6 @@ export const applyThemeSettings = ({ theme, mainColor, uiScale }) => {
     "--message-time-color",
     withAlpha(contrastColor, 0.72),
   );
-  root.style.setProperty("--chat-input-bg", chatInputBg);
 };
 
 export const saveThemeSettings = ({ theme, mainColor, uiScale }) => {

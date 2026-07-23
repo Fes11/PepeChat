@@ -275,7 +275,11 @@ const ChatWindow = observer(
         });
 
         setInputMessage("");
-        if (!isSent) notifyError(new Error("WebSocket is not connected"), "Сообщение не доставлено");
+        if (!isSent)
+          notifyError(
+            new Error("WebSocket is not connected"),
+            "Сообщение не доставлено",
+          );
       } catch (err) {
         console.error("Ошибка отправки сообщения:", err);
         notifyError(err, "Не удалось отправить сообщение");
@@ -447,7 +451,9 @@ const ChatWindow = observer(
 
             {!isLoading && error && (
               <div className="chat__empty">
-                <p>{getErrorMessage(error, "Не удалось загрузить сообщения.")}</p>
+                <p>
+                  {getErrorMessage(error, "Не удалось загрузить сообщения.")}
+                </p>
               </div>
             )}
 
@@ -526,7 +532,7 @@ const ChatWindow = observer(
                 aria-label="Open emoji picker"
                 onClick={() => setIsEmojiPickerOpen((isOpen) => !isOpen)}
               >
-                <img src="/smile.svg" alt="" />
+                <img src="/smile.svg" />
               </button>
             </div>
             <button className="chat__send_btn" onClick={sendMessage}>

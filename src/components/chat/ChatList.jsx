@@ -43,9 +43,11 @@ const ChatList = observer(
 
       try {
         const response = await ChatServices.getChats(pageRef.current);
-        ChatStore.setChats(pageRef.current === 1
-          ? response.data.results
-          : [...ChatStore.chats, ...response.data.results]);
+        ChatStore.setChats(
+          pageRef.current === 1
+            ? response.data.results
+            : [...ChatStore.chats, ...response.data.results],
+        );
 
         setHasMore(!!response.data.next);
         pageRef.current++;
@@ -92,7 +94,19 @@ const ChatList = observer(
             />
           </MyModal>
 
-          <Search placeholder="Search..." />
+          <div className={classes.chat_list_header}>
+            <img className={classes.chat_list_logo} src="/logo.svg" />
+
+            <Search placeholder="Search..." />
+          </div>
+
+          <button
+            onClick={() => setModal(true)}
+            className={classes.chat_list__btn}
+          >
+            <img src="/plus.svg" alt="Plus" />
+            Создать чат
+          </button>
 
           {/* <Select>
           <option value="">All chats</option>
@@ -105,9 +119,7 @@ const ChatList = observer(
               <ChatListElement
                 key={chat.id}
                 chat={chat}
-                isSelected={
-                  String(chat.id) === String(routeChatId)
-                }
+                isSelected={String(chat.id) === String(routeChatId)}
                 isLast={idx === sortedChats.length - 1}
               />
             ))}
@@ -115,14 +127,6 @@ const ChatList = observer(
               {loading && "Загрузка..."}
             </div>
           </div>
-
-          <button
-            onClick={() => setModal(true)}
-            className={classes.chat_list__btn}
-          >
-            <img src="/plus.svg" alt="Plus" />
-            Создать чат
-          </button>
         </div>
 
         <Profile

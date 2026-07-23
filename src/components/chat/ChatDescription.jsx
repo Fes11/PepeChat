@@ -1,9 +1,6 @@
-import React, { useContext, useState } from "react";
+import { useContext, useState } from "react";
 import { observer } from "mobx-react-lite";
 import { Context } from "../../main.jsx";
-import Search from "../UI/Input/Search";
-import ChatDescriptionBtn from "../UI/Button/ChatDescriptionBtn";
-import Select from "../UI/Select";
 import Participant from "./Participant";
 
 const ChatDescription = ({ participants = [] }) => {

@@ -19,6 +19,8 @@
   --bg-color: #000000;
   --box-bg-color: #181818;
   --surface-color: #ffffff05;
+  --main-button-color: #1d1d1d;
+  --main-button-hover-color: #252525;
   --modal-bg-color: #363636;
   --input-bg-color: rgba(255, 255, 255, 0.05);
   --input-border-color: #50505a;
@@ -44,7 +46,7 @@
   --empty-badge-bg-color: rgba(0, 0, 0, 0.1);
   --message-other-bg-color: rgba(255, 255, 255, 0.1);
   --link-color: rgba(123, 97, 255, 0.8);
-  --chat-input-bg: rgba(22, 22, 22, 0.9);
+  --chat-input-bg: rgba(255, 255, 255, 0.03);
   --skeleton-bg-color: rgba(46, 46, 46, 0.41);
   --spinner-track-color: #2f2f2f;
   --scrollbar-thumb-color: #202020;
@@ -425,7 +427,7 @@ body.tray-menu-window #root {
 
 .chat_list_element {
   display: flex;
-  padding: 8px;
+  padding: 9px 16px;
   cursor: pointer;
 }
 
@@ -616,7 +618,7 @@ body.tray-menu-window #root {
 
 .chat_header_voice--active {
   opacity: 1;
-  box-shadow: 0 0 10px var(--main-color);
+  background: #333333;
 }
 
 .chat_header_voice .chat_list_element__voice_icon {
@@ -676,7 +678,7 @@ body.tray-menu-window #root {
   border-radius: 30px;
   font-size: 14px;
   padding: 12px 52px 12px 15px;
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(100px);
   min-height: 45px;
   max-height: 200px;
   width: 100%;
@@ -692,6 +694,10 @@ body.tray-menu-window #root {
   box-shadow:
     -1px -1px 0 var(--raised-light-color),
     1px 1px 0 var(--raised-dark-color);
+}
+
+.chat__input::placeholder {
+  color: var(--muted-text-color);
 }
 
 .chat__input::-webkit-scrollbar {
@@ -719,10 +725,11 @@ body.tray-menu-window #root {
   display: flex;
   align-items: center;
   justify-content: center;
+  opacity: 0.5;
 }
 
 .chat__emoji_btn:hover {
-  background: var(--hover-bg-color);
+  opacity: 1;
 }
 
 .chat__emoji_btn img {
@@ -731,11 +738,14 @@ body.tray-menu-window #root {
   opacity: 0.72;
 }
 
+.smile_btn {
+}
+
 .chat__send_btn {
-  min-width: 45px;
-  flex: 0 0 45px;
-  height: 45px;
-  border-radius: 10px;
+  min-width: 44px;
+  flex: 0 0 44px;
+  height: 44px;
+  border-radius: 50%;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -744,8 +754,7 @@ body.tray-menu-window #root {
     -1px -1px 0 var(--raised-light-color),
     1px 1px 0 var(--raised-dark-color);
   border: 1px solid var(--shadow-border-color);
-  background-color: var(--main-soft-color);
-  backdrop-filter: blur(20px);
+  background-color: var(--main-color);
 }
 
 .chat__send_btn img {
