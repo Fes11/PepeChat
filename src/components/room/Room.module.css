@@ -2,7 +2,7 @@
   container-name: voice-room;
   container-type: inline-size;
   background: var(--box-bg-color);
-  border-radius: 10px;
+  border-radius: var(--main-border-radius);
   width: 100%;
   height: 100%;
   position: absolute;
@@ -35,7 +35,7 @@
   background: var(--active-bg-color);
   width: 36px;
   height: 36px;
-  right: 15px;
+  right: 10px;
   top: 10px;
   border-radius: 50%;
   display: flex;
@@ -173,6 +173,35 @@
   transform: translate(-50%, 0);
   opacity: 1;
   pointer-events: auto;
+}
+
+.room_activity_panel_compact {
+  position: static;
+  width: 100%;
+  max-width: none;
+  padding: 0px;
+  border-radius: 14px;
+  transform: none;
+  flex-wrap: nowrap;
+  gap: 6px;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.room_activity_panel_compact.room_activity_panel_visible {
+  transform: none;
+}
+
+.room_activity_panel_compact .room_activity_btn {
+  flex: 1 1 0;
+  padding: 7px;
+  border-radius: 10px;
+}
+
+.room_activity_panel_compact .room_activity_btn img {
+  width: 18px;
+  height: 18px;
 }
 
 .room_activity_btn {

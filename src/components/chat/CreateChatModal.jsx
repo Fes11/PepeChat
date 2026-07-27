@@ -63,7 +63,6 @@ const CreateChatModal = ({ onChatCreated, onClose }) => {
     <form className={classes.content} onSubmit={createChat}>
       <div className={classes.header}>
         <div>
-          <p className={classes.eyebrow}>Чат</p>
           <h2 className={classes.title}>Создание нового чата</h2>
         </div>
         <button className={classes.close} type="button" onClick={onClose}>

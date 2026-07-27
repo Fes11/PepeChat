@@ -15,6 +15,7 @@ import classes from "./ChatList.module.css";
 import { Context } from "../../main.jsx";
 import { observer } from "mobx-react-lite";
 import { useNavigate, useParams } from "react-router-dom";
+import Logo from "../UI/Logo.jsx";
 
 const ChatList = observer(
   ({
@@ -22,6 +23,11 @@ const ChatList = observer(
     activeVoiceRoomName,
     onOpenVoiceRoomPanel,
     onLeaveVoiceRoom,
+    voiceControls,
+    onToggleVoiceMic,
+    onToggleVoiceHeadphones,
+    onToggleVoiceCamera,
+    onToggleVoiceScreenShare,
   }) => {
     const { ChatStore } = useContext(Context);
     const navigate = useNavigate();
@@ -95,7 +101,7 @@ const ChatList = observer(
           </MyModal>
 
           <div className={classes.chat_list_header}>
-            <img className={classes.chat_list_logo} src="/logo.svg" />
+            <Logo />
 
             <Search placeholder="Search..." />
           </div>
@@ -127,14 +133,19 @@ const ChatList = observer(
               {loading && "Загрузка..."}
             </div>
           </div>
-        </div>
 
-        <Profile
-          activeVoiceRoomChatId={activeVoiceRoomChatId}
-          activeVoiceRoomName={activeVoiceRoomName}
-          onOpenVoiceRoomPanel={onOpenVoiceRoomPanel}
-          onLeaveVoiceRoom={onLeaveVoiceRoom}
-        />
+          <Profile
+            activeVoiceRoomChatId={activeVoiceRoomChatId}
+            activeVoiceRoomName={activeVoiceRoomName}
+            onOpenVoiceRoomPanel={onOpenVoiceRoomPanel}
+            onLeaveVoiceRoom={onLeaveVoiceRoom}
+            voiceControls={voiceControls}
+            onToggleVoiceMic={onToggleVoiceMic}
+            onToggleVoiceHeadphones={onToggleVoiceHeadphones}
+            onToggleVoiceCamera={onToggleVoiceCamera}
+            onToggleVoiceScreenShare={onToggleVoiceScreenShare}
+          />
+        </div>
       </div>
     );
   },

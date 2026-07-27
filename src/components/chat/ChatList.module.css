@@ -75,7 +75,7 @@
 .chat_list_header {
   display: flex;
   gap: 10px;
-  padding: 16px 16px 0px 16px;
+  padding: 10px 16px 0px 16px;
   justify-content: center;
   align-items: center;
 }

@@ -33,6 +33,11 @@ const ParticipantProfile = forwardRef(({ user, style }, ref) => {
           {user.login && (
             <p className="participant__description_login">@{user.login}</p>
           )}
+          {user.descriptions && (
+            <p className="participant__description_login">
+              {user.descriptions}
+            </p>
+          )}
         </div>
       </div>
 

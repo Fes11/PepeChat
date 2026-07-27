@@ -22,7 +22,7 @@ export default class ChatServices {
   }
 
   static async getChatParticipants(id) {
-    return api.get(`/api/chats/${id}/participants`);
+    return api.get(`/api/chats/${id}/participants/`);
   }
 
   static async globalSearch(query) {

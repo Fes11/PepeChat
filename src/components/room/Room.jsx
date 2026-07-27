@@ -1,6 +1,7 @@
 import React, {
   forwardRef,
   useContext,
+  useEffect,
   useImperativeHandle,
   useMemo,
   useRef,
@@ -12,6 +13,7 @@ import { useVoiceRoom } from "../../hooks/useVoiceRoom";
 import ContextMenu from "../UI/ContextMenu";
 import { Context } from "../../main";
 import Spinner from "../UI/Spiner";
+import RoomActivityPanel from "./RoomActivityPanel";
 
 const DEFAULT_USER_VOLUME = 1;
 const VOLUME_STEP = 5;
@@ -33,6 +35,7 @@ const Room = forwardRef(function Room(
     chatId,
     isOpen = true,
     preserveChatDescription = false,
+    onControlsChange,
   },
   ref,
 ) {
@@ -174,8 +177,6 @@ const Room = forwardRef(function Room(
     onLeaveRoom();
   };
 
-  useImperativeHandle(ref, () => ({ leave: leaveRoom }));
-
   const toggleMic = () => {
     if (headphonesMuted) {
       setMicMuted(true);
@@ -225,6 +226,29 @@ const Room = forwardRef(function Room(
       setScreenShareEnabledState(false);
     }
   };
+
+  useEffect(() => {
+    onControlsChange?.({
+      micMuted,
+      headphonesMuted,
+      cameraEnabled,
+      screenShareEnabled,
+    });
+  }, [
+    cameraEnabled,
+    headphonesMuted,
+    micMuted,
+    onControlsChange,
+    screenShareEnabled,
+  ]);
+
+  useImperativeHandle(ref, () => ({
+    leave: leaveRoom,
+    toggleMic,
+    toggleHeadphones,
+    toggleCamera,
+    toggleScreenShare,
+  }));
 
   return (
     <div
@@ -302,70 +326,18 @@ const Room = forwardRef(function Room(
         onClose={closeContextMenu}
       />
 
-      <div
-        className={`${cls.room_activity_panel} ${
-          showRoomUi ? cls.room_activity_panel_visible : ""
-        }`}
-      >
-        <button
-          className={`${cls.room_activity_btn} ${cls.headphones} ${
-            headphonesMuted ? cls.muted : ""
-          }`}
-          onClick={toggleHeadphones}
-          title={headphonesMuted ? "Включить наушники" : "Выключить наушники"}
-        >
-          <img
-            src={headphonesMuted ? "/headphones-off.svg" : "/headphones.svg"}
-            alt="headphones"
-          />
-        </button>
-
-        <button
-          className={`${cls.room_activity_btn} ${cls.mic} ${
-            micMuted ? cls.muted : ""
-          }`}
-          onClick={toggleMic}
-          title={
-            headphonesMuted
-              ? "Включите наушники, чтобы включить микрофон"
-              : micMuted
-                ? "Включить микрофон"
-                : "Выключить микрофон"
-          }
-          aria-disabled={headphonesMuted}
-        >
-          <img src={micMuted ? "/mic-off.svg" : "/mic.svg"} alt="mic" />
-        </button>
-
-        <button
-          className={`${cls.room_activity_btn} ${cameraEnabled ? cls.active : ""}`}
-          onClick={toggleCamera}
-          title={cameraEnabled ? "Выключить камеру" : "Включить камеру"}
-        >
-          <span aria-hidden="true">
-            <img src="/camera.svg" />
-          </span>
-        </button>
-
-        <button
-          className={`${cls.room_activity_btn} ${screenShareEnabled ? cls.active : ""}`}
-          onClick={toggleScreenShare}
-          title={
-            screenShareEnabled ? "Остановить демонстрацию" : "Показать экран"
-          }
-        >
-          <span aria-hidden="true">
-            <img src="/monitor.svg" />
-          </span>
-        </button>
-
-        <button
-          className={`${cls.room_activity_btn} ${cls.leave}`}
-          onClick={leaveRoom}
-        >
-          <img src="/leave.svg" alt="leave" />
-        </button>
-      </div>
+      <RoomActivityPanel
+        visible={showRoomUi}
+        micMuted={micMuted}
+        headphonesMuted={headphonesMuted}
+        cameraEnabled={cameraEnabled}
+        screenShareEnabled={screenShareEnabled}
+        onToggleHeadphones={toggleHeadphones}
+        onToggleMic={toggleMic}
+        onToggleCamera={toggleCamera}
+        onToggleScreenShare={toggleScreenShare}
+        onLeave={leaveRoom}
+      />
     </div>
   );
 });

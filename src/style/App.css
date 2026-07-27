@@ -3,11 +3,32 @@
   padding: 0;
   border: none;
   box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
   transition: 0.2s all;
   text-decoration: none;
-  font-family: "Inter", sans-serif;
   scrollbar-color: var(--scrollbar-thumb-color) transparent;
   scrollbar-width: thin;
+}
+
+.allow_selection,
+.allow_selection * {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+html,
+body,
+#root {
+  font-family: "Inter Variable", "Inter", sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
 }
 
 :root {
@@ -774,18 +795,19 @@ body.tray-menu-window #root {
 }
 
 .profile {
-  border-radius: var(--main-border-radius);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: stretch;
   gap: 8px;
-  background-color: var(--box-bg-color);
   flex: 0 0 auto;
   width: 100%;
   min-height: 60px;
-  padding: 8px;
+  padding: 16px;
   min-width: 0;
+  background: transparent;
+  position: absolute;
+  bottom: 0;
 }
 
 .profile__user {
@@ -793,16 +815,21 @@ body.tray-menu-window #root {
   align-items: center;
   width: 100%;
   min-width: 0;
+  background-color: #1d1d1d;
+  border-radius: var(--main-border-radius);
+  padding: 12px;
 }
 
 .profile_voice {
   width: 100%;
   min-width: 0;
   display: flex;
-  align-items: center;
+  align-items: stretch;
+  flex-direction: column;
   gap: 8px;
-  border-radius: 8px;
-  padding-bottom: 10px;
+  border-radius: var(--main-border-radius);
+  padding: 16px 20px;
+  background: #1d1d1d;
 }
 
 .profile_voice__info {
@@ -833,20 +860,26 @@ body.tray-menu-window #root {
   display: flex;
   flex-direction: column;
   gap: 2px;
-}
-
-.profile_voice__label {
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--text-color);
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .profile_voice__chat {
-  font-size: 12px;
-  color: var(--muted-text-color);
+  color: var(--text-color);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  margin-bottom: 5px;
+}
+
+.profile_voice__chat_status {
+  color: #41d37e;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 300;
+  margin-bottom: 15px;
 }
 
 .profile_voice__leave {
@@ -900,13 +933,18 @@ body.tray-menu-window #root {
 .profile__settings_btn {
   border-radius: 10px;
   cursor: pointer;
+  flex: 0 0 auto;
+  padding: 12px;
+  background: var(--input-bg-color);
+}
+
+.profile__settings_btn img {
   width: 20px;
   height: 20px;
-  flex: 0 0 auto;
 }
 
 .profile__settings_btn:hover {
-  opacity: 50%;
+  background: var(--button-soft-bg-color);
 }
 
 .chat_avatar {

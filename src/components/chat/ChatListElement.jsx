@@ -5,6 +5,7 @@ import { format, parseISO } from "date-fns";
 import { Context } from "../../main.jsx";
 import { observer } from "mobx-react-lite";
 import { useNavigate } from "react-router-dom";
+import VoiceIcon from "../UI/VoiceIcon.jsx";
 import { resolveMediaUrl } from "../../utils/mediaUrl";
 
 const getUserDisplayName = (user) =>
@@ -15,12 +16,11 @@ const ChatListElement = observer(({ chat, isSelected, isLast }) => {
   const navigate = useNavigate();
   const lastMessage = ChatStore.getLastMessage(chat.id);
   const chatLastMessage = lastMessage || chat.last_message;
-  const last_message_time =
-    chatLastMessage?.created_at;
+  const last_message_time = chatLastMessage?.created_at;
   const lastMessageAuthor = chatLastMessage?.author?.user;
   const isOwnLastMessage =
-    lastMessageAuthor?.id != null
-    && String(lastMessageAuthor.id) === String(AuthStore?.user?.id);
+    lastMessageAuthor?.id != null &&
+    String(lastMessageAuthor.id) === String(AuthStore?.user?.id);
   const lastMessagePrefix = isOwnLastMessage
     ? "Вы"
     : getUserDisplayName(lastMessageAuthor);
@@ -92,11 +92,7 @@ const ChatListElement = observer(({ chat, isSelected, isLast }) => {
               )}
             </div>
 
-            <img
-              src="/voice.svg"
-              alt=""
-              className="chat_list_element__voice_icon"
-            />
+            <VoiceIcon />
           </div>
         )}
 

@@ -1,5 +1,6 @@
 import { makeAutoObservable, runInAction } from "mobx";
 import ChatService from "../services/ChatService";
+import MessageService from "../services/MessageService";
 import ChatSocketService from "../services/ChatSocketService";
 import ChatActivityStore from "./chatActivityStore";
 import ChatMessagesStore from "./chatMessagesStore";
@@ -8,6 +9,8 @@ import LocalCacheService from "../services/LocalCacheService";
 const normalizeId = (id) => String(id);
 const sameId = (left, right) => normalizeId(left) === normalizeId(right);
 const CHAT_SESSION_KEYS = ["lastOpenChatId", "activeVoiceRoomChatId"];
+const PARTICIPANTS_CACHE_TTL_MS = 5 * 60 * 1000;
+const MESSAGES_CACHE_TTL_MS = 30 * 1000;
 const createClientId = () => globalThis.crypto?.randomUUID?.()
   ?? "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (char) => {
     const value = Math.floor(Math.random() * 16);
@@ -21,6 +24,11 @@ export default class ChatStore {
   chats = [];
   currentUser = null;
   chatLoadRequests = new Map();
+  participantsByChatId = {};
+  participantsLoadedAtByChatId = {};
+  participantLoadRequests = new Map();
+  messageFirstPageByChatId = {};
+  messageLoadRequests = new Map();
   chatLoadGeneration = 0;
   presenceListener = null;
   openChatRequestId = 0;
@@ -48,6 +56,8 @@ export default class ChatStore {
       activity: false,
       socketService: false,
       chatLoadRequests: false,
+      participantLoadRequests: false,
+      messageLoadRequests: false,
       chatLoadGeneration: false,
       connectionStore: false,
       cacheWriteTimer: false,
@@ -74,7 +84,11 @@ export default class ChatStore {
 
   setCurrentUser(user) { this.currentUser = user; }
   setPresenceListener(listener) { this.presenceListener = listener; }
-  setConnectionState(isConnected) { this.isConnected = isConnected; }
+  setConnectionState(isConnected) {
+    const didReconnect = !this.isConnected && isConnected;
+    this.isConnected = isConnected;
+    if (didReconnect) this.invalidateMessageFirstPages();
+  }
 
   connect(token) {
     this.connectionStore?.setWebsocketExpected(Boolean(token));
@@ -184,6 +198,86 @@ export default class ChatStore {
   getMessages(chatId) { return this.messages.getMessages(chatId); }
   setLastMessage(chatId, message) { this.messages.setLastMessage(chatId, message); this.scheduleCacheWrite(); }
   getLastMessage(chatId) { return this.messages.getLastMessage(chatId); }
+
+  getChatParticipants(chatId) {
+    return this.participantsByChatId[normalizeId(chatId)] || [];
+  }
+
+  async ensureChatParticipants(chatId) {
+    const key = normalizeId(chatId);
+    const cached = this.getChatParticipants(key);
+    const loadedAt = this.participantsLoadedAtByChatId[key] || 0;
+    if (loadedAt && Date.now() - loadedAt < PARTICIPANTS_CACHE_TTL_MS) {
+      return cached;
+    }
+
+    const pendingRequest = this.participantLoadRequests.get(key);
+    if (pendingRequest) return pendingRequest;
+
+    const generation = this.chatLoadGeneration;
+    const request = ChatService.getChatParticipants(chatId)
+      .then(({ data }) => {
+        const participants = data.results || [];
+        if (generation === this.chatLoadGeneration) {
+          runInAction(() => {
+            this.participantsByChatId[key] = participants;
+            this.participantsLoadedAtByChatId[key] = Date.now();
+          });
+        }
+        return participants;
+      })
+      .finally(() => {
+        if (this.participantLoadRequests.get(key) === request) {
+          this.participantLoadRequests.delete(key);
+        }
+      });
+
+    this.participantLoadRequests.set(key, request);
+    return request;
+  }
+
+  async ensureMessageFirstPage(chatId) {
+    const key = normalizeId(chatId);
+    const cachedMessages = this.getMessages(key);
+    const pageState = this.messageFirstPageByChatId[key];
+    if (pageState && Date.now() - pageState.loadedAt < MESSAGES_CACHE_TTL_MS) {
+      return { messages: cachedMessages, next: pageState.next, fromCache: true };
+    }
+
+    const pendingRequest = this.messageLoadRequests.get(key);
+    if (pendingRequest) return pendingRequest;
+
+    const generation = this.chatLoadGeneration;
+    const request = MessageService.getMessages(chatId)
+      .then(({ data }) => {
+        if (generation === this.chatLoadGeneration) {
+          runInAction(() => {
+            this.mergeMessages(chatId, data.results.slice().reverse());
+            this.messageFirstPageByChatId[key] = {
+              next: data.next,
+              loadedAt: Date.now(),
+            };
+          });
+        }
+        return {
+          messages: this.getMessages(key),
+          next: data.next,
+          fromCache: false,
+        };
+      })
+      .finally(() => {
+        if (this.messageLoadRequests.get(key) === request) {
+          this.messageLoadRequests.delete(key);
+        }
+      });
+
+    this.messageLoadRequests.set(key, request);
+    return request;
+  }
+
+  invalidateMessageFirstPages() {
+    this.messageFirstPageByChatId = {};
+  }
 
   sendMessage(chatId, message) {
     const clientId = createClientId();
@@ -414,6 +508,11 @@ export default class ChatStore {
     this.chats = [];
     this.chatLoadGeneration += 1;
     this.chatLoadRequests.clear();
+    this.participantsByChatId = {};
+    this.participantsLoadedAtByChatId = {};
+    this.participantLoadRequests.clear();
+    this.messageFirstPageByChatId = {};
+    this.messageLoadRequests.clear();
     this.messages.reset();
     this.activity.reset();
     CHAT_SESSION_KEYS.forEach((key) => sessionStorage.removeItem(key));

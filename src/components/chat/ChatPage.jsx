@@ -1,4 +1,11 @@
-import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import ChatList from "./ChatList.jsx";
 import ChatWindow from "./ChatWindow.jsx";
@@ -8,6 +15,12 @@ import { observer } from "mobx-react-lite";
 
 const ACTIVE_VOICE_ROOM_CHAT_ID_KEY = "activeVoiceRoomChatId";
 const LAST_OPEN_CHAT_ID_KEY = "lastOpenChatId";
+const INITIAL_VOICE_CONTROLS = {
+  micMuted: false,
+  headphonesMuted: false,
+  cameraEnabled: false,
+  screenShareEnabled: false,
+};
 
 const ChatPage = observer(() => {
   const { ChatStore } = useContext(Context);
@@ -28,6 +41,10 @@ const ChatPage = observer(() => {
     return Boolean(sessionStorage.getItem(ACTIVE_VOICE_ROOM_CHAT_ID_KEY));
   });
   const voiceRoomRef = useRef(null);
+  const [voiceControls, setVoiceControls] = useState(INITIAL_VOICE_CONTROLS);
+  const handleVoiceControlsChange = useCallback((nextControls) => {
+    setVoiceControls(nextControls);
+  }, []);
 
   useEffect(() => {
     if (routeChatId) {
@@ -56,12 +73,14 @@ const ChatPage = observer(() => {
     sessionStorage.setItem(ACTIVE_VOICE_ROOM_CHAT_ID_KEY, nextChatId);
     setActiveVoiceRoomChatId(nextChatId);
     setIsVoiceRoomOpen(true);
+    setVoiceControls(INITIAL_VOICE_CONTROLS);
   };
 
   const leaveVoiceRoom = () => {
     sessionStorage.removeItem(ACTIVE_VOICE_ROOM_CHAT_ID_KEY);
     setActiveVoiceRoomChatId(null);
     setIsVoiceRoomOpen(false);
+    setVoiceControls(INITIAL_VOICE_CONTROLS);
   };
 
   const leaveVoiceRoomFromProfile = () => {
@@ -113,6 +132,15 @@ const ChatPage = observer(() => {
         activeVoiceRoomName={activeVoiceRoomName}
         onOpenVoiceRoomPanel={() => setIsVoiceRoomOpen(true)}
         onLeaveVoiceRoom={leaveVoiceRoomFromProfile}
+        voiceControls={voiceControls}
+        onToggleVoiceMic={() => voiceRoomRef.current?.toggleMic()}
+        onToggleVoiceHeadphones={() =>
+          voiceRoomRef.current?.toggleHeadphones()
+        }
+        onToggleVoiceCamera={() => voiceRoomRef.current?.toggleCamera()}
+        onToggleVoiceScreenShare={() =>
+          voiceRoomRef.current?.toggleScreenShare()
+        }
       />
 
       <div className="chat_page_main">
@@ -138,6 +166,7 @@ const ChatPage = observer(() => {
             preserveChatDescription={Boolean(selectedChatData?.is_group)}
             onHide={() => setIsVoiceRoomOpen(false)}
             onLeaveRoom={leaveVoiceRoom}
+            onControlsChange={handleVoiceControlsChange}
           />
         )}
       </div>

@@ -33,16 +33,17 @@ const RoomUser = function ({
   const audioRef = useRef(null);
   const videoRef = useRef(null);
   const tileRef = useRef(null);
-  const videoMedia = participant.media?.screen?.track &&
+  const videoMedia =
+    participant.media?.screen?.track &&
     !participant.media.screen.publication?.isMuted
-    ? participant.media.screen
-    : participant.media?.camera?.track &&
-        !participant.media.camera.publication?.isMuted
-      ? participant.media.camera
-      : null;
+      ? participant.media.screen
+      : participant.media?.camera?.track &&
+          !participant.media.camera.publication?.isMuted
+        ? participant.media.camera
+        : null;
   const hasActiveVideo = Boolean(
     videoMedia?.stream &&
-      videoMedia.track?.mediaStreamTrack?.readyState !== "ended",
+    videoMedia.track?.mediaStreamTrack?.readyState !== "ended",
   );
   const isHeadphonesMuted = Boolean(participant.state?.deafened);
   const isRemoteMicMuted =
@@ -86,9 +87,12 @@ const RoomUser = function ({
     if (!tile || (!cameraPublication && !screenPublication)) return;
 
     screenPublication?.setSubscribed?.(true);
-    const observer = new IntersectionObserver(([entry]) => {
-      cameraPublication?.setSubscribed?.(entry.isIntersecting);
-    }, { threshold: 0.05 });
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        cameraPublication?.setSubscribed?.(entry.isIntersecting);
+      },
+      { threshold: 0.05 },
+    );
     observer.observe(tile);
     return () => observer.disconnect();
   }, [
@@ -113,7 +117,13 @@ const RoomUser = function ({
     if (!audio.muted) {
       playAudio(audio);
     }
-  }, [participant.stream, participant.isLocalMedia, soundMuted, isLocallyMuted, volume]);
+  }, [
+    participant.stream,
+    participant.isLocalMedia,
+    soundMuted,
+    isLocallyMuted,
+    volume,
+  ]);
 
   return (
     <div
@@ -122,7 +132,6 @@ const RoomUser = function ({
       role="button"
       tabIndex={0}
       aria-pressed={isFocused}
-      title={isFocused ? "Вернуть обычную сетку" : "Показать крупно"}
       onClick={onSelect}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {

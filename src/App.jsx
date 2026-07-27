@@ -2,7 +2,6 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { observer } from "mobx-react-lite";
 import { useContext, useEffect } from "react";
 import { Context } from "./main";
-import "./style/App.css";
 import Spinner from "./components/UI/Spiner";
 import TrayMenu from "./components/tray/TrayMenu";
 import CustomTitleBar from "./components/CustomTitleBar";

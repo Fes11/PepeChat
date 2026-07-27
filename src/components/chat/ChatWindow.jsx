@@ -9,7 +9,6 @@ import React, {
 } from "react";
 import { Context } from "../../main.jsx";
 import MessageService from "../../services/MessageService";
-import ChatServices from "../../services/ChatService.jsx";
 import Message from "../message/Message.jsx";
 import ChatDescription from "./ChatDescription.jsx";
 import Spinner from "../UI/Spiner.jsx";
@@ -24,6 +23,7 @@ import { notifyError } from "../../notifications/notificationService.js";
 import { getErrorMessage } from "../../utils/errors.js";
 import { resolveMediaUrl } from "../../utils/mediaUrl";
 import ContextMenu from "../UI/ContextMenu";
+import VoiceIcon from "../UI/VoiceIcon.jsx";
 
 const MAX_INPUT_HEIGHT = 200;
 
@@ -47,7 +47,7 @@ const ChatWindow = observer(
     const shouldStickToBottom = useRef(true);
     const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
     const [emojiTab, setEmojiTab] = useState("emoji");
-    const [participants, setParticipants] = useState([]);
+    const participants = ChatStore.getChatParticipants(chat.id);
     const voiceParticipants = ChatStore.getVoiceParticipants(chat.id);
     const visibleVoiceAvatars =
       voiceParticipants.length > 3
@@ -134,29 +134,13 @@ const ChatWindow = observer(
 
     useEffect(() => {
       if (!chat.is_group) {
-        setParticipants([]);
         return;
       }
 
-      let isActual = true;
-
-      const fetchParticipants = async () => {
-        try {
-          const response = await ChatServices.getChatParticipants(chat.id);
-          if (isActual) {
-            setParticipants(response.data.results);
-          }
-        } catch (error) {
-          console.error("Ошибка при получении участников чата:", error);
-        }
-      };
-
-      fetchParticipants();
-
-      return () => {
-        isActual = false;
-      };
-    }, [chat.id, chat.is_group]);
+      ChatStore.ensureChatParticipants(chat.id).catch((error) => {
+        console.error("Ошибка при получении участников чата:", error);
+      });
+    }, [ChatStore, chat.id, chat.is_group]);
 
     useEffect(() => {
       const hasCachedMessages = ChatStore.getMessages(chat.id).length > 0;
@@ -169,11 +153,10 @@ const ChatWindow = observer(
         setIsLoading(!hasCachedMessages);
 
         try {
-          const res = await MessageService.getMessages(chat.id);
+          const res = await ChatStore.ensureMessageFirstPage(chat.id);
           if (activeChatId.current !== chat.id) return;
-          ChatStore.mergeMessages(chat.id, res.data.results.slice().reverse());
-          setNextCursor(res.data.next);
-          setHasMore(Boolean(res.data.next));
+          setNextCursor(res.next);
+          setHasMore(Boolean(res.next));
         } catch (e) {
           console.error(e);
           if (!hasCachedMessages) setError(e);
@@ -439,11 +422,7 @@ const ChatWindow = observer(
                 </div>
               )}
 
-              <img
-                src="/voice.svg"
-                alt=""
-                className="chat_list_element__voice_icon"
-              />
+              <VoiceIcon />
             </button>
           </div>
           <div className="chat__message_list" ref={listRef}>

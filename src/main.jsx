@@ -1,5 +1,7 @@
 import React, { createContext } from "react";
 import ReactDOM from "react-dom/client";
+import "@fontsource-variable/inter";
+import "./style/App.css";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import authStore from "./store/authStore";

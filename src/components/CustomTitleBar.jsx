@@ -2,6 +2,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useContext } from "react";
 import { observer } from "mobx-react-lite";
 import { Context } from "../main";
+import Logo from "./UI/Logo.jsx";
 
 const runWindowAction = (actionName) => {
   try {
@@ -51,7 +52,7 @@ const CustomTitleBar = observer(() => {
       onMouseDown={startDragging}
     >
       <div className="custom_title_bar__brand" data-tauri-drag-region>
-        <img className="custom_title_bar__logo" src="/logo.svg" alt="" />
+        <Logo className="custom_title_bar__logo" />
         <span className="custom_title_bar__title">PepeChat</span>
         <span
           className={`connection_status connection_status--${status}`}
@@ -59,7 +60,9 @@ const CustomTitleBar = observer(() => {
           aria-label={`Состояние подключения: ${CONNECTION_LABELS[status]}`}
         >
           <span className="connection_status__dot" aria-hidden="true" />
-          <span className="connection_status__label">{CONNECTION_LABELS[status]}</span>
+          <span className="connection_status__label">
+            {CONNECTION_LABELS[status]}
+          </span>
         </span>
       </div>
       <div
