@@ -1,4 +1,12 @@
-import React, { useContext, useState, useEffect, useRef } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+} from "react";
+import { createPortal } from "react-dom";
 import classes from "./SettingsModal.module.css";
 import AvatarPicker from "./UI/AvatarPicker/AvatarPicker.jsx";
 import { mediaService } from "../services/MediaService";
@@ -20,6 +28,8 @@ import {
 import { useUpdater } from "../updates/UpdateProvider";
 import { getErrorMessage } from "../utils/errors";
 import { invoke } from "@tauri-apps/api/core";
+import EmojiPicker from "./UI/EmojiPicker/EmojiPicker.jsx";
+import EmojiButton from "./UI/EmojiButton/EmojiButton.jsx";
 
 const SettingsModal = function ({ onClose }) {
   const navigate = useNavigate();
@@ -27,6 +37,10 @@ const SettingsModal = function ({ onClose }) {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [description, setDescription] = useState("");
+  const [isDescriptionEmojiOpen, setIsDescriptionEmojiOpen] = useState(false);
+  const [descriptionEmojiTab, setDescriptionEmojiTab] = useState("emoji");
+  const [descriptionEmojiPosition, setDescriptionEmojiPosition] =
+    useState(null);
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [profileError, setProfileError] = useState("");
@@ -49,6 +63,99 @@ const SettingsModal = function ({ onClose }) {
   const gainNodeRef = useRef(null);
   const analyserRef = useRef(null);
   const animationRef = useRef(null);
+  const descriptionRef = useRef(null);
+  const descriptionEmojiRef = useRef(null);
+  const descriptionEmojiPortalRef = useRef(null);
+
+  useLayoutEffect(() => {
+    if (!isDescriptionEmojiOpen) {
+      setDescriptionEmojiPosition(null);
+      return undefined;
+    }
+
+    const updatePosition = () => {
+      const anchor = descriptionEmojiRef.current;
+      if (!anchor) return;
+
+      const scale = Number.parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue(
+          "--ui-scale",
+        ),
+      ) || 1;
+      const rect = anchor.getBoundingClientRect();
+      const viewportWidth = window.innerWidth / scale;
+      const viewportHeight = window.innerHeight / scale;
+      const anchorTop = rect.top / scale;
+      const anchorBottom = rect.bottom / scale;
+      const anchorRight = rect.right / scale;
+      const edgeGap = 12;
+      const pickerGap = 8;
+      const pickerWidth = Math.min(320, viewportWidth - edgeGap * 2);
+      const spaceAbove = anchorTop - edgeGap - pickerGap;
+      const spaceBelow = viewportHeight - anchorBottom - edgeGap - pickerGap;
+      const openAbove = spaceAbove >= spaceBelow;
+      const availableHeight = Math.min(
+        360,
+        Math.max(0, openAbove ? spaceAbove : spaceBelow),
+      );
+      const left = Math.min(
+        Math.max(edgeGap, anchorRight - pickerWidth),
+        viewportWidth - pickerWidth - edgeGap,
+      );
+      const top = openAbove
+        ? Math.max(edgeGap, anchorTop - availableHeight - pickerGap)
+        : anchorBottom + pickerGap;
+
+      setDescriptionEmojiPosition({
+        top,
+        left,
+        width: pickerWidth,
+        height: availableHeight,
+      });
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    document.addEventListener("scroll", updatePosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      document.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [isDescriptionEmojiOpen, uiScale]);
+
+  useEffect(() => {
+    if (!isDescriptionEmojiOpen) return undefined;
+
+    const closeOnOutsideClick = (event) => {
+      if (descriptionEmojiRef.current?.contains(event.target)) return;
+      if (descriptionEmojiPortalRef.current?.contains(event.target)) return;
+      setIsDescriptionEmojiOpen(false);
+    };
+
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    return () => document.removeEventListener("mousedown", closeOnOutsideClick);
+  }, [isDescriptionEmojiOpen]);
+
+  const addDescriptionEmoji = useCallback((emoji) => {
+    const input = descriptionRef.current;
+    const selectionStart = input?.selectionStart ?? 0;
+    const selectionEnd = input?.selectionEnd ?? selectionStart;
+    const currentDescription = input?.value ?? "";
+    const nextDescription =
+      currentDescription.slice(0, selectionStart) +
+      emoji +
+      currentDescription.slice(selectionEnd);
+
+    if (nextDescription.length > 450) return;
+    setDescription(nextDescription);
+
+    requestAnimationFrame(() => {
+      descriptionRef.current?.focus();
+      const cursorPosition = selectionStart + emoji.length;
+      descriptionRef.current?.setSelectionRange(cursorPosition, cursorPosition);
+    });
+  }, []);
 
   useEffect(() => {
     MediaStore.initializeDevices({ requestMicrophone: true });
@@ -322,7 +429,10 @@ const SettingsModal = function ({ onClose }) {
 
   const resetMediaPermissions = async () => {
     if (!window.__TAURI_INTERNALS__) {
-      notifyError(null, "Сброс разрешений доступен только в приложении PepeChat.");
+      notifyError(
+        null,
+        "Сброс разрешений доступен только в приложении PepeChat.",
+      );
       return;
     }
 
@@ -344,9 +454,13 @@ const SettingsModal = function ({ onClose }) {
       if (microphone.status === "fulfilled" && camera.status === "fulfilled") {
         notifySuccess("Доступ к микрофону и камере обновлён.");
       } else if (microphone.status === "fulfilled") {
-        notifySuccess("Доступ к микрофону обновлён. Камера недоступна или запрещена.");
+        notifySuccess(
+          "Доступ к микрофону обновлён. Камера недоступна или запрещена.",
+        );
       } else if (camera.status === "fulfilled") {
-        notifySuccess("Доступ к камере обновлён. Микрофон недоступен или запрещён.");
+        notifySuccess(
+          "Доступ к камере обновлён. Микрофон недоступен или запрещён.",
+        );
       } else {
         throw new Error(
           "Доступ не предоставлен. Проверьте настройки конфиденциальности Windows.",
@@ -424,15 +538,58 @@ const SettingsModal = function ({ onClose }) {
                       className={classes.settings_input}
                     />
                   </label>
-                  <label className={classes.control_label}>
+                  <label
+                    className={`${classes.control_label} ${classes.description_label}`}
+                  >
                     Описание
-                    <input
-                      type="text"
-                      placeholder="О вас"
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      className={classes.settings_input}
-                    />
+                    <div
+                      className={classes.description_input_box}
+                      ref={descriptionEmojiRef}
+                    >
+                      {isDescriptionEmojiOpen &&
+                        descriptionEmojiPosition &&
+                        createPortal(
+                          <div
+                            ref={descriptionEmojiPortalRef}
+                            className={classes.description_emoji_portal}
+                            style={{
+                              top: descriptionEmojiPosition.top,
+                              left: descriptionEmojiPosition.left,
+                              width: descriptionEmojiPosition.width,
+                              height: descriptionEmojiPosition.height,
+                              "--description-emoji-grid-height": `${Math.max(
+                                0,
+                                descriptionEmojiPosition.height - 50,
+                              )}px`,
+                            }}
+                          >
+                            <EmojiPicker
+                              className={classes.description_emoji_picker}
+                              activeTab={descriptionEmojiTab}
+                              onTabChange={setDescriptionEmojiTab}
+                              onEmojiSelect={addDescriptionEmoji}
+                            />
+                          </div>,
+                          document.getElementById("root"),
+                        )}
+                      <input
+                        type="text"
+                        ref={descriptionRef}
+                        placeholder="Расскажите немного о себе"
+                        value={description}
+                        maxLength={450}
+                        rows={3}
+                        onChange={(e) => setDescription(e.target.value)}
+                        className={`${classes.settings_input} ${classes.description_input}`}
+                      />
+                      <EmojiButton
+                        className={classes.description_emoji_button}
+                        isOpen={isDescriptionEmojiOpen}
+                        onClick={() =>
+                          setIsDescriptionEmojiOpen((isOpen) => !isOpen)
+                        }
+                      />
+                    </div>
                   </label>
                 </div>
               </div>
@@ -591,7 +748,8 @@ const SettingsModal = function ({ onClose }) {
                 <span>
                   <strong>Микрофон и камера</strong>
                   <small>
-                    Сбросить решение WebView и снова показать системные запросы доступа.
+                    Сбросить решение WebView и снова показать системные запросы
+                    доступа.
                   </small>
                 </span>
                 <button
@@ -609,34 +767,65 @@ const SettingsModal = function ({ onClose }) {
               <div className={classes.update_card} aria-live="polite">
                 <div className={classes.update_header}>
                   <span>
-                    <strong>PepeChat {updater.currentVersion && `v${updater.currentVersion}`}</strong>
+                    <strong>
+                      PepeChat{" "}
+                      {updater.currentVersion && `v${updater.currentVersion}`}
+                    </strong>
                     <small>
                       {updater.status === "checking" && "Проверяем обновления…"}
-                      {updater.status === "upToDate" && "Установлена последняя версия"}
-                      {updater.status === "available" && `Доступна версия ${updater.nextVersion}`}
-                      {updater.status === "downloading" && "Загрузка и установка…"}
-                      {updater.status === "installed" && "Обновление установлено"}
+                      {updater.status === "upToDate" &&
+                        "Установлена последняя версия"}
+                      {updater.status === "available" &&
+                        `Доступна версия ${updater.nextVersion}`}
+                      {updater.status === "downloading" &&
+                        "Загрузка и установка…"}
+                      {updater.status === "installed" &&
+                        "Обновление установлено"}
                       {updater.status === "error" && updater.error}
-                      {updater.status === "idle" && (updater.supported ? "Автоматическая проверка включена" : "Доступно только в десктопном приложении")}
+                      {updater.status === "idle" &&
+                        (updater.supported
+                          ? "Автоматическая проверка включена"
+                          : "Доступно только в десктопном приложении")}
                     </small>
                   </span>
                   {updater.status === "available" ? (
-                    <button type="button" onClick={updater.installUpdate}>Установить</button>
+                    <button type="button" onClick={updater.installUpdate}>
+                      Установить
+                    </button>
                   ) : updater.status === "installed" ? (
-                    <button type="button" onClick={updater.relaunch}>Перезапустить</button>
+                    <button type="button" onClick={updater.relaunch}>
+                      Перезапустить
+                    </button>
                   ) : (
-                    <button type="button" disabled={!updater.supported || updater.status === "checking" || updater.status === "downloading"} onClick={() => updater.checkForUpdates()}>
+                    <button
+                      type="button"
+                      disabled={
+                        !updater.supported ||
+                        updater.status === "checking" ||
+                        updater.status === "downloading"
+                      }
+                      onClick={() => updater.checkForUpdates()}
+                    >
                       {updater.status === "error" ? "Повторить" : "Проверить"}
                     </button>
                   )}
                 </div>
                 {updater.status === "downloading" && (
                   <div className={classes.update_progress}>
-                    <progress value={updater.downloaded} max={updater.total || undefined} />
-                    <span>{updater.total ? `${Math.round((updater.downloaded / updater.total) * 100)}%` : `${(updater.downloaded / 1024 / 1024).toFixed(1)} МБ`}</span>
+                    <progress
+                      value={updater.downloaded}
+                      max={updater.total || undefined}
+                    />
+                    <span>
+                      {updater.total
+                        ? `${Math.round((updater.downloaded / updater.total) * 100)}%`
+                        : `${(updater.downloaded / 1024 / 1024).toFixed(1)} МБ`}
+                    </span>
                   </div>
                 )}
-                {updater.status === "available" && updater.notes && <p className={classes.update_notes}>{updater.notes}</p>}
+                {updater.status === "available" && updater.notes && (
+                  <p className={classes.update_notes}>{updater.notes}</p>
+                )}
               </div>
             </div>
           </div>

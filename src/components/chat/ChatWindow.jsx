@@ -15,6 +15,7 @@ import Spinner from "../UI/Spiner.jsx";
 import ChatAvatar from "../UI/ChatAvatar.jsx";
 import UserAvatar from "../UI/UserAvatar.jsx";
 import EmojiPicker from "../UI/EmojiPicker/EmojiPicker.jsx";
+import EmojiButton from "../UI/EmojiButton/EmojiButton.jsx";
 import { parseISO, isSameDay, formatDistanceToNow } from "date-fns";
 import { enUS } from "date-fns/locale";
 import DateDivider from "../UI/DateDivider.jsx";
@@ -505,14 +506,12 @@ const ChatWindow = observer(
                 onKeyDown={handleMessageKeyDown}
                 rows={1}
               />
-              <button
+              <EmojiButton
                 className="chat__emoji_btn"
-                type="button"
-                aria-label="Open emoji picker"
+                isOpen={isEmojiPickerOpen}
+                ariaLabel="Открыть выбор emoji"
                 onClick={() => setIsEmojiPickerOpen((isOpen) => !isOpen)}
-              >
-                <img src="/smile.svg" />
-              </button>
+              />
             </div>
             <button className="chat__send_btn" onClick={sendMessage}>
               <img src="/paperplane.svg" alt="Send" />

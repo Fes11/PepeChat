@@ -8,7 +8,7 @@ import roomJoinSoundUrl from "../assets/sounds/JoinSound.mp3";
 import roomLeftSoundUrl from "../assets/sounds/LeftSound.mp3";
 
 const HEARTBEAT_INTERVAL = 10_000;
-const ROOM_SOUND_VOLUME = 0.4;
+const ROOM_SOUND_VOLUME = 0.2;
 
 const playRoomSound = (url, outputDeviceId) => {
   const audio = new Audio(url);
@@ -31,7 +31,21 @@ export const useLiveKitVoiceRoom = (chatId) => {
   const directoryRef = useRef(new Map());
   const manuallyClosedRef = useRef(false);
   const microphoneRequestRef = useRef(0);
+  const microphoneEnabledRef = useRef(true);
   const localJoinSoundPlayedRef = useRef(false);
+
+  const updateLocalParticipantState = useCallback(
+    (statePatch) => {
+      setParticipants((current) =>
+        current.map((item) =>
+          String(item.user?.id) === String(AuthStore.user?.id)
+            ? { ...item, state: { ...item.state, ...statePatch } }
+            : item,
+        ),
+      );
+    },
+    [AuthStore.user?.id],
+  );
 
   const mergeTransportParticipant = useCallback((mediaParticipant) => {
     setParticipants((current) =>
@@ -45,7 +59,9 @@ export const useLiveKitVoiceRoom = (chatId) => {
               state: {
                 ...participant.state,
                 speaking: mediaParticipant.isSpeaking,
-                muted: Boolean(mediaParticipant.media.audio?.publication?.isMuted),
+                muted: Boolean(
+                  mediaParticipant.media.audio?.publication?.isMuted,
+                ),
               },
             }
           : participant,
@@ -55,35 +71,45 @@ export const useLiveKitVoiceRoom = (chatId) => {
 
   const startMicrophone = useCallback(async () => {
     const requestId = ++microphoneRequestRef.current;
-    const stream = await mediaService.getMicrophone(MediaStore.selectedMicrophone, {
-      volume: MediaStore.volume,
-      audioSettings: MediaStore.getAudioSettings(),
-    });
+    const stream = await mediaService.getMicrophone(
+      MediaStore.selectedMicrophone,
+      {
+        volume: MediaStore.volume,
+        audioSettings: MediaStore.getAudioSettings(),
+      },
+    );
     if (requestId !== microphoneRequestRef.current || !transportRef.current) {
       mediaService.stopStream(stream);
       return;
     }
     await transportRef.current?.publishMicrophone(stream);
+    await transportRef.current?.setMicrophoneEnabled(
+      microphoneEnabledRef.current,
+    );
     setLocalStreamReady(true);
   }, [MediaStore]);
 
-  const disconnect = useCallback(async ({ playSound = true } = {}) => {
-    if (manuallyClosedRef.current) return;
-    manuallyClosedRef.current = true;
-    if (playSound) playRoomSound(roomLeftSoundUrl, MediaStore.selectedDisplay);
-    microphoneRequestRef.current += 1;
-    clearInterval(heartbeatRef.current);
-    const socket = socketRef.current;
-    const transport = transportRef.current;
-    socket?.send({ type: "leave" });
-    socket?.disconnect();
-    await transport?.disconnect();
-    if (transportRef.current === transport) transportRef.current = null;
-    if (socketRef.current === socket) socketRef.current = null;
-    setParticipants([]);
-    setLocalStreamReady(false);
-    ChatStore?.clearVoiceParticipants(chatId);
-  }, [ChatStore, MediaStore.selectedDisplay, chatId]);
+  const disconnect = useCallback(
+    async ({ playSound = true } = {}) => {
+      if (manuallyClosedRef.current) return;
+      manuallyClosedRef.current = true;
+      if (playSound)
+        playRoomSound(roomLeftSoundUrl, MediaStore.selectedDisplay);
+      microphoneRequestRef.current += 1;
+      clearInterval(heartbeatRef.current);
+      const socket = socketRef.current;
+      const transport = transportRef.current;
+      socket?.send({ type: "leave" });
+      socket?.disconnect();
+      await transport?.disconnect();
+      if (transportRef.current === transport) transportRef.current = null;
+      if (socketRef.current === socket) socketRef.current = null;
+      setParticipants([]);
+      setLocalStreamReady(false);
+      ChatStore?.clearVoiceParticipants(chatId);
+    },
+    [ChatStore, MediaStore.selectedDisplay, chatId],
+  );
 
   useEffect(() => {
     manuallyClosedRef.current = false;
@@ -92,9 +118,13 @@ export const useLiveKitVoiceRoom = (chatId) => {
 
     const connect = async () => {
       try {
-        const { data } = await api.post(`/api/rooms/${chatId}/media-token/`, null, {
-          skipErrorNotification: true,
-        });
+        const { data } = await api.post(
+          `/api/rooms/${chatId}/media-token/`,
+          null,
+          {
+            skipErrorNotification: true,
+          },
+        );
         if (data.transport !== "livekit") {
           throw new Error("Server did not select the LiveKit transport");
         }
@@ -103,14 +133,19 @@ export const useLiveKitVoiceRoom = (chatId) => {
           onParticipantChanged: mergeTransportParticipant,
           onParticipantLeft: (identity) =>
             setParticipants((current) =>
-              current.filter((item) => String(item.user?.id) !== String(identity)),
+              current.filter(
+                (item) => String(item.user?.id) !== String(identity),
+              ),
             ),
           onActiveSpeakers: (identities) => {
             const speaking = new Set(identities.map(String));
             setParticipants((current) =>
               current.map((item) => ({
                 ...item,
-                state: { ...item.state, speaking: speaking.has(String(item.user?.id)) },
+                state: {
+                  ...item.state,
+                  speaking: speaking.has(String(item.user?.id)),
+                },
               })),
             );
           },
@@ -157,7 +192,9 @@ export const useLiveKitVoiceRoom = (chatId) => {
               const existing = current.find(
                 (entry) => String(entry.user?.id) === String(item.user?.id),
               );
-              return existing ? { ...item, media: existing.media, stream: existing.stream } : item;
+              return existing
+                ? { ...item, media: existing.media, stream: existing.stream }
+                : item;
             }),
           );
           queueMicrotask(() => transportRef.current?.refreshParticipants());
@@ -174,15 +211,18 @@ export const useLiveKitVoiceRoom = (chatId) => {
             current.filter((item) => item.id !== data.participant_id),
           );
         } else if (data.type === "media_state_update") {
-          setParticipants((current) => current.map((item) =>
-            item.id === data.participant_id
-              ? { ...item, state: { ...item.state, ...data.state } }
-              : item,
-          ));
+          setParticipants((current) =>
+            current.map((item) =>
+              item.id === data.participant_id
+                ? { ...item, state: { ...item.state, ...data.state } }
+                : item,
+            ),
+          );
         }
       },
       onClose: () => clearInterval(heartbeatRef.current),
-      onError: (error) => console.warn("[VoiceRoom] Presence socket error", error),
+      onError: (error) =>
+        console.warn("[VoiceRoom] Presence socket error", error),
     });
     // Defer side effects by one macrotask. In development React Strict Mode
     // mounts, cleans up, and mounts effects again; the first timer is cancelled
@@ -210,32 +250,49 @@ export const useLiveKitVoiceRoom = (chatId) => {
     const replaceCamera = (event) => {
       transportRef.current
         ?.switchCamera(event.detail?.deviceId)
-        .catch((error) => console.warn("[VoiceRoom] Cannot switch camera", error));
+        .catch((error) =>
+          console.warn("[VoiceRoom] Cannot switch camera", error),
+        );
     };
     window.addEventListener("pepechat:microphonechange", replaceMicrophone);
     window.addEventListener("pepechat:audiosettingschange", replaceMicrophone);
     window.addEventListener("pepechat:camerachange", replaceCamera);
     return () => {
-      window.removeEventListener("pepechat:microphonechange", replaceMicrophone);
-      window.removeEventListener("pepechat:audiosettingschange", replaceMicrophone);
+      window.removeEventListener(
+        "pepechat:microphonechange",
+        replaceMicrophone,
+      );
+      window.removeEventListener(
+        "pepechat:audiosettingschange",
+        replaceMicrophone,
+      );
       window.removeEventListener("pepechat:camerachange", replaceCamera);
     };
   }, [startMicrophone]);
 
-  const setMicEnabled = useCallback((enabled) => {
-    transportRef.current?.setMicrophoneEnabled(enabled);
-    socketRef.current?.send({ type: "media_state", state: { muted: !enabled } });
-  }, []);
+  const setMicEnabled = useCallback(
+    (enabled) => {
+      microphoneEnabledRef.current = enabled;
+      updateLocalParticipantState({ muted: !enabled, speaking: false });
+      transportRef.current?.setMicrophoneEnabled(enabled).catch((error) => {
+        console.warn("[VoiceRoom] Cannot change microphone state", error);
+      });
+      socketRef.current?.send({
+        type: "media_state",
+        state: { muted: !enabled },
+      });
+    },
+    [updateLocalParticipantState],
+  );
 
-  const setHeadphonesMuted = useCallback((deafened) => {
-    transportRef.current?.setDeafened(deafened);
-    socketRef.current?.send({ type: "media_state", state: { deafened } });
-    setParticipants((current) => current.map((item) =>
-      String(item.user?.id) === String(AuthStore.user?.id)
-        ? { ...item, state: { ...item.state, deafened } }
-        : item,
-    ));
-  }, [AuthStore.user?.id]);
+  const setHeadphonesMuted = useCallback(
+    (deafened) => {
+      transportRef.current?.setDeafened(deafened);
+      socketRef.current?.send({ type: "media_state", state: { deafened } });
+      updateLocalParticipantState({ deafened });
+    },
+    [updateLocalParticipantState],
+  );
 
   return {
     participants,
@@ -244,7 +301,10 @@ export const useLiveKitVoiceRoom = (chatId) => {
     setMicEnabled,
     setHeadphonesMuted,
     setCameraEnabled: (enabled) =>
-      transportRef.current?.setCameraEnabled(enabled, MediaStore.selectedCamera),
+      transportRef.current?.setCameraEnabled(
+        enabled,
+        MediaStore.selectedCamera,
+      ),
     setScreenShareEnabled: (enabled) =>
       transportRef.current?.setScreenShareEnabled(enabled),
     send: (data) => socketRef.current?.send(data),

@@ -86,7 +86,6 @@
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
-  scrollbar-gutter: stable;
 }
 
 .room_users_list_single {
@@ -160,9 +159,7 @@
   backdrop-filter: blur(30px);
   box-shadow:
     -1px -1px 0 var(--raised-light-color),
-    1px 1px 0 var(--raised-dark-color),
-    2px 2px 4px rgba(0, 0, 0, 0.1),
-    3px 3px 1px rgba(0, 0, 0, 0.4);
+    1px 1px 0 var(--raised-dark-color);
   transition:
     opacity 400ms ease,
     transform 400ms ease,

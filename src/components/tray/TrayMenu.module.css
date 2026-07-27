@@ -11,9 +11,7 @@
   content: "";
   position: fixed;
   inset: 0;
-  border-radius: 12px;
   background: var(--box-bg-color);
-  border: 1px solid var(--border-color);
   box-shadow: 0 18px 46px rgba(0, 0, 0, 0.34);
   z-index: -1;
 }
@@ -90,8 +88,8 @@
   align-items: center;
   justify-content: center;
   border-radius: 6px;
-  background: var(--main-faint-color);
-  color: var(--main-color);
+  background: var(--surface-color);
+  color: var(--input-border-color);
   font-size: 14px;
   font-weight: 900;
   line-height: 1;

@@ -1,5 +1,5 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { useContext } from "react";
+import { useContext, useRef } from "react";
 import { observer } from "mobx-react-lite";
 import { Context } from "../main";
 import Logo from "./UI/Logo.jsx";
@@ -32,12 +32,37 @@ const CONNECTION_LABELS = {
 const CustomTitleBar = observer(() => {
   const { ConnectionStore } = useContext(Context);
   const status = ConnectionStore.status;
+  const dragInProgress = useRef(false);
+
   const startDragging = (event) => {
-    if (event.button !== 0) {
+    if (event.button !== 0 || dragInProgress.current) {
       return;
     }
 
-    runWindowAction("startDragging");
+    dragInProgress.current = true;
+
+    try {
+      const appWindow = getCurrentWindow();
+      appWindow
+        .startDragging()
+        .catch((error) => {
+          if (import.meta.env.DEV) {
+            console.warn("Tauri window action failed: startDragging", error);
+          }
+        })
+        .finally(() => {
+          dragInProgress.current = false;
+        });
+    } catch (error) {
+      dragInProgress.current = false;
+
+      if (import.meta.env.DEV) {
+        console.warn(
+          "Tauri window action is unavailable: startDragging",
+          error,
+        );
+      }
+    }
   };
 
   const toggleMaximize = () => {
@@ -46,12 +71,12 @@ const CustomTitleBar = observer(() => {
 
   return (
     <header
-      className="custom_title_bar"
       data-tauri-drag-region
+      className="custom_title_bar"
       onDoubleClick={toggleMaximize}
       onMouseDown={startDragging}
     >
-      <div className="custom_title_bar__brand" data-tauri-drag-region>
+      <div className="custom_title_bar__brand">
         <Logo className="custom_title_bar__logo" />
         <span className="custom_title_bar__title">PepeChat</span>
         <span

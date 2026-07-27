@@ -33,13 +33,12 @@ const ParticipantProfile = forwardRef(({ user, style }, ref) => {
           {user.login && (
             <p className="participant__description_login">@{user.login}</p>
           )}
-          {user.descriptions && (
-            <p className="participant__description_login">
-              {user.descriptions}
-            </p>
-          )}
         </div>
       </div>
+
+      {user.descriptions && (
+        <p className="participant_profile_description">{user.descriptions}</p>
+      )}
 
       {AuthStore.user.id !== user.id && (
         <button
