@@ -110,6 +110,15 @@ const Registration = function () {
           {formError && (
             <p className={classes.registration__form_error}>{formError}</p>
           )}
+          {passwordError && (
+            <p className={classes.registration__form_error}>{passwordError}</p>
+          )}
+          {usernameError && (
+            <p className={classes.registration__form_error}>{usernameError}</p>
+          )}
+          {loginError && (
+            <p className={classes.registration__form_error}>{loginError}</p>
+          )}
 
           <div className={classes.registration__form_header}>
             <div className={classes.registration__avatar_box}>
@@ -134,9 +143,7 @@ const Registration = function () {
                   loginError ? classes.registration__form_input_error : ""
                 }`}
               />
-              {loginError && (
-                <p className={classes.registration__form_error}>{loginError}</p>
-              )}
+
               <input
                 value={username}
                 onChange={(e) => {
@@ -149,29 +156,9 @@ const Registration = function () {
                   usernameError ? classes.registration__form_input_error : ""
                 }`}
               />
-              {usernameError && (
-                <p className={classes.registration__form_error}>
-                  {usernameError}
-                </p>
-              )}
             </div>
           </div>
 
-          <input
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              clearFieldError("email");
-            }}
-            type="email"
-            placeholder="Email"
-            className={`${classes.registration__form_input} ${
-              emailError ? classes.registration__form_input_error : ""
-            }`}
-          />
-          {emailError && (
-            <p className={classes.registration__form_error}>{emailError}</p>
-          )}
           <input
             value={password}
             onChange={(e) => {
@@ -184,9 +171,7 @@ const Registration = function () {
               passwordError ? classes.registration__form_input_error : ""
             }`}
           />
-          {passwordError && (
-            <p className={classes.registration__form_error}>{passwordError}</p>
-          )}
+
           <input
             value={passwordConfirm}
             onChange={(e) => {
