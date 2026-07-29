@@ -8,7 +8,7 @@ import React, {
 import ChatListElement from "./ChatListElement.jsx";
 import Profile from "../Profile.jsx";
 import Search from "../UI/Input/Search.jsx";
-import MyModal from "../UI/MyModal/MyModal.jsx";
+import Modal from "../UI/Modal/Modal.jsx";
 import CreateChatModal from "./CreateChatModal.jsx";
 import ChatServices from "../../services/ChatService.jsx";
 import classes from "./ChatList.module.css";
@@ -93,26 +93,29 @@ const ChatList = observer(
     return (
       <div className={classes.chat_list}>
         <div className={classes.chat_list__content}>
-          <MyModal visable={modal} setVisable={setModal}>
+          <Modal
+            isOpen={modal}
+            onClose={() => setModal(false)}
+            size="medium"
+            className={classes.create_chat_modal}
+            contentClassName="modal_content_flush"
+          >
             <CreateChatModal
               onClose={() => setModal(false)}
               onChatCreated={handleChatCreated}
             />
-          </MyModal>
+          </Modal>
 
           <div className={classes.chat_list_header}>
-            <Logo />
-
             <Search placeholder="Search..." />
-          </div>
 
-          <button
-            onClick={() => setModal(true)}
-            className={classes.chat_list__btn}
-          >
-            <img src="/plus.svg" alt="Plus" />
-            Создать чат
-          </button>
+            <button
+              onClick={() => setModal(true)}
+              className={classes.chat_list__btn}
+            >
+              <img src="/plus.svg" alt="Plus" />
+            </button>
+          </div>
 
           {/* <Select>
           <option value="">All chats</option>

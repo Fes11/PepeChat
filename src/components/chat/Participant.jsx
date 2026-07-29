@@ -29,7 +29,10 @@ const Participant = ({ user, onClick, onRemove }) => {
           ),
       top: Math.max(
         viewportGap,
-        Math.min(rect.top - 10, window.innerHeight - profileHeight - viewportGap),
+        Math.min(
+          rect.top - 10,
+          window.innerHeight - profileHeight - viewportGap,
+        ),
       ),
     });
   };
@@ -97,8 +100,7 @@ const Participant = ({ user, onClick, onRemove }) => {
       />
 
       <div className="participant__description">
-        <p>{user.username}</p>
-        <p className="participant__description_login">@{user.login}</p>
+        <p>{user.username || "@" + user.login}</p>
       </div>
 
       {visibleProfile &&

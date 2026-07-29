@@ -1,5 +1,6 @@
 .content {
   width: min(440px, 92vw);
+  max-width: 100%;
   max-height: min(680px, 88vh);
   display: flex;
   flex-direction: column;

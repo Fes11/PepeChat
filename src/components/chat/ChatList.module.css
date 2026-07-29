@@ -26,19 +26,16 @@
 }
 
 .chat_list__btn {
+  flex: 0 0 36px;
+  min-width: 36px;
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  background: #292a2b;
+  border-radius: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  padding: 8px;
-  border-radius: var(--main-border-radius);
-  background: var(--main-button-color);
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 800;
-  margin: 9px 16px;
-  width: calc(100% - 16px);
-  margin-inline: auto;
 }
 
 .chat_list__btn img {
@@ -74,15 +71,31 @@
 
 .chat_list_header {
   display: flex;
-  gap: 10px;
-  padding: 10px 16px 0px 16px;
-  justify-content: center;
   align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 10px 16px 10px 16px;
+  box-sizing: border-box;
+  max-width: 100%;
+  position: absolute;
+  top: 0;
+  z-index: 1;
+  /* background: var(--box-bg-color); */
+  background: linear-gradient(
+    var(--box-bg-color),
+    var(--box-bg-color),
+    transparent
+  );
+  /* backdrop-filter: blur(2px); */
 }
 
 .chat_list_logo {
   width: 58px;
   height: 58px;
+}
+
+.create_chat_modal {
+  width: min(440px, calc(100vw / var(--ui-scale) - 32px));
 }
 
 @media (max-width: 760px) {

@@ -1,6 +1,8 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod screen_share;
+
 use tauri::{
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     Manager, PhysicalPosition, Position, WebviewUrl, WebviewWindowBuilder, WindowEvent,
@@ -88,6 +90,7 @@ fn quit_from_tray(app: tauri::AppHandle) {
 
 fn main() {
     tauri::Builder::default()
+        .manage(screen_share::ScreenShareManager::default())
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             let _ = show_main_window_inner(app);
         }))
@@ -97,7 +100,12 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             show_main_window,
             hide_tray_menu,
-            quit_from_tray
+            quit_from_tray,
+            screen_share::list_capture_sources,
+            screen_share::get_capture_thumbnail,
+            screen_share::start_screen_share,
+            screen_share::stop_screen_share,
+            screen_share::get_screen_share_state
         ])
         .setup(|app| {
             let _window = app.get_webview_window("main").unwrap();

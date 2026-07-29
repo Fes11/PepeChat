@@ -1,0 +1,118 @@
+.tabs {
+  display: flex;
+  gap: 8px;
+  padding: 14px 18px 8px;
+}
+.tabs button {
+  padding: 9px 14px;
+  border-radius: 8px;
+  color: var(--muted-text-color);
+  background: transparent;
+}
+.tabs button:hover {
+  background: var(--hover-bg-color);
+}
+.tabs .activeTab {
+  color: var(--main-contrast-color);
+  background: var(--main-color);
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px;
+  padding: 10px 18px 20px;
+  max-height: 520px;
+}
+.source {
+  min-width: 0;
+  padding: 8px;
+  text-align: left;
+  color: var(--text-color);
+  background: var(--input-bg-color);
+  border: 2px solid transparent;
+  border-radius: 10px;
+}
+.source:hover {
+  background: var(--hover-bg-color);
+}
+.source.selected {
+  border-color: var(--main-color);
+  box-shadow: 0 0 0 2px var(--main-faint-color);
+}
+.preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  margin-bottom: 8px;
+  border-radius: 7px;
+  color: var(--muted-text-color);
+  background: #171717;
+}
+.preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.source strong,
+.source small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.source strong {
+  font-size: 13px;
+}
+.source small {
+  margin-top: 3px;
+  color: var(--muted-text-color);
+}
+.empty {
+  min-height: 280px;
+  display: grid;
+  place-items: center;
+  color: var(--muted-text-color);
+}
+.error {
+  margin: 8px 18px;
+  padding: 10px;
+  border-radius: 8px;
+  color: #ffb5b5;
+  background: rgba(185, 21, 21, 0.25);
+}
+.audioToggle {
+  margin-right: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cancel,
+.share {
+  min-height: 38px;
+  padding: 8px 14px;
+  border-radius: 8px;
+}
+.cancel {
+  color: var(--text-color);
+  background: var(--button-soft-bg-color);
+}
+.share {
+  color: var(--main-contrast-color);
+  background: var(--main-color);
+}
+.share:disabled,
+.cancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+@media (max-width: 600px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .audioToggle {
+    width: 100%;
+  }
+}

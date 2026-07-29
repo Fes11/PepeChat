@@ -14,8 +14,15 @@ import ContextMenu from "../UI/ContextMenu";
 import { Context } from "../../main";
 import Spinner from "../UI/Spiner";
 import RoomActivityPanel from "./RoomActivityPanel";
+import ScreenSharePickerModal from "./ScreenSharePickerModal";
+import {
+  isDesktopApp,
+  screenShareService,
+} from "../../services/ScreenShareService";
+import { notifyInfo } from "../../notifications/notificationService";
 
 const DEFAULT_USER_VOLUME = 1;
+const DEFAULT_STREAM_VOLUME = 0;
 const VOLUME_STEP = 5;
 
 const getRoomGridClass = (participantsCount) => {
@@ -47,13 +54,17 @@ const Room = forwardRef(function Room(
     setHeadphonesMuted: setRemoteHeadphonesMuted,
     setCameraEnabled,
     setScreenShareEnabled,
+    startScreenShare,
+    stopScreenShare,
     disconnect,
   } = useVoiceRoom(chatId);
   const [micMuted, setMicMuted] = useState(false);
   const [headphonesMuted, setHeadphonesMuted] = useState(false);
   const [cameraEnabled, setCameraEnabledState] = useState(false);
   const [screenShareEnabled, setScreenShareEnabledState] = useState(false);
+  const [screenPickerOpen, setScreenPickerOpen] = useState(false);
   const [participantVolumes, setParticipantVolumes] = useState({});
+  const [participantStreamVolumes, setParticipantStreamVolumes] = useState({});
   const [mutedParticipantIds, setMutedParticipantIds] = useState(
     () => new Set(),
   );
@@ -145,6 +156,11 @@ const Room = forwardRef(function Room(
     const participantId = selectedParticipant.id;
     const isMuted = mutedParticipantIds.has(participantId);
     const volume = getParticipantVolume(participantId);
+    const streamVolume = getParticipantStreamVolume(participantId);
+    const hasActiveStream = Boolean(
+      selectedParticipant.media?.screen?.track &&
+        !selectedParticipant.media.screen.publication?.isMuted,
+    );
 
     return [
       {
@@ -169,8 +185,30 @@ const Room = forwardRef(function Room(
         valueLabel: `${Math.round(volume * 100)}%`,
         onChange: (value) => setParticipantVolume(participantId, value),
       },
+      ...(hasActiveStream
+        ? [
+            {
+              id: "stream-volume",
+              type: "slider",
+              label: "Громкость стрима",
+              min: 0,
+              max: 100,
+              step: VOLUME_STEP,
+              value: Math.round(streamVolume * 100),
+              valueLabel: `${Math.round(streamVolume * 100)}%`,
+              onChange: (value) =>
+                setParticipantStreamVolume(participantId, value),
+            },
+          ]
+        : []),
     ];
-  }, [ChatStore, mutedParticipantIds, participantVolumes, selectedParticipant]);
+  }, [
+    ChatStore,
+    mutedParticipantIds,
+    participantStreamVolumes,
+    participantVolumes,
+    selectedParticipant,
+  ]);
 
   const leaveRoom = () => {
     disconnect();
@@ -217,15 +255,57 @@ const Room = forwardRef(function Room(
   };
 
   const toggleScreenShare = async () => {
+    if (!screenShareEnabled && isDesktopApp()) {
+      setScreenPickerOpen(true);
+      return;
+    }
     const next = !screenShareEnabled;
     try {
-      await setScreenShareEnabled(next);
+      if (next) await setScreenShareEnabled(true);
+      else await stopScreenShare();
       setScreenShareEnabledState(next);
     } catch (error) {
       console.warn("[VoiceRoom] Cannot toggle screen share", error);
       setScreenShareEnabledState(false);
     }
   };
+
+  const getParticipantStreamVolume = (participantId) =>
+    participantStreamVolumes[participantId] ?? DEFAULT_STREAM_VOLUME;
+
+  const setParticipantStreamVolume = (participantId, value) => {
+    const nextVolume = Math.max(0, Math.min(1, Number(value) / 100));
+    setParticipantStreamVolumes((prev) => ({
+      ...prev,
+      [participantId]: nextVolume,
+    }));
+  };
+
+  const shareSelectedSource = async (source, withAudio) => {
+    const state = await startScreenShare(source.id, withAudio);
+    setScreenShareEnabledState(Boolean(state?.active ?? true));
+    if (withAudio && state?.audioAvailable === false) {
+      notifyInfo("Системный звук недоступен. Трансляция продолжена без звука.");
+    }
+  };
+
+  useEffect(() => {
+    if (!isDesktopApp()) return undefined;
+    let unlistenStopped;
+    let unlistenError;
+    screenShareService.onStopped(() => setScreenShareEnabledState(false)).then(
+      (unlisten) => { unlistenStopped = unlisten; },
+    );
+    screenShareService.onError((event) => {
+      console.warn("[VoiceRoom] Native screen share stopped", event.payload);
+      setScreenShareEnabledState(false);
+      screenShareService.stop().catch(() => {});
+    }).then((unlisten) => { unlistenError = unlisten; });
+    return () => {
+      unlistenStopped?.();
+      unlistenError?.();
+    };
+  }, []);
 
   useEffect(() => {
     onControlsChange?.({
@@ -290,6 +370,7 @@ const Room = forwardRef(function Room(
             soundMuted={headphonesMuted}
             userMuted={mutedParticipantIds.has(participant.id)}
             volume={getParticipantVolume(participant.id)}
+            streamVolume={getParticipantStreamVolume(participant.id)}
             showDetails={showRoomUi}
             isFocused={
               String(participant.id) === String(focusedParticipantId)
@@ -337,6 +418,12 @@ const Room = forwardRef(function Room(
         onToggleCamera={toggleCamera}
         onToggleScreenShare={toggleScreenShare}
         onLeave={leaveRoom}
+      />
+
+      <ScreenSharePickerModal
+        isOpen={screenPickerOpen}
+        onClose={() => setScreenPickerOpen(false)}
+        onShare={shareSelectedSource}
       />
     </div>
   );

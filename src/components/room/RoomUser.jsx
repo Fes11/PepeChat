@@ -23,6 +23,7 @@ const RoomUser = function ({
   soundMuted = false,
   userMuted = false,
   volume = 1,
+  streamVolume = 0,
   showDetails = false,
   isFocused = false,
   isCompact = false,
@@ -31,6 +32,7 @@ const RoomUser = function ({
 }) {
   const { MediaStore } = useContext(Context);
   const audioRef = useRef(null);
+  const screenAudioRef = useRef(null);
   const videoRef = useRef(null);
   const tileRef = useRef(null);
   const videoMedia =
@@ -70,6 +72,20 @@ const RoomUser = function ({
   }, [participant.stream]);
 
   useEffect(() => {
+    const audio = screenAudioRef.current;
+    if (!audio) return;
+    const stream = participant.media?.screenAudio?.stream ?? null;
+    if (audio.srcObject !== stream) audio.srcObject = stream;
+    if (stream && !audio.muted) playAudio(audio);
+    return () => {
+      if (audio.srcObject === stream) {
+        audio.pause();
+        audio.srcObject = null;
+      }
+    };
+  }, [participant.media?.screenAudio?.stream]);
+
+  useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
     const stream = videoMedia?.stream ?? null;
@@ -105,6 +121,10 @@ const RoomUser = function ({
     if (!audio) return;
 
     mediaService.setAudioOutput(audio, MediaStore.selectedDisplay);
+    mediaService.setAudioOutput(
+      screenAudioRef.current,
+      MediaStore.selectedDisplay,
+    );
   }, [MediaStore.selectedDisplay]);
 
   useEffect(() => {
@@ -117,12 +137,19 @@ const RoomUser = function ({
     if (!audio.muted) {
       playAudio(audio);
     }
+    const screenAudio = screenAudioRef.current;
+    if (screenAudio) {
+      screenAudio.muted = audio.muted;
+      screenAudio.volume = streamVolume;
+      if (!screenAudio.muted) playAudio(screenAudio);
+    }
   }, [
     participant.stream,
     participant.isLocalMedia,
     soundMuted,
     isLocallyMuted,
     volume,
+    streamVolume,
   ]);
 
   return (
@@ -187,6 +214,12 @@ const RoomUser = function ({
 
       <audio
         ref={audioRef}
+        autoPlay
+        playsInline
+        muted={soundMuted || isLocallyMuted || participant.isLocalMedia}
+      />
+      <audio
+        ref={screenAudioRef}
         autoPlay
         playsInline
         muted={soundMuted || isLocallyMuted || participant.isLocalMedia}

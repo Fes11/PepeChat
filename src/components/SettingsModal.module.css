@@ -1,12 +1,7 @@
 .settings_modal {
-  height: min(620px, calc(100vh / var(--ui-scale) - 32px));
-  width: min(860px, calc(100vw / var(--ui-scale) - 32px));
   position: relative;
-  background: var(--box-bg-color);
-  border: 1px solid var(--border-color);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
   z-index: 5;
 }
 
@@ -172,7 +167,7 @@
 
 .description_emoji_portal {
   position: fixed;
-  z-index: 1000;
+  z-index: 1100;
 }
 
 .description_emoji_picker {
@@ -351,20 +346,6 @@
 .update_header button:disabled {
   opacity: 0.55;
   cursor: default;
-}
-.update_progress {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: 10px;
-}
-.update_progress progress {
-  width: 100%;
-  accent-color: var(--main-color);
-}
-.update_progress span {
-  color: var(--muted-text-color);
-  font-size: 12px;
 }
 .update_notes {
   max-height: 72px;

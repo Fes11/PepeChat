@@ -268,6 +268,12 @@ body.tray-menu-window #root {
   line-height: 1;
 }
 
+.custom_title_bar__control span img {
+  width: 16px;
+  height: 16px;
+  opacity: 0.8;
+}
+
 .custom_title_bar__control:hover {
   background: var(--hover-bg-color);
   color: var(--text-color);
@@ -286,6 +292,8 @@ body.tray-menu-window #root {
   justify-content: center;
   flex: 1 1 auto;
   min-height: 0;
+  position: relative;
+  overflow: hidden;
 }
 
 .chat_page {
@@ -445,6 +453,10 @@ body.tray-menu-window #root {
   cursor: pointer;
 }
 
+.chat_list_element:first-child {
+  margin-top: 60px;
+}
+
 .chat_list_element:last-child {
   margin-bottom: 120px;
 }
@@ -456,6 +468,11 @@ body.tray-menu-window #root {
 
 .chat_list_element:hover {
   background-color: var(--hover-bg-color);
+}
+
+.chat_list_element__div {
+  display: flex;
+  gap: 5px;
 }
 
 .chat_list_element__text_box {
@@ -561,9 +578,12 @@ body.tray-menu-window #root {
   padding: 1px 4px;
   margin-top: 5px;
   border-radius: 50%;
+  height: 16px;
+  width: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
 }
 
 .chat__header {
@@ -989,6 +1009,12 @@ body.tray-menu-window #root {
   min-width: 0;
 }
 
+.participant__description {
+  color: var(--text-color);
+  font-size: 13px;
+  font-weight: 500;
+}
+
 .participant__remove {
   margin-left: auto;
   width: 28px;
@@ -1004,11 +1030,6 @@ body.tray-menu-window #root {
 
 .participant__remove:hover {
   background: var(--hover-bg-color);
-}
-
-.participant p {
-  color: var(--main-color);
-  font-size: 14px;
 }
 
 .chat_empty {
@@ -1079,7 +1100,7 @@ body.tray-menu-window #root {
 }
 
 .participant_profile {
-  width: min(280px, calc(100vw / var(--ui-scale) - 24px));
+  width: 220px;
   background: var(--box-bg-color);
   backdrop-filter: blur(20px);
   border-radius: 15px;
@@ -1091,6 +1112,7 @@ body.tray-menu-window #root {
   padding: 15px;
   box-sizing: border-box;
   gap: 12px;
+  transition: all 0s;
 }
 
 @media (max-width: 1100px) {
@@ -1341,4 +1363,9 @@ body.tray-menu-window #root {
   to {
     transform: rotate(360deg);
   }
+}
+/* Content shells that already provide their own padding and scrolling. */
+.modal_content_flush {
+  padding: 0;
+  overflow: hidden;
 }

@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   notify,
   notifyError,
@@ -43,18 +44,21 @@ export const NotificationProvider = ({ children }) => {
   return (
     <NotificationContext.Provider value={value}>
       {children}
-      <div className={classes.stack} aria-live="polite" aria-atomic="true">
-        {notifications.map((notification) => (
-          <button
-            key={notification.id}
-            type="button"
-            className={`${classes.notification} ${classes[notification.type]}`}
-            onClick={() => removeNotification(notification.id)}
-          >
-            <span className={classes.text}>{notification.message}</span>
-          </button>
-        ))}
-      </div>
+      {createPortal(
+        <div className={classes.stack} aria-live="polite" aria-atomic="true">
+          {notifications.map((notification) => (
+            <button
+              key={notification.id}
+              type="button"
+              className={`${classes.notification} ${classes[notification.type]}`}
+              onClick={() => removeNotification(notification.id)}
+            >
+              <span className={classes.text}>{notification.message}</span>
+            </button>
+          ))}
+        </div>,
+        document.body,
+      )}
     </NotificationContext.Provider>
   );
 };

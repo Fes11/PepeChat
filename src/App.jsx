@@ -5,6 +5,8 @@ import { Context } from "./main";
 import Spinner from "./components/UI/Spiner";
 import TrayMenu from "./components/tray/TrayMenu";
 import CustomTitleBar from "./components/CustomTitleBar";
+import UpdateScreen from "./updates/UpdateScreen";
+import { useUpdater } from "./updates/UpdateProvider";
 
 import Login from "./components/auth/Login";
 import Registration from "./components/auth/Registration";
@@ -15,8 +17,19 @@ const isTrayMenuWindow = () =>
 
 const MainApp = observer(() => {
   const { ChatStore, AuthStore, MediaStore } = useContext(Context);
+  const {
+    startupComplete,
+    isUpdateScreenVisible,
+    runStartupUpdate,
+  } = useUpdater();
 
   useEffect(() => {
+    runStartupUpdate();
+  }, [runStartupUpdate]);
+
+  useEffect(() => {
+    if (!startupComplete) return undefined;
+
     let isCurrent = true;
 
     const init = async () => {
@@ -37,44 +50,59 @@ const MainApp = observer(() => {
     return () => {
       isCurrent = false;
     };
-  }, [AuthStore, ChatStore, MediaStore]);
+  }, [AuthStore, ChatStore, MediaStore, startupComplete]);
 
   return (
     <div className="app_shell">
-      <CustomTitleBar />
+      <CustomTitleBar
+        showConnectionStatus={startupComplete && !isUpdateScreenVisible}
+      />
       <main className="container">
-        {AuthStore.isInitializing ? (
-          <div role="status" aria-label="Загрузка приложения">
-            <Spinner />
-          </div>
+        {!startupComplete ? (
+          <UpdateScreen />
         ) : (
-          <Routes>
-            <Route
-              path="/login"
-              element={!AuthStore.isAuth ? <Login /> : <Navigate to="/chat" />}
-            />
-            <Route
-              path="/registration"
-              element={
-                !AuthStore.isAuth ? <Registration /> : <Navigate to="/chat" />
-              }
-            />
-            <Route
-              path="/chat/:id?"
-              element={
-                AuthStore.isAuth ? <ChatPage /> : <Navigate to="/login" />
-              }
-            />
-            <Route
-              path="*"
-              element={
-                <Navigate
-                  to={AuthStore.isAuth ? "/chat" : "/login"}
-                  replace
+          <>
+            {AuthStore.isInitializing ? (
+              <div role="status" aria-label="Загрузка приложения">
+                <Spinner />
+              </div>
+            ) : (
+              <Routes>
+                <Route
+                  path="/login"
+                  element={
+                    !AuthStore.isAuth ? <Login /> : <Navigate to="/chat" />
+                  }
                 />
-              }
-            />
-          </Routes>
+                <Route
+                  path="/registration"
+                  element={
+                    !AuthStore.isAuth ? (
+                      <Registration />
+                    ) : (
+                      <Navigate to="/chat" />
+                    )
+                  }
+                />
+                <Route
+                  path="/chat/:id?"
+                  element={
+                    AuthStore.isAuth ? <ChatPage /> : <Navigate to="/login" />
+                  }
+                />
+                <Route
+                  path="*"
+                  element={
+                    <Navigate
+                      to={AuthStore.isAuth ? "/chat" : "/login"}
+                      replace
+                    />
+                  }
+                />
+              </Routes>
+            )}
+            {isUpdateScreenVisible && <UpdateScreen />}
+          </>
         )}
       </main>
     </div>

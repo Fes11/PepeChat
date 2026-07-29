@@ -6,6 +6,10 @@ import { mediaService } from "../services/MediaService";
 import { LiveKitVoiceTransport } from "../services/LiveKitVoiceTransport";
 import roomJoinSoundUrl from "../assets/sounds/JoinSound.mp3";
 import roomLeftSoundUrl from "../assets/sounds/LeftSound.mp3";
+import {
+  isDesktopApp,
+  screenShareService,
+} from "../services/ScreenShareService";
 
 const HEARTBEAT_INTERVAL = 10_000;
 const ROOM_SOUND_VOLUME = 0.2;
@@ -31,6 +35,7 @@ export const useLiveKitVoiceRoom = (chatId) => {
   const directoryRef = useRef(new Map());
   const manuallyClosedRef = useRef(false);
   const microphoneRequestRef = useRef(0);
+  const screenShareRequestRef = useRef(0);
   const microphoneEnabledRef = useRef(true);
   const localJoinSoundPlayedRef = useRef(false);
 
@@ -58,7 +63,6 @@ export const useLiveKitVoiceRoom = (chatId) => {
               stream: mediaParticipant.media.audio?.stream ?? null,
               state: {
                 ...participant.state,
-                speaking: mediaParticipant.isSpeaking,
                 muted: Boolean(
                   mediaParticipant.media.audio?.publication?.isMuted,
                 ),
@@ -96,11 +100,21 @@ export const useLiveKitVoiceRoom = (chatId) => {
       if (playSound)
         playRoomSound(roomLeftSoundUrl, MediaStore.selectedDisplay);
       microphoneRequestRef.current += 1;
+      screenShareRequestRef.current += 1;
       clearInterval(heartbeatRef.current);
       const socket = socketRef.current;
       const transport = transportRef.current;
       socket?.send({ type: "leave" });
       socket?.disconnect();
+      if (isDesktopApp()) {
+        try {
+          await screenShareService.stop();
+        } catch (error) {
+          console.warn("[VoiceRoom] Cannot stop native screen share", error);
+        }
+      } else {
+        await transport?.setScreenShareEnabled(false).catch(() => {});
+      }
       await transport?.disconnect();
       if (transportRef.current === transport) transportRef.current = null;
       if (socketRef.current === socket) socketRef.current = null;
@@ -307,6 +321,45 @@ export const useLiveKitVoiceRoom = (chatId) => {
       ),
     setScreenShareEnabled: (enabled) =>
       transportRef.current?.setScreenShareEnabled(enabled),
+    startScreenShare: async (sourceId, withAudio) => {
+      if (!isDesktopApp()) {
+        await transportRef.current?.setScreenShareEnabled(true);
+        return { active: true, audioAvailable: false };
+      }
+      const requestId = ++screenShareRequestRef.current;
+      const { data } = await api.post(
+        `/api/rooms/${chatId}/media-token/`,
+        { role: "screen" },
+        { skipErrorNotification: true },
+      );
+      if (
+        manuallyClosedRef.current ||
+        requestId !== screenShareRequestRef.current
+      ) {
+        throw new Error("Голосовая комната уже закрыта");
+      }
+      const state = await screenShareService.start({
+        sourceId,
+        withAudio,
+        maxFps: 30,
+        url: data.url,
+        token: data.token,
+      });
+      if (
+        manuallyClosedRef.current ||
+        requestId !== screenShareRequestRef.current
+      ) {
+        await screenShareService.stop().catch(() => {});
+        throw new Error("Голосовая комната уже закрыта");
+      }
+      return state;
+    },
+    stopScreenShare: () => {
+      screenShareRequestRef.current += 1;
+      return isDesktopApp()
+        ? screenShareService.stop()
+        : transportRef.current?.setScreenShareEnabled(false);
+    },
     send: (data) => socketRef.current?.send(data),
     disconnect,
   };

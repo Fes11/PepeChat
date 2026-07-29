@@ -4,7 +4,8 @@ const LOWPASS_FREQUENCY = 8000;
 const GATE_CHECK_INTERVAL = 16;
 const GATE_CLOSED_GAIN = 0.04;
 const GATE_ATTACK_SECONDS = 0.015;
-const GATE_RELEASE_SECONDS = 0.12;
+const GATE_RELEASE_SECONDS = 0.2;
+const GATE_CLOSE_THRESHOLD_RATIO = 0.6;
 
 const getAudioContextClass = () =>
   window.AudioContext || window.webkitAudioContext;
@@ -15,7 +16,7 @@ export const audioProcessingService = {
       volume = 1,
       noiseSuppressionMode = "light",
       noiseGateEnabled = true,
-      noiseGateThreshold = 0.035,
+      noiseGateThreshold = 0.02,
     } = options;
     const AudioContextClass = getAudioContextClass();
 
@@ -78,13 +79,16 @@ export const audioProcessingService = {
     previousNode.connect(highpass);
     highpass.connect(lowpass);
     lowpass.connect(compressor);
-    compressor.connect(gateAnalyser);
-    compressor.connect(gateGain);
-    gateGain.connect(gainNode);
+    // Apply the user's microphone gain before measuring the gate level. With
+    // the previous order a quiet microphone was attenuated before its volume
+    // boost, so LiveKit never received enough signal to mark it as speaking.
+    compressor.connect(gainNode);
+    gainNode.connect(gateAnalyser);
+    gainNode.connect(gateGain);
     // Some WebView2/audio-worklet combinations expose a two-channel signal
     // with voice only in channel 0. Duplicate that channel explicitly so a
     // mono microphone is centered in headphones instead of playing on the left.
-    gainNode.connect(splitter);
+    gateGain.connect(splitter);
     splitter.connect(stereoMerger, 0, 0);
     splitter.connect(stereoMerger, 0, 1);
     stereoMerger.connect(destination);
@@ -92,8 +96,10 @@ export const audioProcessingService = {
     const gateData = new Uint8Array(gateAnalyser.fftSize);
     const gateThreshold =
       noiseSuppressionMode === "strong"
-        ? noiseGateThreshold
-        : noiseGateThreshold * 0.8;
+        ? noiseGateThreshold * 0.75
+        : noiseGateThreshold * 0.5;
+    const gateCloseThreshold = gateThreshold * GATE_CLOSE_THRESHOLD_RATIO;
+    let gateOpen = false;
 
     const gateIntervalId = noiseGateEnabled
       ? setInterval(() => {
@@ -106,7 +112,9 @@ export const audioProcessingService = {
           }
 
           const rms = Math.sqrt(sum / gateData.length);
-          const targetGain = rms >= gateThreshold ? 1 : GATE_CLOSED_GAIN;
+          if (gateOpen) gateOpen = rms >= gateCloseThreshold;
+          else gateOpen = rms >= gateThreshold;
+          const targetGain = gateOpen ? 1 : GATE_CLOSED_GAIN;
 
           gateGain.gain.cancelScheduledValues(audioContext.currentTime);
           gateGain.gain.setTargetAtTime(

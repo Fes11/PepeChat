@@ -89,7 +89,7 @@ export const mediaService = {
           volume,
           noiseSuppressionMode,
           noiseGateEnabled: audioSettings.noiseGateEnabled ?? true,
-          noiseGateThreshold: audioSettings.noiseGateThreshold ?? 0.035,
+          noiseGateThreshold: audioSettings.noiseGateThreshold ?? 0.02,
         },
       );
 

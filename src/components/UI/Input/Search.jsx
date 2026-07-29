@@ -81,6 +81,7 @@ const Search = function (props) {
   return (
     <div className={classes.search_wrapper}>
       <form autoComplete="off" onSubmit={(e) => e.preventDefault()}>
+        <img src="/explorer.svg" alt="" />
         <input type="text" name="login" autoComplete="username" hidden />
         <input
           type="password"

@@ -29,7 +29,7 @@ const CONNECTION_LABELS = {
   offline: "Нет сети",
 };
 
-const CustomTitleBar = observer(() => {
+const CustomTitleBar = observer(({ showConnectionStatus = true }) => {
   const { ConnectionStore } = useContext(Context);
   const status = ConnectionStore.status;
   const dragInProgress = useRef(false);
@@ -79,16 +79,18 @@ const CustomTitleBar = observer(() => {
       <div className="custom_title_bar__brand">
         <Logo className="custom_title_bar__logo" />
         <span className="custom_title_bar__title">PepeChat</span>
-        <span
-          className={`connection_status connection_status--${status}`}
-          title={CONNECTION_LABELS[status]}
-          aria-label={`Состояние подключения: ${CONNECTION_LABELS[status]}`}
-        >
-          <span className="connection_status__dot" aria-hidden="true" />
-          <span className="connection_status__label">
-            {CONNECTION_LABELS[status]}
+        {showConnectionStatus && (
+          <span
+            className={`connection_status connection_status--${status}`}
+            title={CONNECTION_LABELS[status]}
+            aria-label={`Состояние подключения: ${CONNECTION_LABELS[status]}`}
+          >
+            <span className="connection_status__dot" aria-hidden="true" />
+            <span className="connection_status__label">
+              {CONNECTION_LABELS[status]}
+            </span>
           </span>
-        </span>
+        )}
       </div>
       <div
         className="custom_title_bar__controls"
@@ -102,7 +104,9 @@ const CustomTitleBar = observer(() => {
           title="Свернуть"
           onClick={() => runWindowAction("minimize")}
         >
-          <span aria-hidden="true">-</span>
+          <span aria-hidden="true">
+            <img src="/hide.svg" />
+          </span>
         </button>
         <button
           type="button"
@@ -111,7 +115,9 @@ const CustomTitleBar = observer(() => {
           title="Развернуть"
           onClick={toggleMaximize}
         >
-          <span aria-hidden="true">□</span>
+          <span aria-hidden="true">
+            <img src="/reveal.svg" />
+          </span>
         </button>
         <button
           type="button"
@@ -120,7 +126,9 @@ const CustomTitleBar = observer(() => {
           title="Закрыть"
           onClick={() => runWindowAction("close")}
         >
-          <span aria-hidden="true">×</span>
+          <span aria-hidden="true">
+            <img src="/close.svg" />
+          </span>
         </button>
       </div>
     </header>

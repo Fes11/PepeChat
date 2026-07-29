@@ -77,17 +77,12 @@ const SettingsModal = function ({ onClose }) {
       const anchor = descriptionEmojiRef.current;
       if (!anchor) return;
 
-      const scale = Number.parseFloat(
-        getComputedStyle(document.documentElement).getPropertyValue(
-          "--ui-scale",
-        ),
-      ) || 1;
       const rect = anchor.getBoundingClientRect();
-      const viewportWidth = window.innerWidth / scale;
-      const viewportHeight = window.innerHeight / scale;
-      const anchorTop = rect.top / scale;
-      const anchorBottom = rect.bottom / scale;
-      const anchorRight = rect.right / scale;
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const anchorTop = rect.top;
+      const anchorBottom = rect.bottom;
+      const anchorRight = rect.right;
       const edgeGap = 12;
       const pickerGap = 8;
       const pickerWidth = Math.min(320, viewportWidth - edgeGap * 2);
@@ -570,7 +565,7 @@ const SettingsModal = function ({ onClose }) {
                               onEmojiSelect={addDescriptionEmoji}
                             />
                           </div>,
-                          document.getElementById("root"),
+                          document.body,
                         )}
                       <input
                         type="text"
@@ -778,7 +773,9 @@ const SettingsModal = function ({ onClose }) {
                       {updater.status === "available" &&
                         `Доступна версия ${updater.nextVersion}`}
                       {updater.status === "downloading" &&
-                        "Загрузка и установка…"}
+                        "Загрузка обновления…"}
+                      {updater.status === "installing" &&
+                        "Установка обновления…"}
                       {updater.status === "installed" &&
                         "Обновление установлено"}
                       {updater.status === "error" && updater.error}
@@ -802,7 +799,8 @@ const SettingsModal = function ({ onClose }) {
                       disabled={
                         !updater.supported ||
                         updater.status === "checking" ||
-                        updater.status === "downloading"
+                        updater.status === "downloading" ||
+                        updater.status === "installing"
                       }
                       onClick={() => updater.checkForUpdates()}
                     >
@@ -810,19 +808,6 @@ const SettingsModal = function ({ onClose }) {
                     </button>
                   )}
                 </div>
-                {updater.status === "downloading" && (
-                  <div className={classes.update_progress}>
-                    <progress
-                      value={updater.downloaded}
-                      max={updater.total || undefined}
-                    />
-                    <span>
-                      {updater.total
-                        ? `${Math.round((updater.downloaded / updater.total) * 100)}%`
-                        : `${(updater.downloaded / 1024 / 1024).toFixed(1)} МБ`}
-                    </span>
-                  </div>
-                )}
                 {updater.status === "available" && updater.notes && (
                   <p className={classes.update_notes}>{updater.notes}</p>
                 )}

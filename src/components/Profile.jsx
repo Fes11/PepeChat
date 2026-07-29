@@ -2,7 +2,7 @@ import React, { useContext, useState } from "react";
 import UserAvatar from "./UI/UserAvatar";
 import { Context } from "../main";
 import { observer } from "mobx-react-lite";
-import MyModal from "./UI/MyModal/MyModal.jsx";
+import Modal from "./UI/Modal/Modal.jsx";
 import SettingsModal from "./SettingsModal";
 import RoomActivityPanel from "./room/RoomActivityPanel";
 
@@ -75,9 +75,14 @@ const Profile = ({
         </button>
       </div>
 
-      <MyModal visable={modal} setVisable={setModal}>
+      <Modal
+        isOpen={modal}
+        onClose={() => setModal(false)}
+        size="large"
+        contentClassName="modal_content_flush"
+      >
         <SettingsModal onClose={() => setModal(false)} />
-      </MyModal>
+      </Modal>
     </div>
   );
 };

@@ -68,43 +68,46 @@ const ChatListElement = observer(({ chat, isSelected, isLast }) => {
       </div>
 
       <div className="chat_list_element__time">
-        {hasVoiceParticipants && (
-          <div
-            className="chat_list_element__voice"
-            title={`В голосовой комнате: ${voiceParticipants.length}`}
-          >
-            <div className="chat_list_element__voice_avatars">
-              {visibleVoiceAvatars.map((participant) => (
-                <img
-                  key={participant.id}
-                  src={
-                    resolveMediaUrl(participant.user?.avatar) || "/default.jpg"
-                  }
-                  alt=""
-                  className="chat_list_element__voice_avatar"
-                />
-              ))}
+        <div className="chat_list_element__div">
+          {hasVoiceParticipants && (
+            <div
+              className="chat_list_element__voice"
+              title={`В голосовой комнате: ${voiceParticipants.length}`}
+            >
+              <div className="chat_list_element__voice_avatars">
+                {visibleVoiceAvatars.map((participant) => (
+                  <img
+                    key={participant.id}
+                    src={
+                      resolveMediaUrl(participant.user?.avatar) ||
+                      "/default.jpg"
+                    }
+                    alt=""
+                    className="chat_list_element__voice_avatar"
+                  />
+                ))}
 
-              {voiceParticipants.length > 3 && (
-                <span className="chat_list_element__voice_count">
-                  {voiceParticipants.length}
-                </span>
-              )}
+                {voiceParticipants.length > 3 && (
+                  <span className="chat_list_element__voice_count">
+                    {voiceParticipants.length}
+                  </span>
+                )}
+              </div>
+
+              <VoiceIcon />
             </div>
+          )}
 
-            <VoiceIcon />
-          </div>
-        )}
+          {chat.unread_count && chat.unread_count !== 0 ? (
+            <div className="new_messages_count">{chat.unread_count}</div>
+          ) : (
+            ""
+          )}
+        </div>
 
         {last_message_time
           ? format(parseISO(last_message_time), "HH:mm")
           : chat_created_time}
-
-        {chat.unread_count && chat.unread_count !== 0 ? (
-          <div className="new_messages_count">{chat.unread_count}</div>
-        ) : (
-          ""
-        )}
       </div>
     </div>
   );

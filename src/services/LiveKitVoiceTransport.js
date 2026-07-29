@@ -6,6 +6,30 @@ import {
   VideoPresets,
 } from "livekit-client";
 
+// LiveKit can briefly remove a participant from ActiveSpeakersChanged between
+// words. Keep the indicator active through natural speech pauses while still
+// showing the start of speech immediately.
+const SPEAKING_RELEASE_DELAY = 300;
+
+// LiveKit emits participant updates for unrelated media changes too (for
+// example, muting the microphone while screen sharing). Keep one MediaStream
+// per underlying track so React does not detach and reattach the same video
+// source on every participant update, which briefly reveals the avatar.
+const streamsByTrack = new WeakMap();
+
+const streamForTrack = (track) => {
+  const mediaStreamTrack = track?.mediaStreamTrack;
+  if (!mediaStreamTrack) return null;
+
+  let stream = streamsByTrack.get(mediaStreamTrack);
+  if (!stream) {
+    stream = new MediaStream([mediaStreamTrack]);
+    streamsByTrack.set(mediaStreamTrack, stream);
+  }
+
+  return stream;
+};
+
 const mediaFor = (participant, excludedSource = null) => {
   const getTrack = (source) => {
     if (source === excludedSource) return null;
@@ -15,7 +39,7 @@ const mediaFor = (participant, excludedSource = null) => {
     return {
       publication,
       track: track ?? null,
-      stream: track ? new MediaStream([track.mediaStreamTrack]) : null,
+      stream: streamForTrack(track),
     };
   };
 
@@ -23,7 +47,16 @@ const mediaFor = (participant, excludedSource = null) => {
     audio: getTrack(Track.Source.Microphone),
     camera: getTrack(Track.Source.Camera),
     screen: getTrack(Track.Source.ScreenShare),
+    screenAudio: getTrack(Track.Source.ScreenShareAudio),
   };
+};
+
+const participantMetadata = (participant) => {
+  try {
+    return JSON.parse(participant?.metadata || "{}");
+  } catch {
+    return {};
+  }
 };
 
 export class LiveKitVoiceTransport {
@@ -39,24 +72,88 @@ export class LiveKitVoiceTransport {
       publishDefaults: {
         audioPreset: AudioPresets.musicStereo,
         simulcast: true,
-        videoSimulcastLayers: [
-          VideoPresets.h180,
-          VideoPresets.h360,
-        ],
+        videoSimulcastLayers: [VideoPresets.h180, VideoPresets.h360],
       },
     });
     this.microphoneStream = null;
     this.microphoneUpdateQueue = Promise.resolve();
+    this.activeSpeakerIdentities = new Set();
+    this.speakerReleaseTimers = new Map();
     this.bindEvents();
+  }
+
+  emitActiveSpeakers() {
+    this.callbacks.onActiveSpeakers?.([...this.activeSpeakerIdentities]);
+  }
+
+  updateActiveSpeakers(speakers) {
+    const nextIdentities = new Set(
+      speakers.map((item) => String(item.identity)),
+    );
+    let changed = false;
+
+    nextIdentities.forEach((identity) => {
+      const releaseTimer = this.speakerReleaseTimers.get(identity);
+      if (releaseTimer) {
+        clearTimeout(releaseTimer);
+        this.speakerReleaseTimers.delete(identity);
+      }
+      if (!this.activeSpeakerIdentities.has(identity)) {
+        this.activeSpeakerIdentities.add(identity);
+        changed = true;
+      }
+    });
+
+    this.activeSpeakerIdentities.forEach((identity) => {
+      if (
+        nextIdentities.has(identity) ||
+        this.speakerReleaseTimers.has(identity)
+      ) {
+        return;
+      }
+
+      const releaseTimer = setTimeout(() => {
+        this.speakerReleaseTimers.delete(identity);
+        if (this.activeSpeakerIdentities.delete(identity)) {
+          this.emitActiveSpeakers();
+        }
+      }, SPEAKING_RELEASE_DELAY);
+      this.speakerReleaseTimers.set(identity, releaseTimer);
+    });
+
+    if (changed) this.emitActiveSpeakers();
+  }
+
+  removeActiveSpeaker(identity) {
+    const normalizedIdentity = String(identity);
+    const releaseTimer = this.speakerReleaseTimers.get(normalizedIdentity);
+    if (releaseTimer) clearTimeout(releaseTimer);
+    this.speakerReleaseTimers.delete(normalizedIdentity);
+    if (this.activeSpeakerIdentities.delete(normalizedIdentity)) {
+      this.emitActiveSpeakers();
+    }
+  }
+
+  clearActiveSpeakers() {
+    this.speakerReleaseTimers.forEach((timer) => clearTimeout(timer));
+    this.speakerReleaseTimers.clear();
+    this.activeSpeakerIdentities.clear();
   }
 
   bindEvents() {
     const changed = (participant) => this.emitParticipant(participant);
     this.room
       .on(RoomEvent.ParticipantConnected, changed)
-      .on(RoomEvent.ParticipantDisconnected, (participant) =>
-        this.callbacks.onParticipantLeft?.(participant.identity),
-      )
+      .on(RoomEvent.ParticipantDisconnected, (participant) => {
+        const metadata = participantMetadata(participant);
+        if (metadata.connection_role === "screen") {
+          const owner = this.findParticipant(metadata.owner_identity);
+          if (owner) this.emitParticipant(owner);
+          return;
+        }
+        this.removeActiveSpeaker(participant.identity);
+        this.callbacks.onParticipantLeft?.(participant.identity);
+      })
       .on(RoomEvent.TrackSubscribed, (_track, _publication, participant) =>
         changed(participant),
       )
@@ -75,34 +172,77 @@ export class LiveKitVoiceTransport {
       .on(RoomEvent.LocalTrackUnpublished, (publication) =>
         this.emitParticipant(this.room.localParticipant, publication.source),
       )
-      .on(RoomEvent.TrackMuted, (_publication, participant) => changed(participant))
-      .on(RoomEvent.TrackUnmuted, (_publication, participant) => changed(participant))
+      .on(RoomEvent.TrackMuted, (_publication, participant) => {
+        this.removeActiveSpeaker(participant.identity);
+        changed(participant);
+      })
+      .on(RoomEvent.TrackUnmuted, (_publication, participant) =>
+        changed(participant),
+      )
       .on(RoomEvent.ActiveSpeakersChanged, (speakers) =>
-        this.callbacks.onActiveSpeakers?.(speakers.map((item) => item.identity)),
+        this.updateActiveSpeakers(speakers),
       )
       .on(RoomEvent.Reconnecting, () => this.callbacks.onReconnecting?.())
       .on(RoomEvent.Reconnected, () => this.callbacks.onReconnected?.())
-      .on(RoomEvent.Disconnected, (reason) => this.callbacks.onDisconnected?.(reason));
+      .on(RoomEvent.Disconnected, (reason) =>
+        this.callbacks.onDisconnected?.(reason),
+      );
   }
 
   emitParticipant(participant, excludedSource = null) {
+    const metadata = participantMetadata(participant);
+    const ownerIdentity =
+      metadata.connection_role === "screen"
+        ? String(metadata.owner_identity)
+        : String(participant.identity);
+    const owner = this.findParticipant(ownerIdentity) ?? participant;
+    const screenParticipant = this.findScreenParticipant(ownerIdentity);
+    const ownerMedia = mediaFor(owner, excludedSource);
+    const screenMedia = screenParticipant
+      ? mediaFor(screenParticipant, excludedSource)
+      : null;
     this.callbacks.onParticipantChanged?.({
-      identity: participant.identity,
-      isLocal: participant === this.room.localParticipant,
-      isSpeaking: participant.isSpeaking,
-      media: mediaFor(participant, excludedSource),
+      identity: ownerIdentity,
+      isLocal: owner === this.room.localParticipant,
+      isSpeaking: owner.isSpeaking,
+      media: {
+        ...ownerMedia,
+        screen: screenMedia?.screen ?? ownerMedia.screen,
+        screenAudio: screenMedia?.screenAudio ?? ownerMedia.screenAudio,
+      },
+    });
+  }
+
+  findParticipant(identity) {
+    if (String(this.room.localParticipant.identity) === String(identity)) {
+      return this.room.localParticipant;
+    }
+    return this.room.remoteParticipants.get(String(identity));
+  }
+
+  findScreenParticipant(ownerIdentity) {
+    return [...this.room.remoteParticipants.values()].find((participant) => {
+      const metadata = participantMetadata(participant);
+      return (
+        metadata.connection_role === "screen" &&
+        String(metadata.owner_identity) === String(ownerIdentity)
+      );
     });
   }
 
   async connect(url, token) {
     await this.room.connect(url, token, { autoSubscribe: true });
     this.emitParticipant(this.room.localParticipant);
-    this.room.remoteParticipants.forEach((participant) => this.emitParticipant(participant));
+    this.room.remoteParticipants.forEach((participant) =>
+      this.emitParticipant(participant),
+    );
   }
 
   refreshParticipants() {
     this.emitParticipant(this.room.localParticipant);
-    this.room.remoteParticipants.forEach((participant) => this.emitParticipant(participant));
+    this.room.remoteParticipants.forEach((participant) =>
+      this.emitParticipant(participant),
+    );
   }
 
   async publishMicrophone(stream) {
@@ -122,7 +262,9 @@ export class LiveKitVoiceTransport {
         if (publication?.track) {
           // Keep the same LiveKit publication/RTCRtpSender. Unpublishing during
           // settings changes creates a gap and races with rapid UI updates.
-          await publication.track.replaceTrack(track, { userProvidedTrack: true });
+          await publication.track.replaceTrack(track, {
+            userProvidedTrack: true,
+          });
         } else {
           await this.room.localParticipant.publishTrack(track, {
             source: Track.Source.Microphone,
@@ -182,7 +324,9 @@ export class LiveKitVoiceTransport {
 
   setDeafened(deafened) {
     this.room.remoteParticipants.forEach((participant) => {
-      const publication = participant.getTrackPublication(Track.Source.Microphone);
+      const publication = participant.getTrackPublication(
+        Track.Source.Microphone,
+      );
       publication?.setSubscribed(!deafened);
     });
   }
@@ -200,6 +344,7 @@ export class LiveKitVoiceTransport {
   }
 
   async disconnect() {
+    this.clearActiveSpeakers();
     this.stopMicrophoneStream();
     await this.room.disconnect();
   }
