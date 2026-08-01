@@ -10,6 +10,87 @@ import {
 // words. Keep the indicator active through natural speech pauses while still
 // showing the start of speech immediately.
 const SPEAKING_RELEASE_DELAY = 300;
+const DIAGNOSTIC_STORAGE_KEY = "pepechat:livekit-diagnostics";
+const DIAGNOSTIC_BUFFER_LIMIT = 200;
+
+const diagnosticsEnabled = () => {
+  if (import.meta.env.VITE_LIVEKIT_DIAGNOSTICS === "true") return true;
+  try {
+    return localStorage.getItem(DIAGNOSTIC_STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+};
+
+const diagnosticLog = (event, details = {}) => {
+  if (!diagnosticsEnabled()) return;
+  const record = {
+    timestamp: new Date().toISOString(),
+    event,
+    ...details,
+  };
+  const buffer = window.__PEPECHAT_LIVEKIT_DIAGNOSTICS__ ?? [];
+  buffer.push(record);
+  if (buffer.length > DIAGNOSTIC_BUFFER_LIMIT) buffer.shift();
+  window.__PEPECHAT_LIVEKIT_DIAGNOSTICS__ = buffer;
+  console.info("[LiveKit diagnostics]", record);
+};
+
+const candidateDetails = (candidate) =>
+  candidate
+    ? {
+        type: candidate.candidateType,
+        protocol: candidate.protocol,
+        relayProtocol: candidate.relayProtocol,
+        address: candidate.address ?? candidate.ip,
+        port: candidate.port,
+        url: candidate.url,
+      }
+    : null;
+
+const transportSnapshot = async (transport, name) => {
+  if (!transport) return { name, available: false };
+
+  const stats = await transport.getStats();
+  let selectedPairId;
+  const pairs = new Map();
+  const candidates = new Map();
+  stats.forEach((report) => {
+    if (report.type === "transport" && report.selectedCandidatePairId) {
+      selectedPairId = report.selectedCandidatePairId;
+    } else if (report.type === "candidate-pair") {
+      pairs.set(report.id, report);
+      if (!selectedPairId && (report.nominated || report.selected)) {
+        selectedPairId = report.id;
+      }
+    } else if (
+      report.type === "local-candidate" ||
+      report.type === "remote-candidate"
+    ) {
+      candidates.set(report.id, report);
+    }
+  });
+
+  const pair = pairs.get(selectedPairId);
+  return {
+    name,
+    available: true,
+    connectionState: transport.getConnectionState(),
+    iceConnectionState: transport.getICEConnectionState(),
+    signalingState: transport.getSignallingState(),
+    selectedPair: pair
+      ? {
+          state: pair.state,
+          nominated: pair.nominated,
+          currentRoundTripTime: pair.currentRoundTripTime,
+          bytesSent: pair.bytesSent,
+          bytesReceived: pair.bytesReceived,
+          local: candidateDetails(candidates.get(pair.localCandidateId)),
+          remote: candidateDetails(candidates.get(pair.remoteCandidateId)),
+        }
+      : null,
+  };
+};
 
 // LiveKit emits participant updates for unrelated media changes too (for
 // example, muting the microphone while screen sharing). Keep one MediaStream
@@ -80,6 +161,60 @@ export class LiveKitVoiceTransport {
     this.activeSpeakerIdentities = new Set();
     this.speakerReleaseTimers = new Map();
     this.bindEvents();
+    this.bindDiagnostics();
+  }
+
+  bindDiagnostics() {
+    if (!diagnosticsEnabled()) return;
+
+    this.room
+      .on(RoomEvent.SignalConnected, () => {
+        diagnosticLog("signal-connected");
+        const manager = this.room.engine?.pcManager;
+        [manager?.publisher, manager?.subscriber].forEach((transport) => {
+          if (!transport) return;
+          transport.onIceCandidateError = (error) => {
+            diagnosticLog("ice-candidate-error", {
+              errorCode: error.errorCode,
+              errorText: error.errorText,
+              address: error.address,
+              port: error.port,
+              url: error.url,
+            });
+          };
+        });
+      })
+      .on(RoomEvent.ConnectionStateChanged, (state) => {
+        diagnosticLog("connection-state", { state });
+        this.logDiagnostics(`connection-state:${state}`);
+      })
+      .on(RoomEvent.TrackSubscriptionFailed, (trackSid, participant) => {
+        diagnosticLog("track-subscription-failed", {
+          trackSid,
+          participantIdentity: participant?.identity,
+        });
+      });
+  }
+
+  async logDiagnostics(reason) {
+    if (!diagnosticsEnabled()) return;
+    try {
+      const manager = this.room.engine?.pcManager;
+      const transports = await Promise.all([
+        transportSnapshot(manager?.publisher, "publisher"),
+        transportSnapshot(manager?.subscriber, "subscriber"),
+      ]);
+      diagnosticLog("transport-snapshot", {
+        reason,
+        roomState: this.room.state,
+        transports,
+      });
+    } catch (error) {
+      diagnosticLog("transport-snapshot-error", {
+        reason,
+        message: error?.message ?? String(error),
+      });
+    }
   }
 
   emitActiveSpeakers() {
@@ -231,7 +366,18 @@ export class LiveKitVoiceTransport {
   }
 
   async connect(url, token) {
-    await this.room.connect(url, token, { autoSubscribe: true });
+    diagnosticLog("connect-start", { url });
+    try {
+      await this.room.connect(url, token, { autoSubscribe: true });
+    } catch (error) {
+      diagnosticLog("connect-failed", {
+        name: error?.name,
+        message: error?.message ?? String(error),
+      });
+      await this.logDiagnostics("connect-failed");
+      throw error;
+    }
+    await this.logDiagnostics("connected");
     this.emitParticipant(this.room.localParticipant);
     this.room.remoteParticipants.forEach((participant) =>
       this.emitParticipant(participant),
@@ -280,7 +426,13 @@ export class LiveKitVoiceTransport {
           this.cleanupMicrophoneStream(previousStream);
         }
         this.emitParticipant(this.room.localParticipant);
+        await this.logDiagnostics("microphone-published");
       } catch (error) {
+        diagnosticLog("microphone-publication-failed", {
+          name: error?.name,
+          message: error?.message ?? String(error),
+        });
+        await this.logDiagnostics("microphone-publication-failed");
         this.cleanupMicrophoneStream(stream);
         throw error;
       }
