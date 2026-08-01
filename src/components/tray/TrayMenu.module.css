@@ -48,12 +48,6 @@
   text-overflow: ellipsis;
 }
 
-.status {
-  color: var(--muted-text-color);
-  font-size: 11px;
-  white-space: nowrap;
-}
-
 .actions {
   display: flex;
   flex-direction: column;

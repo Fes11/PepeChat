@@ -14,6 +14,7 @@ const Modal = ({
   size = "medium",
   className = "",
   contentClassName = "",
+  contentFlush = false,
   closeDisabled = false,
   closeOnOverlay = true,
 }) => {
@@ -105,7 +106,11 @@ const Modal = ({
             </button>
           </header>
         )}
-        <div className={`${cls.content} ${contentClassName}`}>{children}</div>
+        <div
+          className={`${cls.content} ${contentFlush ? cls.contentFlush : ""} ${contentClassName}`}
+        >
+          {children}
+        </div>
         {footer && <footer className={cls.footer}>{footer}</footer>}
       </section>
     </div>,

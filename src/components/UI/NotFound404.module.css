@@ -1,0 +1,9 @@
+.notFound {
+  padding: 10px 15px;
+  background: var(--box-bg-color);
+  border-radius: 5px;
+}
+
+.notFound h3 {
+  color: var(--muted-text-color);
+}

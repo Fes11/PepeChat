@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import styles from "./VoiceIcon.module.css";
 
-const VoiceIcon = function () {
+const VoiceIcon = function ({ large = false }) {
   return (
     <svg
       width="800px"
@@ -8,7 +8,7 @@ const VoiceIcon = function () {
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className="chat_list_element__voice_icon"
+      className={`${styles.icon} ${large ? styles.large : ""}`}
     >
       <path
         d="M3 11V13M6 8V16M9 10V14M12 7V17M15 4V20M18 9V15M21 11V13"

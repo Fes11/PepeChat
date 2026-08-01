@@ -1,7 +1,8 @@
 import React, { useContext, forwardRef } from "react";
 import { useNavigate } from "react-router-dom";
-import UserAvatar from "../UI/UserAvatar.jsx";
+import Avatar from "../UI/Avatar/Avatar";
 import { Context } from "../../main";
+import styles from "./ParticipantProfile.module.css";
 
 const ParticipantProfile = forwardRef(({ user, style }, ref) => {
   const { AuthStore } = useContext(Context);
@@ -18,31 +19,31 @@ const ParticipantProfile = forwardRef(({ user, style }, ref) => {
   };
 
   return (
-    <div className="participant_profile" ref={ref} style={style}>
-      <div className="participant_profile_header">
-        <UserAvatar
+    <div className={styles.profile} ref={ref} style={style}>
+      <div className={styles.header}>
+        <Avatar
           src={user.avatar}
           status={user.status}
-          width="50px"
-          height="50px"
+          alt={`Аватар пользователя ${user.username || user.login}`}
+          size={50}
         />
-        <div className="participant_profile_header_box">
+        <div className={styles.headerContent}>
           {user.username && (
-            <p className="participant__description">{user.username}</p>
+            <p className={styles.username}>{user.username}</p>
           )}
           {user.login && (
-            <p className="participant__description_login">@{user.login}</p>
+            <p className={styles.login}>@{user.login}</p>
           )}
         </div>
       </div>
 
       {user.descriptions && (
-        <p className="participant_profile_description">{user.descriptions}</p>
+        <p className={styles.description}>{user.descriptions}</p>
       )}
 
       {AuthStore.user.id !== user.id && (
         <button
-          className="participant_profile_send_mes"
+          className={styles.sendMessageButton}
           onClick={handleOpenPrivateChat}
         >
           Написать

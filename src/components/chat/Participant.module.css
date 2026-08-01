@@ -1,0 +1,72 @@
+.participant {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 5px;
+  padding: 5px;
+  position: relative;
+  min-width: 0;
+}
+
+.description {
+  color: var(--text-color);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.removeButton {
+  margin-left: auto;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 50%;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.removeButton:hover {
+  background: var(--hover-bg-color);
+}
+
+.removable {
+  padding: 9px 9px 9px 11px;
+  border-radius: 8px;
+  background: var(--input-bg-color);
+  border: 1px solid var(--border-color);
+  box-shadow: inset 3px 0 0 var(--main-color);
+  cursor: pointer;
+}
+
+.removable:hover {
+  border-color: color-mix(in srgb, var(--main-color) 42%, var(--border-color));
+  background: var(--hover-bg-color);
+}
+
+.removable p {
+  max-width: 230px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.removable .description p:first-child {
+  color: var(--text-color);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.removable .removeButton {
+  border-radius: 8px;
+  color: var(--muted-text-color);
+  background: var(--button-soft-bg-color);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.removable .removeButton:hover {
+  color: var(--text-color);
+  background: color-mix(in srgb, #b91515 72%, var(--button-soft-bg-color));
+}

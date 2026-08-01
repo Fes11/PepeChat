@@ -1,6 +1,6 @@
 import React, { useState, useContext } from "react";
 import classes from "./Message.module.css";
-import UserAvatar from "../UI/UserAvatar";
+import Avatar from "../UI/Avatar/Avatar";
 import { Context } from "../../main";
 import { format, parseISO } from "date-fns";
 import ReadMessageCheck from "../chat/ReadMessageCheck";
@@ -24,7 +24,10 @@ const Message = function ({
           {message?.text}
           <div className={classes.message__time}>{message_time}</div>
         </div>
-        <UserAvatar src={message.author?.user?.avatar} />
+        <Avatar
+          src={message.author?.user?.avatar}
+          alt={`Аватар пользователя ${message.author?.user?.username || message.author?.user?.login || "неизвестно"}`}
+        />
       </div>
     );
   } else {
@@ -33,7 +36,10 @@ const Message = function ({
         className={`${classes.message}${lastMessageClass}`}
         onContextMenu={(event) => onContextMenu?.(event, message)}
       >
-        <UserAvatar src={message.author?.user.avatar} />
+        <Avatar
+          src={message.author?.user?.avatar}
+          alt={`Аватар пользователя ${message.author?.user?.username || message.author?.user?.login || "неизвестно"}`}
+        />
 
         <div className={classes.message__bubble}>
           {message?.text}

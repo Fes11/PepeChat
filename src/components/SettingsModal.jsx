@@ -57,10 +57,9 @@ const SettingsModal = function ({ onClose }) {
     useThemeSettings();
   const [pendingMainColor, setPendingMainColor] = useState(mainColor);
   const updater = useUpdater();
-  const tabs = ["Profile", "App", "Device"];
+  const tabs = ["Device", "Profile", "App"];
   const testStreamRef = useRef(null);
   const audioContextRef = useRef(null);
-  const gainNodeRef = useRef(null);
   const analyserRef = useRef(null);
   const animationRef = useRef(null);
   const descriptionRef = useRef(null);
@@ -272,26 +271,20 @@ const SettingsModal = function ({ onClose }) {
       audioContextRef.current = null;
     }
 
-    gainNodeRef.current = null;
     analyserRef.current = null;
     setMicLevel(0);
     setIsTestingMicrophone(false);
   };
 
   useEffect(() => {
-    if (gainNodeRef.current && audioContextRef.current) {
-      gainNodeRef.current.gain.setValueAtTime(
-        MediaStore.volume,
-        audioContextRef.current.currentTime,
-      );
-    }
-  }, [MediaStore.volume]);
-
-  useEffect(() => {
     if (activeTab !== "Device" && isTestingMicrophone) {
       stopMicrophoneTest();
     }
   }, [activeTab, isTestingMicrophone]);
+
+  useEffect(() => {
+    testStreamRef.current?.__setAudioVolume?.(MediaStore.volume);
+  }, [MediaStore.volume]);
 
   useEffect(() => {
     if (!isTestingMicrophone) return;
@@ -328,21 +321,12 @@ const SettingsModal = function ({ onClose }) {
     audioContextRef.current = audioContext;
 
     const source = audioContext.createMediaStreamSource(stream);
-    const gainNode = audioContext.createGain();
-    gainNode.gain.value = Math.min(MediaStore.volume, 1);
-    gainNodeRef.current = gainNode;
-
     const analyser = audioContext.createAnalyser();
     analyser.fftSize = 256;
 
     analyserRef.current = analyser;
-    const merger = audioContext.createChannelMerger(2);
-
-    source.connect(gainNode);
-    gainNode.connect(analyser);
-    gainNode.connect(merger, 0, 0);
-    gainNode.connect(merger, 0, 1);
-    merger.connect(audioContext.destination);
+    source.connect(analyser);
+    source.connect(audioContext.destination);
 
     const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
@@ -575,7 +559,7 @@ const SettingsModal = function ({ onClose }) {
                         maxLength={450}
                         rows={3}
                         onChange={(e) => setDescription(e.target.value)}
-                        className={`${classes.settings_input} ${classes.description_input}`}
+                        className={classes.settings_input}
                       />
                       <EmojiButton
                         className={classes.description_emoji_button}
@@ -738,26 +722,6 @@ const SettingsModal = function ({ onClose }) {
                 </div>
               </div>
 
-              <p className={classes.settings_label}>Конфиденциальность</p>
-              <div className={classes.permission_card}>
-                <span>
-                  <strong>Микрофон и камера</strong>
-                  <small>
-                    Сбросить решение WebView и снова показать системные запросы
-                    доступа.
-                  </small>
-                </span>
-                <button
-                  type="button"
-                  onClick={resetMediaPermissions}
-                  disabled={isResettingMediaPermissions}
-                >
-                  {isResettingMediaPermissions
-                    ? "Запрашиваем…"
-                    : "Запросить заново"}
-                </button>
-              </div>
-
               <p className={classes.settings_label}>Обновления</p>
               <div className={classes.update_card} aria-live="polite">
                 <div className={classes.update_header}>
@@ -823,6 +787,26 @@ const SettingsModal = function ({ onClose }) {
             </div>
 
             <div className={classes.tabcontent_body}>
+              <p className={classes.settings_label}>Конфиденциальность</p>
+              <div className={classes.permission_card}>
+                <span>
+                  <strong>Микрофон и камера</strong>
+                  <small>
+                    Сбросить решение WebView и снова показать системные запросы
+                    доступа.
+                  </small>
+                </span>
+                <button
+                  type="button"
+                  onClick={resetMediaPermissions}
+                  disabled={isResettingMediaPermissions}
+                >
+                  {isResettingMediaPermissions
+                    ? "Запрашиваем…"
+                    : "Запросить заново"}
+                </button>
+              </div>
+
               <div className={classes.settings_section}>
                 <div className={classes.section_header}>
                   <span>Ввод</span>
@@ -891,11 +875,16 @@ const SettingsModal = function ({ onClose }) {
                     max="2"
                     step="0.01"
                     value={MediaStore.volume}
+                    disabled={MediaStore.autoGainControl}
                     onChange={(e) =>
                       MediaStore.changeVolume(parseFloat(e.target.value))
                     }
                   />
-                  <strong>{Math.round(MediaStore.volume * 100)}%</strong>
+                  <strong>
+                    {MediaStore.autoGainControl
+                      ? "Авто"
+                      : `${Math.round(MediaStore.volume * 100)}%`}
+                  </strong>
                 </label>
 
                 <div className={classes.mic_meter}>
@@ -915,19 +904,23 @@ const SettingsModal = function ({ onClose }) {
                 </div>
 
                 <div className={classes.segmented_control}>
-                  {["off", "light", "strong"].map((mode) => (
+                  {[
+                    { value: "off", label: "Выкл" },
+                    { value: "light", label: "WebRTC" },
+                    { value: "strong", label: "RNNoise" },
+                  ].map((mode) => (
                     <button
-                      key={mode}
+                      key={mode.value}
                       className={
-                        MediaStore.noiseSuppressionMode === mode
+                        MediaStore.noiseSuppressionMode === mode.value
                           ? classes.active_segment
                           : ""
                       }
                       onClick={() =>
-                        MediaStore.changeNoiseSuppressionMode(mode)
+                        MediaStore.changeNoiseSuppressionMode(mode.value)
                       }
                     >
-                      {mode}
+                      {mode.label}
                     </button>
                   ))}
                 </div>
@@ -964,7 +957,7 @@ const SettingsModal = function ({ onClose }) {
                 </label>
 
                 <label className={classes.switch_row}>
-                  <span>Auto усилитель</span>
+                  <span>Автоусиление (AGC)</span>
                   <input
                     type="checkbox"
                     checked={MediaStore.autoGainControl}

@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
-import UserAvatar from "../UI/UserAvatar.jsx";
+import Avatar from "../UI/Avatar/Avatar";
 import ParticipantProfile from "./ParticipantProfile.jsx";
+import styles from "./Participant.module.css";
 
 const Participant = ({ user, onClick, onRemove }) => {
   const [visibleProfile, setvisibleProfile] = useState(false);
@@ -88,18 +89,18 @@ const Participant = ({ user, onClick, onRemove }) => {
 
   return (
     <div
-      className="participant"
+      className={`${styles.participant} ${onRemove ? styles.removable : ""}`}
       ref={participantRef}
       onClick={() => showProfile(user)}
     >
-      <UserAvatar
+      <Avatar
         src={user.avatar}
         status={user.status}
-        width="28px"
-        height="28px"
+        alt={`Аватар пользователя ${user.username || user.login}`}
+        size={28}
       />
 
-      <div className="participant__description">
+      <div className={styles.description}>
         <p>{user.username || "@" + user.login}</p>
       </div>
 
@@ -117,7 +118,7 @@ const Participant = ({ user, onClick, onRemove }) => {
       {onRemove && (
         <button
           type="button"
-          className="participant__remove"
+          className={styles.removeButton}
           aria-label={`Remove ${user.username || user.login}`}
           onClick={(event) => {
             event.stopPropagation();

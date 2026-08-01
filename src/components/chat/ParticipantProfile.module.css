@@ -1,0 +1,70 @@
+.profile {
+  width: 220px;
+  background: var(--box-bg-color);
+  backdrop-filter: blur(20px);
+  border-radius: 15px;
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-color);
+  z-index: 1000;
+  padding: 15px;
+  box-sizing: border-box;
+  gap: 12px;
+  transition: all 0s;
+}
+
+.header {
+  width: 100%;
+  display: flex;
+  gap: 10px;
+}
+
+.headerContent {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: left;
+  min-width: 0;
+  flex: 1;
+}
+
+.username {
+  color: var(--text-color);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.login {
+  color: var(--muted-text-color) !important;
+  font-size: 12px !important;
+  font-weight: 600;
+}
+
+.description {
+  margin: 0;
+  color: var(--text-color);
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.sendMessageButton {
+  padding: 8px 0;
+  font-size: 12px;
+  width: 110px;
+  border-radius: 10px;
+  background: var(--button-soft-bg-color);
+  cursor: pointer;
+}
+
+.sendMessageButton:hover {
+  background: var(--hover-bg-color);
+}
+
+@media (max-width: 900px) {
+  .profile {
+    width: min(280px, calc(100vw - 16px));
+  }
+}

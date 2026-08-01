@@ -1,6 +1,6 @@
 import { useContext, useEffect, useRef } from "react";
 import cls from "./RoomUser.module.css";
-import UserAvatar from "../UI/UserAvatar.jsx";
+import Avatar from "../UI/Avatar/Avatar";
 import { Context } from "../../main.jsx";
 import { mediaService } from "../../services/MediaService.jsx";
 
@@ -168,9 +168,10 @@ const RoomUser = function ({
       }}
       onContextMenu={onContextMenu}
     >
-      <UserAvatar
+      <Avatar
         src={participant.user.avatar}
-        wrapperClassName={cls.room_user_avatar_frame}
+        alt={`Аватар пользователя ${participant.user.username || participant.user.login}`}
+        size="var(--room-avatar-size)"
         className={cls.room_user_avatar}
       />
       <video

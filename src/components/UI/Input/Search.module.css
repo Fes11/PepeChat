@@ -95,12 +95,6 @@
   border-radius: 999px;
 }
 
-.serach_local {
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-}
-
 .search_result_text {
   text-align: left;
   font-size: 11px;

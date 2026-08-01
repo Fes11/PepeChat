@@ -12,6 +12,7 @@ import ChatWindow from "./ChatWindow.jsx";
 import Room from "../room/Room.jsx";
 import { Context } from "../../main.jsx";
 import { observer } from "mobx-react-lite";
+import styles from "./ChatPage.module.css";
 
 const ACTIVE_VOICE_ROOM_CHAT_ID_KEY = "activeVoiceRoomChatId";
 const LAST_OPEN_CHAT_ID_KEY = "lastOpenChatId";
@@ -126,7 +127,7 @@ const ChatPage = observer(() => {
   }, [activeVoiceRoomChatId, selectedChatId]);
 
   return (
-    <div className="chat_page">
+    <div className={styles.page}>
       <ChatList
         activeVoiceRoomChatId={activeVoiceRoomChatId}
         activeVoiceRoomName={activeVoiceRoomName}
@@ -143,7 +144,7 @@ const ChatPage = observer(() => {
         }
       />
 
-      <div className="chat_page_main">
+      <div className={styles.main}>
         {shouldShowSelectedChat ? (
           <ChatWindow
             chat={selectedChatData}
@@ -152,7 +153,7 @@ const ChatPage = observer(() => {
             onOpenVoiceRoom={openVoiceRoom}
           />
         ) : (
-          <div className="chat_empty">
+          <div className={styles.emptyState}>
             <p>Выберите чат</p>
           </div>
         )}

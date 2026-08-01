@@ -11,6 +11,7 @@ import { useUpdater } from "./updates/UpdateProvider";
 import Login from "./components/auth/Login";
 import Registration from "./components/auth/Registration";
 import ChatPage from "./components/chat/ChatPage";
+import styles from "./App.module.css";
 
 const isTrayMenuWindow = () =>
   new URLSearchParams(window.location.search).get("tray") === "menu";
@@ -53,11 +54,11 @@ const MainApp = observer(() => {
   }, [AuthStore, ChatStore, MediaStore, startupComplete]);
 
   return (
-    <div className="app_shell">
+    <div className={styles.appShell}>
       <CustomTitleBar
         showConnectionStatus={startupComplete && !isUpdateScreenVisible}
       />
-      <main className="container">
+      <main className={styles.content}>
         {!startupComplete ? (
           <UpdateScreen />
         ) : (

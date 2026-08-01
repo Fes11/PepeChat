@@ -69,7 +69,7 @@ Updater получает подписанный манифест и артефа
 
 ```text
 frontend/
-├── public/                     # Статические изображения, иконки и audio worklet
+├── public/                     # Статические изображения и иконки
 ├── src/
 │   ├── api/                    # Axios и WebSocket-клиенты
 │   ├── components/             # React UI

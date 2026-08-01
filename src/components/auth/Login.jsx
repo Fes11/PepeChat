@@ -58,7 +58,7 @@ const Login = () => {
 
   return (
     <div className={classes.login}>
-      <div className="auth_img">
+      <div className={classes.auth_img}>
         <img src="/login.png" alt="login" />
       </div>
 

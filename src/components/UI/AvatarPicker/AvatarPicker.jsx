@@ -1,4 +1,5 @@
 import { useEffect, useId, useState } from "react";
+import { resolveMediaUrl } from "../../../utils/mediaUrl";
 import classes from "./AvatarPicker.module.css";
 
 const joinClassNames = (...names) => names.filter(Boolean).join(" ");
@@ -15,7 +16,7 @@ const AvatarPicker = ({
   const inputId = useId();
   const [localPreview, setLocalPreview] = useState(null);
   const [hasImageError, setHasImageError] = useState(false);
-  const imageSrc = localPreview || previewSrc;
+  const imageSrc = localPreview || resolveMediaUrl(previewSrc);
 
   useEffect(() => {
     if (!avatar) setLocalPreview(null);

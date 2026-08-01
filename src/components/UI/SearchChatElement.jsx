@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import ChatAvatar from "./ChatAvatar.jsx";
+import Avatar from "./Avatar/Avatar";
 import classes from "./Input/Search.module.css";
 import { Context } from "../../main.jsx";
 import { useNavigate } from "react-router-dom";
@@ -28,7 +28,13 @@ const SearchChatElement = function ({ chat, requiresJoin = false }) {
       className={classes.search_result_item}
       onClick={openChat}
     >
-      <ChatAvatar src={chat.avatar} width="28px" height="28px" />
+      <Avatar
+        src={chat.avatar}
+        alt={`Аватар чата ${chat.name}`}
+        size={28}
+        shape="rounded"
+        fallbackSrc="/default_chat_icon.png"
+      />
 
       <div className={classes.search_result_info}>
         <p className={classes.search_result_username}>{chat.name}</p>

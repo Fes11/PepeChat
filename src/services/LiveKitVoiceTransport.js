@@ -151,7 +151,8 @@ export class LiveKitVoiceTransport {
         resolution: VideoPresets.h720.resolution,
       },
       publishDefaults: {
-        audioPreset: AudioPresets.musicStereo,
+        audioPreset: AudioPresets.music,
+        forceStereo: false,
         simulcast: true,
         videoSimulcastLayers: [VideoPresets.h180, VideoPresets.h360],
       },
@@ -417,7 +418,8 @@ export class LiveKitVoiceTransport {
             name: "microphone",
             dtx: true,
             red: true,
-            audioPreset: AudioPresets.musicStereo,
+            audioPreset: AudioPresets.music,
+            forceStereo: false,
           });
         }
 

@@ -1,12 +1,5 @@
-import React, { useState } from "react";
-
-
 const Default = function () {
-
-    return (
-        <div className="">
-        </div>
-    )
-}
+  return <div />;
+};
 
 export default Default;

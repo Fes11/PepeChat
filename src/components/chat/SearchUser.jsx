@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useId } from "react";
-import "./SearchUser.css";
+import styles from "./SearchUser.module.css";
 import UserServices from "../../services/UserService";
-import UserAvatar from "../UI/UserAvatar.jsx";
+import Avatar from "../UI/Avatar/Avatar";
 
 const SearchUser = ({ onSelectUser, participants }) => {
   const searchId = useId().replace(/:/g, "");
@@ -46,17 +46,17 @@ const SearchUser = ({ onSelectUser, participants }) => {
   }, [isFocused, query]);
 
   return (
-    <div className="search_user_wrapper">
+    <div className={styles.wrapper}>
       {!isEditing ? (
         <button
-          className="search_user_btn"
+          className={styles.addButton}
           type="button"
           onClick={() => setIsEditing(true)}
         >
           + Добавить участника
         </button>
       ) : (
-        <div className="search_user_field">
+        <div>
           <input type="text" name="login" autoComplete="username" hidden />
           <input
             type="password"
@@ -66,7 +66,7 @@ const SearchUser = ({ onSelectUser, participants }) => {
           />
           <input
             ref={inputRef}
-            className="search_user_input"
+            className={styles.input}
             type="text"
             name={searchName}
             placeholder="Поиск по имени или логину"
@@ -95,7 +95,7 @@ const SearchUser = ({ onSelectUser, participants }) => {
       )}
 
       {isFocused && results.length > 0 && (
-        <div className="search_results">
+        <div className={styles.results}>
           {results.map((user) => {
             const isSelected = participants.some((p) => p.id === user.id);
 
@@ -103,8 +103,8 @@ const SearchUser = ({ onSelectUser, participants }) => {
               <button
                 key={user.id}
                 type="button"
-                className={`search_result_item ${
-                  isSelected ? "selected_user" : ""
+                className={`${styles.resultItem} ${
+                  isSelected ? styles.selected : ""
                 }`}
                 disabled={isSelected}
                 aria-disabled={isSelected}
@@ -116,21 +116,21 @@ const SearchUser = ({ onSelectUser, participants }) => {
                   setIsEditing(false);
                 }}
               >
-                <UserAvatar
+                <Avatar
                   src={user.avatar}
                   status={user.status}
-                  width="30px"
-                  height="30px"
+                  alt={`Аватар пользователя ${user.username || user.login}`}
+                  size={30}
                 />
-                <div className="search_result_text">
-                  <p className="search_result_username">{user.username}</p>
-                  <p className="search_result_login">@{user.login}</p>
+                <div className={styles.resultText}>
+                  <p className={styles.resultUsername}>{user.username}</p>
+                  <p className={styles.resultLogin}>@{user.login}</p>
                 </div>
 
                 {isSelected ? (
-                  <span className="search_result_badge">Добавлен</span>
+                  <span className={styles.selectedBadge}>Добавлен</span>
                 ) : (
-                  <span className="search_result_add">Добавить</span>
+                  <span className={styles.addLabel}>Добавить</span>
                 )}
               </button>
             );

@@ -17,7 +17,7 @@ class MediaStore {
   volume = 1;
   autoGainControl = false;
   noiseSuppressionMode = "light";
-  noiseGateEnabled = true;
+  noiseGateEnabled = false;
   noiseGateThreshold = 0.02;
 
   constructor() {

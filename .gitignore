@@ -25,3 +25,5 @@ dist-ssr
 *.sw?
 ~/.tauri
 VERSION_CHANGE.md
+.env.development
+.env.production

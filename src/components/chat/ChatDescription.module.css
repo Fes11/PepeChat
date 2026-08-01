@@ -1,0 +1,114 @@
+.description {
+  flex: 0 0 var(--chat-description-width);
+  width: var(--chat-description-width);
+  min-width: 0;
+  height: 100%;
+  border-radius: var(--main-border-radius);
+  background-color: var(--box-bg-color);
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.content {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+}
+
+.sectionButton {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-color);
+  cursor: pointer;
+  background: transparent;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
+  margin: 5px 0;
+  border-radius: 5px;
+  padding: 5px 8px;
+  width: fit-content;
+  border: none;
+}
+
+.sectionButton:hover {
+  background-color: var(--hover-bg-color);
+}
+
+.statusCount {
+  margin-left: 8px;
+  color: var(--faint-text-color);
+}
+
+.onlineIndicator,
+.offlineIndicator {
+  border-radius: 50%;
+  width: 8px;
+  height: 8px;
+}
+
+.onlineIndicator {
+  background: var(--main-color);
+}
+
+.offlineIndicator {
+  background: var(--faint-text-color);
+}
+
+.participantsList {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  position: relative;
+}
+
+.participantsShell {
+  display: grid;
+  grid-template-rows: 1fr;
+  overflow: visible;
+  transition:
+    grid-template-rows 0.25s ease,
+    opacity 0.2s ease;
+}
+
+.participantsShell > .participantsList {
+  min-height: 0;
+}
+
+.participantsShellCollapsed {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 1100px) {
+  .description {
+    flex-basis: 170px;
+    width: 170px;
+  }
+}
+
+@media (max-width: 900px) {
+  .description {
+    flex-basis: 160px;
+    width: 160px;
+  }
+
+  .content {
+    min-height: 100%;
+  }
+
+  .participantsList {
+    flex-direction: row;
+    flex-wrap: wrap;
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 520px) {
+  .description {
+    display: none;
+  }
+}

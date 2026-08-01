@@ -1,6 +1,13 @@
+import {
+  RnnoiseWorkletNode,
+  loadRnnoise,
+} from "@sapphi-red/web-noise-suppressor";
+import rnnoiseWorkletUrl from "@sapphi-red/web-noise-suppressor/rnnoiseWorklet.js?url";
+import rnnoiseWasmUrl from "@sapphi-red/web-noise-suppressor/rnnoise.wasm?url";
+import rnnoiseSimdWasmUrl from "@sapphi-red/web-noise-suppressor/rnnoise_simd.wasm?url";
+
 const AUDIO_SAMPLE_RATE = 48000;
 const HIGHPASS_FREQUENCY = 80;
-const LOWPASS_FREQUENCY = 8000;
 const GATE_CHECK_INTERVAL = 16;
 const GATE_CLOSED_GAIN = 0.04;
 const GATE_ATTACK_SECONDS = 0.015;
@@ -10,12 +17,53 @@ const GATE_CLOSE_THRESHOLD_RATIO = 0.6;
 const getAudioContextClass = () =>
   window.AudioContext || window.webkitAudioContext;
 
+let rnnoiseBinaryPromise = null;
+
+const loadRnnoiseBinary = () => {
+  if (!rnnoiseBinaryPromise) {
+    rnnoiseBinaryPromise = loadRnnoise({
+      url: rnnoiseWasmUrl,
+      simdUrl: rnnoiseSimdWasmUrl,
+    }).catch((error) => {
+      rnnoiseBinaryPromise = null;
+      throw error;
+    });
+  }
+
+  return rnnoiseBinaryPromise;
+};
+
+const enableBrowserNoiseSuppression = async (stream) => {
+  await Promise.all(
+    stream.getAudioTracks().map((track) =>
+      track
+        .applyConstraints({ noiseSuppression: true })
+        .catch((error) =>
+          console.warn(
+            "[AudioProcessing] Cannot enable WebRTC noise suppression fallback",
+            error,
+          ),
+        ),
+    ),
+  );
+};
+
 export const audioProcessingService = {
+  isRnnoiseSupported() {
+    const AudioContextClass = getAudioContextClass();
+    return Boolean(
+      AudioContextClass &&
+        window.AudioWorkletNode &&
+        "audioWorklet" in AudioContextClass.prototype,
+    );
+  },
+
   async createProcessedMicrophoneStream(inputStream, options = {}) {
     const {
       volume = 1,
+      autoGainControl = false,
       noiseSuppressionMode = "light",
-      noiseGateEnabled = true,
+      noiseGateEnabled = false,
       noiseGateThreshold = 0.02,
     } = options;
     const AudioContextClass = getAudioContextClass();
@@ -36,62 +84,74 @@ export const audioProcessingService = {
     const source = audioContext.createMediaStreamSource(inputStream);
     const destination = audioContext.createMediaStreamDestination();
     const highpass = audioContext.createBiquadFilter();
-    const lowpass = audioContext.createBiquadFilter();
-    const compressor = audioContext.createDynamicsCompressor();
+    const limiter = audioContext.createDynamicsCompressor();
     const gateAnalyser = audioContext.createAnalyser();
     const gateGain = audioContext.createGain();
     const gainNode = audioContext.createGain();
-    const splitter = audioContext.createChannelSplitter(2);
-    const stereoMerger = audioContext.createChannelMerger(2);
+
+    try {
+      destination.channelCount = 1;
+      destination.channelCountMode = "explicit";
+    } catch (error) {
+      console.debug(
+        "[AudioProcessing] Mono destination configuration is unavailable",
+        error,
+      );
+    }
 
     highpass.type = "highpass";
     highpass.frequency.value = HIGHPASS_FREQUENCY;
 
-    lowpass.type = "lowpass";
-    lowpass.frequency.value =
-      noiseSuppressionMode === "strong" ? 7200 : LOWPASS_FREQUENCY;
-
-    compressor.threshold.setValueAtTime(-45, audioContext.currentTime);
-    compressor.knee.setValueAtTime(24, audioContext.currentTime);
-    compressor.ratio.setValueAtTime(4, audioContext.currentTime);
-    compressor.attack.setValueAtTime(0.003, audioContext.currentTime);
-    compressor.release.setValueAtTime(0.25, audioContext.currentTime);
+    // This node is only a soft peak limiter. Browser AGC, when enabled, is the
+    // sole level controller; the previous -45 dB compressor changed virtually
+    // the entire speech envelope and caused audible pumping.
+    limiter.threshold.setValueAtTime(-6, audioContext.currentTime);
+    limiter.knee.setValueAtTime(3, audioContext.currentTime);
+    limiter.ratio.setValueAtTime(8, audioContext.currentTime);
+    limiter.attack.setValueAtTime(0.003, audioContext.currentTime);
+    limiter.release.setValueAtTime(0.08, audioContext.currentTime);
 
     gateAnalyser.fftSize = 1024;
     gateAnalyser.smoothingTimeConstant = 0.15;
     gateGain.gain.value = noiseGateEnabled ? GATE_CLOSED_GAIN : 1;
-    gainNode.gain.value = volume;
+    gainNode.gain.value = autoGainControl ? 1 : volume;
 
     let rnnoiseNode = null;
     let previousNode = source;
 
     try {
-      if (noiseSuppressionMode !== "off") {
-        await audioContext.audioWorklet.addModule("/rnnoise-processor.js");
-        rnnoiseNode = new AudioWorkletNode(audioContext, "rnnoise-processor");
+      if (noiseSuppressionMode === "strong") {
+        if (audioContext.sampleRate !== AUDIO_SAMPLE_RATE) {
+          throw new Error(
+            `RNNoise requires ${AUDIO_SAMPLE_RATE} Hz, got ${audioContext.sampleRate} Hz`,
+          );
+        }
+
+        const [wasmBinary] = await Promise.all([
+          loadRnnoiseBinary(),
+          audioContext.audioWorklet.addModule(rnnoiseWorkletUrl),
+        ]);
+        rnnoiseNode = new RnnoiseWorkletNode(audioContext, {
+          maxChannels: 1,
+          wasmBinary,
+        });
         previousNode.connect(rnnoiseNode);
         previousNode = rnnoiseNode;
       }
     } catch (err) {
-      console.warn("[AudioProcessing] RNNoise worklet is unavailable", err);
+      console.warn(
+        "[AudioProcessing] RNNoise is unavailable, using WebRTC noise suppression",
+        err,
+      );
+      await enableBrowserNoiseSuppression(inputStream);
     }
 
     previousNode.connect(highpass);
-    highpass.connect(lowpass);
-    lowpass.connect(compressor);
-    // Apply the user's microphone gain before measuring the gate level. With
-    // the previous order a quiet microphone was attenuated before its volume
-    // boost, so LiveKit never received enough signal to mark it as speaking.
-    compressor.connect(gainNode);
-    gainNode.connect(gateAnalyser);
-    gainNode.connect(gateGain);
-    // Some WebView2/audio-worklet combinations expose a two-channel signal
-    // with voice only in channel 0. Duplicate that channel explicitly so a
-    // mono microphone is centered in headphones instead of playing on the left.
-    gateGain.connect(splitter);
-    splitter.connect(stereoMerger, 0, 0);
-    splitter.connect(stereoMerger, 0, 1);
-    stereoMerger.connect(destination);
+    highpass.connect(gainNode);
+    gainNode.connect(limiter);
+    limiter.connect(gateAnalyser);
+    limiter.connect(gateGain);
+    gateGain.connect(destination);
 
     const gateData = new Uint8Array(gateAnalyser.fftSize);
     const gateThreshold =
@@ -134,23 +194,35 @@ export const audioProcessingService = {
         source,
         rnnoiseNode,
         highpass,
-        lowpass,
-        compressor,
+        limiter,
         gateAnalyser,
         gateGain,
         gainNode,
-        splitter,
-        stereoMerger,
       ].forEach((node) => node?.disconnect?.());
+      rnnoiseNode?.destroy?.();
       audioContext.close().catch(() => {});
     };
+
+    if (audioContext.state === "suspended") {
+      await audioContext.resume().catch((error) =>
+        console.warn("[AudioProcessing] Cannot resume AudioContext", error),
+      );
+    }
+
+    const outputTrack = destination.stream.getAudioTracks()[0];
+    if (outputTrack && "contentHint" in outputTrack) {
+      outputTrack.contentHint = "speech";
+    }
 
     return {
       stream: destination.stream,
       cleanup,
       setVolume: (nextVolume) => {
         if (!Number.isFinite(nextVolume)) return;
-        gainNode.gain.setValueAtTime(nextVolume, audioContext.currentTime);
+        gainNode.gain.setValueAtTime(
+          autoGainControl ? 1 : nextVolume,
+          audioContext.currentTime,
+        );
       },
     };
   },

@@ -1,0 +1,117 @@
+.titleBar {
+  position: relative;
+  flex: 0 0 var(--title-bar-height);
+  height: var(--title-bar-height);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 14px;
+  background-color: var(--bg-color);
+  color: var(--muted-text-color);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.dragRegion {
+  position: absolute;
+  inset: 0;
+}
+
+.brand {
+  position: relative;
+  pointer-events: none;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+.connectionStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 8px;
+  color: var(--text-secondary, #9ba3af);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.connectionDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #f59e0b;
+}
+
+.connectionConnected .connectionDot {
+  background: var(--main-color);
+}
+
+.connectionOffline .connectionDot {
+  background: #ef4444;
+}
+
+.connectionLabel {
+  font-size: 11px;
+  color: var(--text-secondary, #9ba3af);
+  font-weight: 600;
+  text-align: center;
+}
+
+.logo {
+  width: 18px;
+  height: 18px;
+}
+
+.controls {
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: stretch;
+}
+
+.control {
+  width: 46px;
+  height: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted-text-color);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.control span img {
+  width: 16px;
+  height: 16px;
+  opacity: 0.8;
+}
+
+.control:hover {
+  background: var(--hover-bg-color);
+  color: var(--text-color);
+}
+
+.closeControl:hover {
+  background: #d83b3b;
+  color: #ffffff;
+}
+
+@media (max-width: 560px) {
+  .connectionLabel {
+    display: none;
+  }
+}

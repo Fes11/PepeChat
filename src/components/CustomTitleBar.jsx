@@ -1,8 +1,9 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { useContext, useRef } from "react";
+import { useContext } from "react";
 import { observer } from "mobx-react-lite";
 import { Context } from "../main";
 import Logo from "./UI/Logo.jsx";
+import styles from "./CustomTitleBar.module.css";
 
 const runWindowAction = (actionName) => {
   try {
@@ -29,41 +30,15 @@ const CONNECTION_LABELS = {
   offline: "Нет сети",
 };
 
+const CONNECTION_STYLES = {
+  connected: styles.connectionConnected,
+  reconnecting: "",
+  offline: styles.connectionOffline,
+};
+
 const CustomTitleBar = observer(({ showConnectionStatus = true }) => {
   const { ConnectionStore } = useContext(Context);
   const status = ConnectionStore.status;
-  const dragInProgress = useRef(false);
-
-  const startDragging = (event) => {
-    if (event.button !== 0 || dragInProgress.current) {
-      return;
-    }
-
-    dragInProgress.current = true;
-
-    try {
-      const appWindow = getCurrentWindow();
-      appWindow
-        .startDragging()
-        .catch((error) => {
-          if (import.meta.env.DEV) {
-            console.warn("Tauri window action failed: startDragging", error);
-          }
-        })
-        .finally(() => {
-          dragInProgress.current = false;
-        });
-    } catch (error) {
-      dragInProgress.current = false;
-
-      if (import.meta.env.DEV) {
-        console.warn(
-          "Tauri window action is unavailable: startDragging",
-          error,
-        );
-      }
-    }
-  };
 
   const toggleMaximize = () => {
     runWindowAction("toggleMaximize");
@@ -71,35 +46,38 @@ const CustomTitleBar = observer(({ showConnectionStatus = true }) => {
 
   return (
     <header
-      data-tauri-drag-region
-      className="custom_title_bar"
+      className={styles.titleBar}
       onDoubleClick={toggleMaximize}
-      onMouseDown={startDragging}
     >
-      <div className="custom_title_bar__brand">
-        <Logo className="custom_title_bar__logo" />
-        <span className="custom_title_bar__title">PepeChat</span>
+      <div
+        data-tauri-drag-region
+        className={styles.dragRegion}
+        aria-hidden="true"
+      />
+      <div className={styles.brand}>
+        <Logo className={styles.logo} />
+        <span className={styles.title}>PepeChat</span>
         {showConnectionStatus && (
           <span
-            className={`connection_status connection_status--${status}`}
+            className={`${styles.connectionStatus} ${CONNECTION_STYLES[status] ?? ""}`}
             title={CONNECTION_LABELS[status]}
             aria-label={`Состояние подключения: ${CONNECTION_LABELS[status]}`}
           >
-            <span className="connection_status__dot" aria-hidden="true" />
-            <span className="connection_status__label">
+            <span className={styles.connectionDot} aria-hidden="true" />
+            <span className={styles.connectionLabel}>
               {CONNECTION_LABELS[status]}
             </span>
           </span>
         )}
       </div>
       <div
-        className="custom_title_bar__controls"
+        className={styles.controls}
         onDoubleClick={stopWindowDrag}
         onMouseDown={stopWindowDrag}
       >
         <button
           type="button"
-          className="custom_title_bar__control"
+          className={styles.control}
           aria-label="Свернуть"
           title="Свернуть"
           onClick={() => runWindowAction("minimize")}
@@ -110,7 +88,7 @@ const CustomTitleBar = observer(({ showConnectionStatus = true }) => {
         </button>
         <button
           type="button"
-          className="custom_title_bar__control"
+          className={styles.control}
           aria-label="Развернуть"
           title="Развернуть"
           onClick={toggleMaximize}
@@ -121,7 +99,7 @@ const CustomTitleBar = observer(({ showConnectionStatus = true }) => {
         </button>
         <button
           type="button"
-          className="custom_title_bar__control custom_title_bar__control--close"
+          className={`${styles.control} ${styles.closeControl}`}
           aria-label="Закрыть"
           title="Закрыть"
           onClick={() => runWindowAction("close")}

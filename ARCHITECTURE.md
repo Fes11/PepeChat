@@ -133,6 +133,14 @@ src/
 - `DEFAULT_VIDEO_CONSTRAINTS` — 1920x1080, 60fps
 - `ADDITIONAL_VIDEO_CONSTRAINTS` — захват окна с курсором
 
+#### `services/AudioProcessingService.jsx` — Обработка микрофона
+
+- `light` использует встроенное WebRTC noise suppression.
+- `strong` отключает WebRTC NS и запускает RNNoise 48 кГц в AudioWorklet/WASM.
+- WebRTC AEC остаётся включённым во всех голосовых режимах.
+- При ошибке загрузки WASM трек автоматически возвращается к WebRTC NS.
+- После шумоподавления идут high-pass 80 Гц, ручной gain и мягкий peak limiter. При AGC ручной gain отключён.
+
 ### 4. Компоненты (`components/`)
 
 #### `components/chat/Room.jsx` — Комната голосового чата

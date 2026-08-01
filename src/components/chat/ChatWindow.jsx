@@ -12,8 +12,7 @@ import MessageService from "../../services/MessageService";
 import Message from "../message/Message.jsx";
 import ChatDescription from "./ChatDescription.jsx";
 import Spinner from "../UI/Spiner.jsx";
-import ChatAvatar from "../UI/ChatAvatar.jsx";
-import UserAvatar from "../UI/UserAvatar.jsx";
+import Avatar from "../UI/Avatar/Avatar";
 import EmojiPicker from "../UI/EmojiPicker/EmojiPicker.jsx";
 import EmojiButton from "../UI/EmojiButton/EmojiButton.jsx";
 import { parseISO, isSameDay, formatDistanceToNow } from "date-fns";
@@ -22,9 +21,9 @@ import DateDivider from "../UI/DateDivider.jsx";
 import { observer } from "mobx-react-lite";
 import { notifyError } from "../../notifications/notificationService.js";
 import { getErrorMessage } from "../../utils/errors.js";
-import { resolveMediaUrl } from "../../utils/mediaUrl";
 import ContextMenu from "../UI/ContextMenu";
 import VoiceIcon from "../UI/VoiceIcon.jsx";
+import styles from "./ChatWindow.module.css";
 
 const MAX_INPUT_HEIGHT = 200;
 
@@ -355,35 +354,42 @@ const ChatWindow = observer(
     }, [deleteMessage, deletingMessageId, selectedMessage]);
 
     return (
-      <div className="chat_window">
-        <div className="chat">
-          <div className="chat__header">
-            <div className="chat_header_box">
+      <div className={styles.window}>
+        <div className={styles.chat}>
+          <div className={styles.header}>
+            <div className={styles.headerMain}>
               {chat.is_group ? (
-                <ChatAvatar src={chat?.avatar} />
+                <Avatar
+                  src={chat?.avatar}
+                  alt={`Аватар чата ${chat.name}`}
+                  size={40}
+                  shape="rounded"
+                  fallbackSrc="/default_chat_icon.png"
+                />
               ) : (
-                <UserAvatar
+                <Avatar
                   src={otherUser?.avatar}
                   status={otherUser?.status}
+                  alt={`Аватар пользователя ${otherUser?.username || otherUser?.login || "неизвестно"}`}
                 />
               )}
 
-              <div className="chat__header_info">
+              <div className={styles.headerInfo}>
                 {chat.is_group ? (
-                  <p className="chat__header_name">{chat?.name}</p>
+                  <p className={styles.headerName}>{chat?.name}</p>
                 ) : (
-                  <p className="chat__header_name">
+                  <p className={styles.headerName}>
                     {otherUser?.username || otherUser?.login}
                   </p>
                 )}
                 {!chat.is_group ? (
-                  <p className="chat__header_description">
+                  <p className={styles.headerDescription}>
                     {otherUser?.status === "online"
                       ? "online"
                       : (lastOnlineStatus ?? "offline")}
                   </p>
                 ) : (
-                  <p className="chat__header_description">
+                  <p className={styles.headerDescription}>
                     Онлайн: {onlineParticipantsCount}
                   </p>
                 )}
@@ -392,9 +398,9 @@ const ChatWindow = observer(
 
             <button
               type="button"
-              className={`chat_list_element__voice chat_header_voice ${
+              className={`${styles.voiceButton} ${
                 String(activeVoiceRoomChatId) === String(chat.id)
-                  ? "chat_header_voice--active"
+                  ? styles.voiceButtonActive
                   : ""
               }`}
               onClick={openVoiceRoom}
@@ -402,35 +408,33 @@ const ChatWindow = observer(
               aria-label="Открыть голосовую комнату"
             >
               {voiceParticipants.length > 0 && (
-                <div className="chat_list_element__voice_avatars">
+                <div className={styles.voiceAvatars}>
                   {visibleVoiceAvatars.map((participant) => (
-                    <img
+                    <Avatar
                       key={participant.id}
-                      src={
-                        resolveMediaUrl(participant.user?.avatar) ||
-                        "/default.jpg"
-                      }
-                      alt=""
-                      className="chat_list_element__voice_avatar"
+                      src={participant.user?.avatar}
+                      alt={`Аватар пользователя ${participant.user?.username || participant.user?.login || "неизвестно"}`}
+                      size={18}
+                      className={styles.voiceAvatar}
                     />
                   ))}
 
                   {voiceParticipants.length > 3 && (
-                    <span className="chat_list_element__voice_count">
+                    <span className={styles.voiceCount}>
                       {voiceParticipants.length}
                     </span>
                   )}
                 </div>
               )}
 
-              <VoiceIcon />
+              <VoiceIcon large />
             </button>
           </div>
-          <div className="chat__message_list" ref={listRef}>
-            <div className="spacer" />
+          <div className={styles.messageList} ref={listRef}>
+            <div className={styles.spacer} />
 
             {!isLoading && error && (
-              <div className="chat__empty">
+              <div className={styles.emptyState}>
                 <p>
                   {getErrorMessage(error, "Не удалось загрузить сообщения.")}
                 </p>
@@ -438,19 +442,19 @@ const ChatWindow = observer(
             )}
 
             {isLoading && (
-              <div className="chat__loader">
+              <div className={styles.loader}>
                 <Spinner />
               </div>
             )}
 
             {!isLoading && messages.length === 0 && (
-              <div className="chat__empty">
+              <div className={styles.emptyState}>
                 <p>Здесь пока нет сообщений</p>
               </div>
             )}
 
             {isLoadingMore && !isLoading && (
-              <div className="chat__top_loader">
+              <div className={styles.topLoader}>
                 <Spinner />
               </div>
             )}
@@ -488,8 +492,8 @@ const ChatWindow = observer(
             onClose={closeContextMenu}
           />
 
-          <div className="chat__bottom">
-            <div className="chat__input_box" ref={emojiPickerRef}>
+          <div className={styles.composer}>
+            <div className={styles.inputBox} ref={emojiPickerRef}>
               {isEmojiPickerOpen && (
                 <EmojiPicker
                   activeTab={emojiTab}
@@ -499,7 +503,7 @@ const ChatWindow = observer(
               )}
               <textarea
                 ref={inputRef}
-                className="chat__input"
+                className={styles.input}
                 placeholder="Написать сообщение..."
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
@@ -507,13 +511,13 @@ const ChatWindow = observer(
                 rows={1}
               />
               <EmojiButton
-                className="chat__emoji_btn"
+                className={styles.emojiButton}
                 isOpen={isEmojiPickerOpen}
                 ariaLabel="Открыть выбор emoji"
                 onClick={() => setIsEmojiPickerOpen((isOpen) => !isOpen)}
               />
             </div>
-            <button className="chat__send_btn" onClick={sendMessage}>
+            <button className={styles.sendButton} onClick={sendMessage}>
               <img src="/paperplane.svg" alt="Send" />
             </button>
           </div>

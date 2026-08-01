@@ -2,6 +2,7 @@ import { useContext, useState } from "react";
 import { observer } from "mobx-react-lite";
 import { Context } from "../../main.jsx";
 import Participant from "./Participant";
+import styles from "./ChatDescription.module.css";
 
 const ChatDescription = ({ participants = [] }) => {
   const { ChatStore } = useContext(Context);
@@ -31,33 +32,27 @@ const ChatDescription = ({ participants = [] }) => {
   );
 
   return (
-    <div className="chat_description">
-      <div className="chat_description__content">
-        {/* <div className="chat_description__buttons">
-          <ChatDescriptionBtn disabled>Descriptions</ChatDescriptionBtn>
-          <ChatDescriptionBtn>Attach</ChatDescriptionBtn>
-        </div>*/}
-
+    <div className={styles.description}>
+      <div className={styles.content}>
         <button
           type="button"
-          className="chat_description__online"
+          className={styles.sectionButton}
           aria-expanded={expandedSections.online}
           onClick={() => toggleSection("online")}
         >
-          <span className="chat_description__status-indicator" />
+          <span className={styles.onlineIndicator} />
           <span>
             ОНЛАЙН
-            <span className="status_count">{onlineParticipants.length}</span>
+            <span className={styles.statusCount}>{onlineParticipants.length}</span>
           </span>
-          {/* <span className="chat_description__arrow" aria-hidden="true" /> */}
         </button>
 
         <div
-          className={`participants_list_shell ${
-            expandedSections.online ? "" : "participants_list_shell--collapsed"
+          className={`${styles.participantsShell} ${
+            expandedSections.online ? "" : styles.participantsShellCollapsed
           }`}
         >
-          <div className="participants_list">
+          <div className={styles.participantsList}>
             {onlineParticipants.map((participant) => (
               <Participant key={participant.user.id} user={participant.user} />
             ))}
@@ -66,24 +61,23 @@ const ChatDescription = ({ participants = [] }) => {
 
         <button
           type="button"
-          className="chat_description__online"
+          className={styles.sectionButton}
           aria-expanded={expandedSections.offline}
           onClick={() => toggleSection("offline")}
         >
-          <span className="chat_description__status-indicator-offline" />
+          <span className={styles.offlineIndicator} />
           <span>
             ОФЛАЙН
-            <span className="status_count">{offlineParticipants.length}</span>
+            <span className={styles.statusCount}>{offlineParticipants.length}</span>
           </span>
-          {/* <span className="chat_description__arrow" aria-hidden="true" /> */}
         </button>
 
         <div
-          className={`participants_list_shell ${
-            expandedSections.offline ? "" : "participants_list_shell--collapsed"
+          className={`${styles.participantsShell} ${
+            expandedSections.offline ? "" : styles.participantsShellCollapsed
           }`}
         >
-          <div className="participants_list">
+          <div className={styles.participantsList}>
             {offlineParticipants.map((participant) => (
               <Participant key={participant.user.id} user={participant.user} />
             ))}

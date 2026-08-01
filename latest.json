@@ -2,10 +2,10 @@
   "platforms": {
     "windows-x86_64": {
       "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRNCtLSHVQSkoybkpzbmIxQ0VLQklsWTIvTXZSVjRxSmF4d25ycklMWnQxL1BaaHBkeE5LcDNvWDBXSG82dFYzN2Jza0MzMXpDcUgrdHhLaU5xb01hUGxuU3cvQUhKWkFnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg1MzI0MzEwCWZpbGU6UGVwZUNoYXRfMC4xLjNfeDY0LXNldHVwLmV4ZQpOQndmY2xOYzJGWUlkOCtXVlFGeVBlR011d2xEcm03SHVadERQOHRGL0FsV3RWQ3pTUTlYNVVoNXZFY0tLeHRNbWpVeUw1L0YveHBNci9KRmFGY3lCdz09Cg==",
-      "url": "https://github.com/Fes11/PepeChat/releases/download/v0.1.3/PepeChat_0.1.3_x64-setup.exe"
+      "url": "https://github.com/Fes11/PepeChat/releases/download/v0.1.4/PepeChat_0.1.4_x64-setup.exe"
     }
   },
-  "pub_date": "2026-07-29T11:31:04Z",
-  "version": "0.1.3",
-  "notes": "Релиз PepeChat"
+  "pub_date": "2026-08-01T12:32:08Z",
+  "version": "0.1.4",
+  "notes": "Релиз PepeChat 0.1.4"
 }

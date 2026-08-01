@@ -1,12 +1,11 @@
 import React, { useContext } from "react";
-import ChatAvatar from "../UI/ChatAvatar";
-import UserAvatar from "../UI/UserAvatar.jsx";
+import Avatar from "../UI/Avatar/Avatar";
 import { format, parseISO } from "date-fns";
 import { Context } from "../../main.jsx";
 import { observer } from "mobx-react-lite";
 import { useNavigate } from "react-router-dom";
 import VoiceIcon from "../UI/VoiceIcon.jsx";
-import { resolveMediaUrl } from "../../utils/mediaUrl";
+import styles from "./ChatListElement.module.css";
 
 const getUserDisplayName = (user) =>
   user?.username || user?.login || user?.name || "Пользователь";
@@ -44,51 +43,56 @@ const ChatListElement = observer(({ chat, isSelected, isLast }) => {
       onClick={() => {
         navigate(`/chat/${chat.id}`);
       }}
-      className={"chat_list_element" + (isSelected ? " chat_active" : "")}
+      className={`${styles.item} ${isSelected ? styles.active : ""}`}
       style={{ marginBottom: isLast ? "50px" : undefined }}
     >
       {chat.is_group ? (
-        <ChatAvatar src={chat?.avatar} />
+        <Avatar
+          src={chat?.avatar}
+          alt={`Аватар чата ${chat.name}`}
+          size={40}
+          shape="rounded"
+          fallbackSrc="/default_chat_icon.png"
+        />
       ) : (
-        <UserAvatar
+        <Avatar
           src={chat?.other_user?.avatar}
           status={chat?.other_user?.status}
+          alt={`Аватар пользователя ${chat?.other_user?.username || chat?.other_user?.login || "неизвестно"}`}
         />
       )}
 
-      <div className="chat_list_element__text_box">
+      <div className={styles.textBox}>
         {chat.is_group ? (
-          <b className="chat_list_element__title">{chat.name}</b>
+          <b className={styles.title}>{chat.name}</b>
         ) : (
-          <b className="chat_list_element__title">
+          <b className={styles.title}>
             {chat?.other_user?.username || chat?.other_user?.login}
           </b>
         )}
-        <p className="chat_list_element__last_message">{last_message_text}</p>
+        <p className={styles.lastMessage}>{last_message_text}</p>
       </div>
 
-      <div className="chat_list_element__time">
-        <div className="chat_list_element__div">
+      <div className={styles.meta}>
+        <div className={styles.indicators}>
           {hasVoiceParticipants && (
             <div
-              className="chat_list_element__voice"
+              className={styles.voiceParticipants}
               title={`В голосовой комнате: ${voiceParticipants.length}`}
             >
-              <div className="chat_list_element__voice_avatars">
+              <div className={styles.voiceAvatars}>
                 {visibleVoiceAvatars.map((participant) => (
-                  <img
+                  <Avatar
                     key={participant.id}
-                    src={
-                      resolveMediaUrl(participant.user?.avatar) ||
-                      "/default.jpg"
-                    }
-                    alt=""
-                    className="chat_list_element__voice_avatar"
+                    src={participant.user?.avatar}
+                    alt={`Аватар пользователя ${getUserDisplayName(participant.user)}`}
+                    size={18}
+                    className={styles.voiceAvatar}
                   />
                 ))}
 
                 {voiceParticipants.length > 3 && (
-                  <span className="chat_list_element__voice_count">
+                  <span className={styles.voiceCount}>
                     {voiceParticipants.length}
                   </span>
                 )}
@@ -99,7 +103,7 @@ const ChatListElement = observer(({ chat, isSelected, isLast }) => {
           )}
 
           {chat.unread_count && chat.unread_count !== 0 ? (
-            <div className="new_messages_count">{chat.unread_count}</div>
+            <div className={styles.unreadCount}>{chat.unread_count}</div>
           ) : (
             ""
           )}

@@ -98,7 +98,7 @@ const ChatList = observer(
             onClose={() => setModal(false)}
             size="medium"
             className={classes.create_chat_modal}
-            contentClassName="modal_content_flush"
+            contentFlush
           >
             <CreateChatModal
               onClose={() => setModal(false)}

@@ -1,10 +1,11 @@
 import React, { useContext, useState } from "react";
-import UserAvatar from "./UI/UserAvatar";
+import Avatar from "./UI/Avatar/Avatar";
 import { Context } from "../main";
 import { observer } from "mobx-react-lite";
 import Modal from "./UI/Modal/Modal.jsx";
 import SettingsModal from "./SettingsModal";
 import RoomActivityPanel from "./room/RoomActivityPanel";
+import styles from "./Profile.module.css";
 
 const Profile = ({
   activeVoiceRoomChatId,
@@ -25,18 +26,18 @@ const Profile = ({
   const isInVoiceRoom = Boolean(activeVoiceRoomChatId);
 
   return (
-    <div className="profile">
+    <div className={styles.profile}>
       {isInVoiceRoom && (
-        <div className="profile_voice">
+        <div className={styles.voiceRoom}>
           <button
-            className="profile_voice__info"
+            className={styles.voiceRoomInfo}
             type="button"
             onClick={onOpenVoiceRoomPanel}
             title="Открыть голосовую комнату"
           >
-            <span className="profile_voice__text">
-              <span className="profile_voice__chat">{activeVoiceRoomName}</span>
-              <span className="profile_voice__chat_status">
+            <span className={styles.voiceRoomText}>
+              <span className={styles.voiceRoomName}>{activeVoiceRoomName}</span>
+              <span className={styles.voiceRoomStatus}>
                 <img src="/voice_call.svg" /> В голосовой
               </span>
             </span>
@@ -54,21 +55,21 @@ const Profile = ({
         </div>
       )}
 
-      <div className="profile__user">
-        <UserAvatar
+      <div className={styles.user}>
+        <Avatar
           src={user.avatar}
           status={user.status}
-          width="40px"
-          height="40px"
+          alt={`Аватар пользователя ${username || login}`}
+          size={40}
         />
 
-        <div className="profile__info">
-          {login && <p className="profile_username">@{login}</p>}
-          <p className="profile__status">{username}</p>
+        <div className={styles.userInfo}>
+          {login && <p className={styles.login}>@{login}</p>}
+          <p className={styles.username}>{username}</p>
         </div>
 
         <button
-          className="profile__settings_btn"
+          className={styles.settingsButton}
           onClick={() => setModal(true)}
         >
           <img src="/settings.svg" />
@@ -79,7 +80,7 @@ const Profile = ({
         isOpen={modal}
         onClose={() => setModal(false)}
         size="large"
-        contentClassName="modal_content_flush"
+        contentFlush
       >
         <SettingsModal onClose={() => setModal(false)} />
       </Modal>

@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import UserAvatar from "./UserAvatar.jsx";
+import Avatar from "./Avatar/Avatar";
 import classes from "./Input/Search.module.css";
 import { Context } from "../../main.jsx";
 import { useNavigate } from "react-router-dom";
@@ -21,11 +21,11 @@ const SearchUserElement = function ({ user }) {
       className={classes.search_result_item}
       onClick={handleOpenPrivateChat}
     >
-      <UserAvatar
+      <Avatar
         src={user.avatar}
         status={user.status}
-        width="28px"
-        height="28px"
+        alt={`Аватар пользователя ${user.username || user.login}`}
+        size={28}
       />
 
       <div className={classes.search_result_info}>

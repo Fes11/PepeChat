@@ -22,17 +22,9 @@
     1px 1px 0 var(--raised-dark-color);
 }
 
-.room_user .room_user_avatar_frame {
-  width: clamp(54px, 14vmin, 104px);
-  height: clamp(54px, 14vmin, 104px);
-  flex: 0 0 auto;
-}
-
 .room_user_avatar {
+  --room-avatar-size: clamp(54px, 14vmin, 104px);
   cursor: default;
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover;
 }
 
 .room_user:focus-visible {
@@ -133,9 +125,8 @@
 }
 
 @media (max-width: 520px) {
-  .room_user .room_user_avatar_frame {
-    width: clamp(46px, 18vmin, 74px);
-    height: clamp(46px, 18vmin, 74px);
+  .room_user_avatar {
+    --room-avatar-size: clamp(46px, 18vmin, 74px);
   }
 
   .room_user_name_row {

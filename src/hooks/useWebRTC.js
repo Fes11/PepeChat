@@ -52,7 +52,7 @@ const getIceServersConfig = () => {
 const ICE_SERVERS = getIceServersConfig();
 const MAX_PENDING_ICE_CANDIDATES = 32;
 const PENDING_ICE_TTL = 30_000;
-const AUDIO_MAX_BITRATE = 64_000;
+const AUDIO_MAX_BITRATE = 48_000;
 const CONNECTION_STATS_INTERVAL = 5_000;
 const HIGH_JITTER_SECONDS = 0.08;
 const HIGH_ROUND_TRIP_TIME_SECONDS = 0.5;

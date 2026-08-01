@@ -1,7 +1,7 @@
-import React from "react";
+import styles from "./ChatElementLoader.module.css";
 
 const ChatElementLoader = () => {
-  return <div className="chat_element_loader shimmer"></div>;
+  return <div className={`${styles.loader} ${styles.shimmer}`}></div>;
 };
 
 export default ChatElementLoader;

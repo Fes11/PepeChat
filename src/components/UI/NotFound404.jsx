@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import styles from "./NotFound404.module.css";
 
 const NotFound404 = function () {
   return (
-    <div className="not_found">
+    <div className={styles.notFound}>
       <h3>Не найдено 404</h3>
     </div>
   );

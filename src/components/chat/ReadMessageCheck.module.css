@@ -1,0 +1,67 @@
+.read {
+  width: 10px;
+  height: 10px;
+  opacity: 50%;
+}
+
+.readOverlay {
+  width: 10px;
+  height: 10px;
+  opacity: 50%;
+  position: absolute;
+  top: 2px;
+}
+
+.readDouble {
+  display: flex;
+  overflow: hidden;
+  width: 12px;
+}
+
+.readDouble .readOverlay:first-child {
+  right: 3px;
+}
+
+.readDouble .readOverlay:last-child {
+  right: -1px;
+}
+
+.pending {
+  width: 9px;
+  height: 9px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  opacity: 0.75;
+  position: relative;
+}
+
+.pending::after {
+  content: "";
+  position: absolute;
+  width: 1px;
+  height: 3px;
+  background: currentColor;
+  left: 4px;
+  top: 1px;
+  transform-origin: bottom;
+  animation: deliveryClock 1s linear infinite;
+}
+
+.failed {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #e5484d;
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+@keyframes deliveryClock {
+  to {
+    transform: rotate(360deg);
+  }
+}
