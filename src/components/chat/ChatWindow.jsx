@@ -28,7 +28,15 @@ import styles from "./ChatWindow.module.css";
 const MAX_INPUT_HEIGHT = 200;
 
 const ChatWindow = observer(
-  ({ chat, activeVoiceRoomChatId, onOpenVoiceRoom }) => {
+  ({
+    chat,
+    activeVoiceRoomChatId,
+    onOpenVoiceRoom,
+    onClose,
+    isDescriptionVisible,
+    onHideDescription,
+    onShowDescription,
+  }) => {
     // const [messages, setMessages] = useState([]);
     const { ChatStore } = useContext(Context);
     const messages = ChatStore.getMessages(chat.id);
@@ -49,10 +57,14 @@ const ChatWindow = observer(
     const [emojiTab, setEmojiTab] = useState("emoji");
     const participants = ChatStore.getChatParticipants(chat.id);
     const voiceParticipants = ChatStore.getVoiceParticipants(chat.id);
-    const visibleVoiceAvatars =
-      voiceParticipants.length > 3
-        ? voiceParticipants.slice(0, 2)
-        : voiceParticipants.slice(0, 3);
+    const visibleVoiceAvatars = voiceParticipants.slice(
+      0,
+      voiceParticipants.length > 2 ? 1 : 2,
+    );
+    const hiddenVoiceParticipantsCount = Math.max(
+      0,
+      voiceParticipants.length - visibleVoiceAvatars.length,
+    );
 
     const getLastOnlineStatus = (last_online) => {
       if (!last_online) return null;
@@ -357,8 +369,12 @@ const ChatWindow = observer(
       <div className={styles.window}>
         <div className={styles.chat}>
           <div className={styles.header}>
+            <button type="button" className={styles.hide_btn} onClick={onClose}>
+              <img src="/back.png" alt="" />
+            </button>
+
             <div className={styles.headerMain}>
-              {chat.is_group ? (
+              {/* {chat.is_group ? (
                 <Avatar
                   src={chat?.avatar}
                   alt={`Аватар чата ${chat.name}`}
@@ -372,7 +388,7 @@ const ChatWindow = observer(
                   status={otherUser?.status}
                   alt={`Аватар пользователя ${otherUser?.username || otherUser?.login || "неизвестно"}`}
                 />
-              )}
+              )} */}
 
               <div className={styles.headerInfo}>
                 {chat.is_group ? (
@@ -396,39 +412,53 @@ const ChatWindow = observer(
               </div>
             </div>
 
-            <button
-              type="button"
-              className={`${styles.voiceButton} ${
-                String(activeVoiceRoomChatId) === String(chat.id)
-                  ? styles.voiceButtonActive
-                  : ""
-              }`}
-              onClick={openVoiceRoom}
-              title={`В голосовой комнате: ${voiceParticipants.length}`}
-              aria-label="Открыть голосовую комнату"
-            >
-              {voiceParticipants.length > 0 && (
-                <div className={styles.voiceAvatars}>
-                  {visibleVoiceAvatars.map((participant) => (
-                    <Avatar
-                      key={participant.id}
-                      src={participant.user?.avatar}
-                      alt={`Аватар пользователя ${participant.user?.username || participant.user?.login || "неизвестно"}`}
-                      size={18}
-                      className={styles.voiceAvatar}
-                    />
-                  ))}
+            <div className={styles.headerActions}>
+              <button
+                type="button"
+                className={`${styles.voiceButton} ${
+                  String(activeVoiceRoomChatId) === String(chat.id)
+                    ? styles.voiceButtonActive
+                    : ""
+                }`}
+                onClick={openVoiceRoom}
+                title={`В голосовой комнате: ${voiceParticipants.length}`}
+                aria-label="Открыть голосовую комнату"
+              >
+                {voiceParticipants.length > 0 && (
+                  <div className={styles.voiceAvatars}>
+                    {visibleVoiceAvatars.map((participant) => (
+                      <Avatar
+                        key={participant.id}
+                        src={participant.user?.avatar}
+                        alt={`Аватар пользователя ${participant.user?.username || participant.user?.login || "неизвестно"}`}
+                        size={18}
+                        className={styles.voiceAvatar}
+                      />
+                    ))}
 
-                  {voiceParticipants.length > 3 && (
-                    <span className={styles.voiceCount}>
-                      {voiceParticipants.length}
-                    </span>
-                  )}
-                </div>
+                    {hiddenVoiceParticipantsCount > 0 && (
+                      <span className={styles.voiceCount}>
+                        +{hiddenVoiceParticipantsCount}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                <VoiceIcon large />
+              </button>
+
+              {chat.is_group && !isDescriptionVisible && (
+                <button
+                  type="button"
+                  className={styles.hide_btn}
+                  onClick={onShowDescription}
+                  aria-label="Показать описание чата"
+                  title="Показать описание чата"
+                >
+                  <img src="/back.png" className={styles.hide_btn_back} />
+                </button>
               )}
-
-              <VoiceIcon large />
-            </button>
+            </div>
           </div>
           <div className={styles.messageList} ref={listRef}>
             <div className={styles.spacer} />
@@ -523,8 +553,14 @@ const ChatWindow = observer(
           </div>
         </div>
 
-        {chat.is_group && (
-          <ChatDescription key={chat.id} participants={participants} />
+        {chat.is_group && isDescriptionVisible && (
+          <ChatDescription
+            key={chat.id}
+            participants={participants}
+            voiceParticipants={voiceParticipants}
+            chat={chat}
+            onHide={onHideDescription}
+          />
         )}
       </div>
     );

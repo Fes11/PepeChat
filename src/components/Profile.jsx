@@ -36,7 +36,9 @@ const Profile = ({
             title="Открыть голосовую комнату"
           >
             <span className={styles.voiceRoomText}>
-              <span className={styles.voiceRoomName}>{activeVoiceRoomName}</span>
+              <span className={styles.voiceRoomName}>
+                {activeVoiceRoomName}
+              </span>
               <span className={styles.voiceRoomStatus}>
                 <img src="/voice_call.svg" /> В голосовой
               </span>
@@ -60,12 +62,12 @@ const Profile = ({
           src={user.avatar}
           status={user.status}
           alt={`Аватар пользователя ${username || login}`}
-          size={40}
+          size={45}
         />
 
         <div className={styles.userInfo}>
-          {login && <p className={styles.login}>@{login}</p>}
           <p className={styles.username}>{username}</p>
+          {login && <p className={styles.login}>@{login}</p>}
         </div>
 
         <button

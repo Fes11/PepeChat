@@ -19,6 +19,7 @@ const createClientId = () => globalThis.crypto?.randomUUID?.()
 
 export default class ChatStore {
   selectedChat = null;
+  visibleTextChatId = null;
   isOpening = false;
   isConnected = false;
   chats = [];
@@ -74,6 +75,22 @@ export default class ChatStore {
   get presenceByUserId() { return this.activity.presenceByUserId; }
   get voiceParticipantsByChatId() { return this.activity.voiceParticipantsByChatId; }
 
+  isTextChatVisible(chatId) {
+    return chatId != null
+      && this.visibleTextChatId != null
+      && sameId(this.visibleTextChatId, chatId);
+  }
+
+  setVisibleTextChat(chatId = null) {
+    this.visibleTextChatId = chatId;
+
+    if (chatId == null || !sameId(this.selectedChat?.id, chatId)) return;
+
+    const unreadCount = this.chats.find((chat) => sameId(chat.id, chatId))
+      ?.unread_count || 0;
+    if (unreadCount > 0) this.markChatRead(chatId, null, true);
+  }
+
   get sortedChats() {
     return this.chats.slice().sort((a, b) => {
       const aTime = this.getLastMessage(a.id)?.created_at || a.created_at;
@@ -125,7 +142,7 @@ export default class ChatStore {
     const nextChat = {
       ...existing,
       ...chat,
-      unread_count: sameId(this.selectedChat?.id, chat.id)
+      unread_count: this.isTextChatVisible(chat.id)
         ? 0
         : (unreadCount ?? existing?.unread_count ?? 0),
     };
@@ -150,7 +167,7 @@ export default class ChatStore {
       uniqueChats.set(normalizeId(chat.id), {
         ...existing,
         ...chat,
-        unread_count: sameId(this.selectedChat?.id, chat.id)
+        unread_count: this.isTextChatVisible(chat.id)
           ? 0
           : (existing?.unread_count ?? chat.unread_count ?? 0),
       });
@@ -323,6 +340,8 @@ export default class ChatStore {
   }
 
   markChatRead(chatId, upToMessageId = null, force = false) {
+    if (!this.isTextChatVisible(chatId)) return false;
+
     const chat = this.chats.find((item) => sameId(item.id, chatId));
     const targetId = upToMessageId ?? this.getLastMessage(chatId)?.id
       ?? this.getMessages(chatId).at(-1)?.id ?? null;
@@ -362,7 +381,7 @@ export default class ChatStore {
 
     if (message.author?.user?.id === this.currentUser?.id) {
       this.setUnreadCount(chatId, 0);
-    } else if (sameId(this.selectedChat?.id, chatId)) {
+    } else if (this.isTextChatVisible(chatId)) {
       this.setUnreadCount(chatId, unreadCount ?? 1);
       this.markChatRead(chatId, message.id);
     } else {
@@ -373,7 +392,27 @@ export default class ChatStore {
 
   handleMessagesRead(data) {
     const { ownRead } = this.messages.handleMessagesRead(data, this.currentUser?.id);
-    if (ownRead) this.setUnreadCount(data.chat_id, 0);
+    if (ownRead) {
+      this.setUnreadCount(data.chat_id, 0);
+      return;
+    }
+
+    const lastMessage = this.getLastMessage(data.chat_id);
+    const lastReadMessageId = data.last_read_message_id;
+    const isOwnLastMessage =
+      lastMessage?.author?.user?.id != null &&
+      String(lastMessage.author.user.id) === String(this.currentUser?.id);
+    const lastMessageId = Number(lastMessage?.id);
+    const lastReadId = Number(lastReadMessageId);
+    const isLastMessageRead = lastMessage?.id != null
+      && lastReadMessageId != null
+      && (Number.isFinite(lastMessageId) && Number.isFinite(lastReadId)
+        ? lastMessageId <= lastReadId
+        : String(lastMessage.id) === String(lastReadMessageId));
+
+    if (isOwnLastMessage && isLastMessageRead && !lastMessage.is_read) {
+      this.setLastMessage(data.chat_id, { ...lastMessage, is_read: true });
+    }
   }
 
   handlePresenceChanged(data) {
@@ -430,9 +469,22 @@ export default class ChatStore {
   openChat(chat) {
     this.openChatRequestId += 1;
     const unreadCount = chat.unread_count || 0;
-    this.selectedChat = { id: chat.id, data: { ...chat, unread_count: 0 } };
-    this.upsertChat(chat, { unreadCount: 0 });
-    if (unreadCount > 0) this.markChatRead(chat.id, null, true);
+    const shouldMarkRead = this.isTextChatVisible(chat.id);
+    const nextUnreadCount = shouldMarkRead ? 0 : unreadCount;
+    this.selectedChat = {
+      id: chat.id,
+      data: { ...chat, unread_count: nextUnreadCount },
+    };
+    this.upsertChat(chat, { unreadCount: nextUnreadCount });
+    if (shouldMarkRead && unreadCount > 0) {
+      this.markChatRead(chat.id, null, true);
+    }
+  }
+
+  closeChat() {
+    this.openChatRequestId += 1;
+    this.selectedChat = null;
+    this.visibleTextChatId = null;
   }
 
   async openPrivateChat(user) {
@@ -504,6 +556,7 @@ export default class ChatStore {
     clearTimeout(this.cacheWriteTimer);
     this.cacheWriteTimer = null;
     this.selectedChat = null;
+    this.visibleTextChatId = null;
     this.isOpening = false;
     this.chats = [];
     this.chatLoadGeneration += 1;

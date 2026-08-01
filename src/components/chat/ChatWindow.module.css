@@ -52,37 +52,67 @@
 }
 
 .header {
-  border-bottom: 1px solid var(--border-color);
   display: flex;
-  align-items: center;
-  padding: 10px 15px;
   justify-content: space-between;
+  align-items: flex-start;
+  padding: 16px;
   gap: 10px;
   min-width: 0;
-  background: rgba(31, 31, 31, 0.5);
+  background: linear-gradient(#19191a, #19191a90, transparent);
   position: absolute;
   width: 100%;
   z-index: 2;
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(2px);
   border-radius: var(--main-border-radius) var(--main-border-radius) 0 0;
+}
+
+.hide_btn {
+  border-radius: 50%;
+  background: #252526;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hide_btn_back {
+  rotate: calc(180deg);
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.hide_btn img {
+  width: 16px;
+  height: 16px;
+}
+
+.hide_btn:hover {
+  background: var(--hover);
 }
 
 .headerMain {
   display: flex;
-  align-items: center;
   min-width: 0;
+  background: #252526;
+  border-radius: 100px;
+  padding: 8px 24px;
 }
 
 .headerInfo {
-  text-align: left;
-  margin-left: 8px;
   display: flex;
   flex-direction: column;
   min-width: 0;
+  text-align: center;
 }
 
 .headerName {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: bolder;
   margin-bottom: 5px;
   overflow: hidden;
@@ -91,7 +121,8 @@
 }
 
 .headerDescription {
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 400;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -106,7 +137,7 @@
   cursor: pointer;
   color: inherit;
   opacity: 0.82;
-  min-height: 28px;
+  height: 28px;
   border-radius: 14px;
   padding: 4px 8px;
   gap: 6px;

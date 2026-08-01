@@ -3,15 +3,49 @@
   align-items: center;
   gap: 6px;
   border-radius: 5px;
-  padding: 5px;
+  padding: 5px 10px;
   position: relative;
   min-width: 0;
 }
 
 .description {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
   color: var(--text-color);
   font-size: 13px;
   font-weight: 500;
+}
+
+.description > p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.voiceStatus {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--faint-text-color);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.voiceStatusIcon {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .removeButton {

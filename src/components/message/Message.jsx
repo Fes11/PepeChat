@@ -5,27 +5,33 @@ import { Context } from "../../main";
 import { format, parseISO } from "date-fns";
 import ReadMessageCheck from "../chat/ReadMessageCheck";
 
-const Message = function ({
-  message,
-  isLastInList = false,
-  onContextMenu,
-}) {
+const Message = function ({ message, isLastInList = false, onContextMenu }) {
   const { AuthStore } = useContext(Context);
   const message_time = format(parseISO(message.created_at), "HH:mm");
   const lastMessageClass = isLastInList ? ` ${classes.last_message}` : "";
+  const authorName =
+    message.author?.user?.username ||
+    message.author?.user?.login ||
+    message.author?.user?.name ||
+    "Пользователь";
+  const isOwnMessage =
+    message.author?.user?.id != null &&
+    String(message.author.user.id) === String(AuthStore?.user?.id);
 
-  if (message.author?.user?.id !== AuthStore?.user?.id) {
+  if (!isOwnMessage) {
     return (
       <div
         className={`${classes.other_message}${lastMessageClass}`}
         onContextMenu={(event) => onContextMenu?.(event, message)}
       >
         <div className={classes.other_message__bubble}>
+          {/* <span className={classes.message__author}>{authorName}</span> */}
           {message?.text}
           <div className={classes.message__time}>{message_time}</div>
         </div>
         <Avatar
           src={message.author?.user?.avatar}
+          size={35}
           alt={`Аватар пользователя ${message.author?.user?.username || message.author?.user?.login || "неизвестно"}`}
         />
       </div>
@@ -38,6 +44,7 @@ const Message = function ({
       >
         <Avatar
           src={message.author?.user?.avatar}
+          size={35}
           alt={`Аватар пользователя ${message.author?.user?.username || message.author?.user?.login || "неизвестно"}`}
         />
 

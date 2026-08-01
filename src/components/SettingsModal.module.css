@@ -9,6 +9,7 @@
   text-align: left;
   display: flex;
   height: 100%;
+  max-height: 800px;
   width: 100%;
 }
 

@@ -3,7 +3,7 @@
   justify-content: space-between;
   align-items: stretch;
   width: 100%;
-  padding: 0 8px 8px 8px;
+  padding: 0 16px 16px 16px;
   gap: 8px;
   height: 100%;
   min-width: 0;
@@ -12,8 +12,6 @@
 }
 
 .main {
-  --chat-description-width: clamp(160px, 20vw, 210px);
-  --chat-content-gap: 8px;
   container-name: chat-page-main;
   container-type: inline-size;
   flex: 1 1 auto;

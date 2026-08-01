@@ -1,6 +1,16 @@
 import { makeAutoObservable } from "mobx";
 
 const normalizeId = (id) => String(id);
+const isIdAtOrBefore = (id, lastId) => {
+  const numericId = Number(id);
+  const numericLastId = Number(lastId);
+
+  if (Number.isFinite(numericId) && Number.isFinite(numericLastId)) {
+    return numericId <= numericLastId;
+  }
+
+  return normalizeId(id) === normalizeId(lastId);
+};
 const sortByCreatedAt = (messages) => messages.sort(
   (a, b) => new Date(a.created_at) - new Date(b.created_at),
 );
@@ -142,7 +152,7 @@ export default class ChatMessagesStore {
   handleMessagesRead(data, currentUserId) {
     const { chat_id: chatId, user_id: userId, last_read_message_id: lastReadId } = data;
 
-    if (userId === currentUserId) {
+    if (normalizeId(userId) === normalizeId(currentUserId)) {
       this.lastReadRequestByChat[chatId] = Math.max(
         this.lastReadRequestByChat[chatId] || 0,
         lastReadId || 0,
@@ -154,7 +164,8 @@ export default class ChatMessagesStore {
     if (!messages || lastReadId == null) return { ownRead: false };
 
     this.messagesByChat[chatId] = messages.map((message) =>
-      message.id <= lastReadId && message.author?.user?.id === currentUserId
+      isIdAtOrBefore(message.id, lastReadId)
+        && normalizeId(message.author?.user?.id) === normalizeId(currentUserId)
         ? { ...message, is_read: true }
         : message,
     );

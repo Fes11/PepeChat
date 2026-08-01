@@ -4,7 +4,7 @@ import Avatar from "../UI/Avatar/Avatar";
 import ParticipantProfile from "./ParticipantProfile.jsx";
 import styles from "./Participant.module.css";
 
-const Participant = ({ user, onClick, onRemove }) => {
+const Participant = ({ user, onClick, onRemove, isInVoiceRoom = false }) => {
   const [visibleProfile, setvisibleProfile] = useState(false);
   const [profile, setProfile] = useState(null);
   const [profilePosition, setProfilePosition] = useState(null);
@@ -97,11 +97,24 @@ const Participant = ({ user, onClick, onRemove }) => {
         src={user.avatar}
         status={user.status}
         alt={`Аватар пользователя ${user.username || user.login}`}
-        size={28}
+        size={32}
       />
 
       <div className={styles.description}>
         <p>{user.username || "@" + user.login}</p>
+        {isInVoiceRoom && (
+          <span className={styles.voiceStatus}>
+            <svg
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              className={styles.voiceStatusIcon}
+            >
+              <path d="M12 15.5a3.5 3.5 0 0 0 3.5-3.5V6a3.5 3.5 0 1 0-7 0v6a3.5 3.5 0 0 0 3.5 3.5Z" />
+              <path d="M5 11.5a7 7 0 0 0 14 0M12 18.5V22M9 22h6" />
+            </svg>
+            В ГОЛОСОВОМ
+          </span>
+        )}
       </div>
 
       {visibleProfile &&

@@ -29,12 +29,16 @@ select {
   color-scheme: dark;
   --ui-scale: 1;
   --main-border-radius: 20px;
-  --title-bar-height: 35px;
-  --bg-color: #000000;
-  --box-bg-color: #181818;
+  --title-bar-height: 45px;
+  --bg-color: #121212;
+  --box-bg-color: #19191a;
+  --chat-description-width: 300px;
+  --chat-content-gap: 8px;
+  --hover: rgba(255, 255, 255, 0.1);
+
   --surface-color: #ffffff05;
   --main-button-color: #1d1d1d;
-  --main-button-hover-color: #252525;
+  --main-button-hover-color: #373737;
   --modal-bg-color: #363636;
   --input-bg-color: rgba(255, 255, 255, 0.05);
   --input-border-color: #50505a;
@@ -51,14 +55,14 @@ select {
   --main-contrast-color: #ffffff;
   --main-soft-color: rgba(123, 97, 255, 0.28);
   --main-faint-color: rgba(123, 97, 255, 0.16);
-  --message-time-color: rgba(255, 255, 255, 0.72);
+  --message-time-color: rgba(255, 255, 255, 0.65);
   --border-color: #3a3a40;
   --shadow-border-color: rgba(255, 255, 255, 0.05);
   --raised-light-color: rgba(255, 255, 255, 0.05);
   --raised-dark-color: rgba(107, 107, 107, 0.3);
   --overlay-color: rgba(0, 0, 0, 0.3);
   --empty-badge-bg-color: rgba(0, 0, 0, 0.1);
-  --message-other-bg-color: rgba(255, 255, 255, 0.1);
+  --message-other-bg-color: #313131;
   --link-color: rgba(123, 97, 255, 0.8);
   --chat-input-bg: rgba(255, 255, 255, 0.03);
   --skeleton-bg-color: rgba(46, 46, 46, 0.41);

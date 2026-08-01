@@ -41,6 +41,8 @@ const ChatPage = observer(() => {
   const [isVoiceRoomOpen, setIsVoiceRoomOpen] = useState(() => {
     return Boolean(sessionStorage.getItem(ACTIVE_VOICE_ROOM_CHAT_ID_KEY));
   });
+  const [isChatDescriptionVisible, setIsChatDescriptionVisible] =
+    useState(true);
   const voiceRoomRef = useRef(null);
   const [voiceControls, setVoiceControls] = useState(INITIAL_VOICE_CONTROLS);
   const handleVoiceControlsChange = useCallback((nextControls) => {
@@ -57,6 +59,16 @@ const ChatPage = observer(() => {
     if (lastOpenChatId) navigate(`/chat/${lastOpenChatId}`, { replace: true });
   }, [routeChatId, navigate]);
 
+  useEffect(() => {
+    setIsChatDescriptionVisible(true);
+  }, [routeChatId]);
+
+  const closeChat = useCallback(() => {
+    sessionStorage.removeItem(LAST_OPEN_CHAT_ID_KEY);
+    ChatStore.closeChat();
+    navigate("/chat", { replace: true });
+  }, [ChatStore, navigate]);
+
   const activeVoiceChat = useMemo(() => {
     return ChatStore.chats.find(
       (chat) => String(chat.id) === String(activeVoiceRoomChatId),
@@ -69,11 +81,16 @@ const ChatPage = observer(() => {
     activeVoiceChat?.other_user?.login ||
     "Голосовая комната";
 
+  const showVoiceRoom = useCallback(() => {
+    ChatStore.setVisibleTextChat(null);
+    setIsVoiceRoomOpen(true);
+  }, [ChatStore]);
+
   const openVoiceRoom = (chatId) => {
     const nextChatId = String(chatId);
     sessionStorage.setItem(ACTIVE_VOICE_ROOM_CHAT_ID_KEY, nextChatId);
     setActiveVoiceRoomChatId(nextChatId);
-    setIsVoiceRoomOpen(true);
+    showVoiceRoom();
     setVoiceControls(INITIAL_VOICE_CONTROLS);
   };
 
@@ -87,6 +104,16 @@ const ChatPage = observer(() => {
   const leaveVoiceRoomFromProfile = () => {
     voiceRoomRef.current?.leave();
   };
+
+  const isTextChatVisible = Boolean(
+    shouldShowSelectedChat && !isVoiceRoomOpen,
+  );
+
+  useEffect(() => {
+    ChatStore.setVisibleTextChat(isTextChatVisible ? selectedChatId : null);
+
+    return () => ChatStore.setVisibleTextChat(null);
+  }, [ChatStore, isTextChatVisible, selectedChatId]);
 
   useEffect(() => {
     if (!routeChatId || String(selectedChatId) === routeChatId) return;
@@ -131,7 +158,7 @@ const ChatPage = observer(() => {
       <ChatList
         activeVoiceRoomChatId={activeVoiceRoomChatId}
         activeVoiceRoomName={activeVoiceRoomName}
-        onOpenVoiceRoomPanel={() => setIsVoiceRoomOpen(true)}
+        onOpenVoiceRoomPanel={showVoiceRoom}
         onLeaveVoiceRoom={leaveVoiceRoomFromProfile}
         voiceControls={voiceControls}
         onToggleVoiceMic={() => voiceRoomRef.current?.toggleMic()}
@@ -151,6 +178,10 @@ const ChatPage = observer(() => {
             type={selectedChat.type}
             activeVoiceRoomChatId={activeVoiceRoomChatId}
             onOpenVoiceRoom={openVoiceRoom}
+            onClose={closeChat}
+            isDescriptionVisible={isChatDescriptionVisible}
+            onHideDescription={() => setIsChatDescriptionVisible(false)}
+            onShowDescription={() => setIsChatDescriptionVisible(true)}
           />
         ) : (
           <div className={styles.emptyState}>
@@ -164,7 +195,9 @@ const ChatPage = observer(() => {
             key={activeVoiceRoomChatId}
             chatId={activeVoiceRoomChatId}
             isOpen={isVoiceRoomOpen}
-            preserveChatDescription={Boolean(selectedChatData?.is_group)}
+            preserveChatDescription={Boolean(
+              selectedChatData?.is_group && isChatDescriptionVisible,
+            )}
             onHide={() => setIsVoiceRoomOpen(false)}
             onLeaveRoom={leaveVoiceRoom}
             onControlsChange={handleVoiceControlsChange}

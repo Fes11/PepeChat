@@ -31,11 +31,13 @@
 .online,
 .offline {
   position: absolute;
+  display: block;
+  box-sizing: border-box;
   right: -2px;
-  bottom: -2px;
-  width: 8px;
-  height: 8px;
-  border: 3px solid var(--box-bg-color);
+  bottom: -1px;
+  width: 10px;
+  height: 10px;
+  border: 3px solid var(--avatar-status-border-color, var(--box-bg-color));
   border-radius: 50%;
   box-sizing: content-box;
 }

@@ -1,21 +1,24 @@
 .read {
+  display: block;
   width: 10px;
   height: 10px;
-  opacity: 50%;
+  flex: 0 0 10px;
 }
 
 .readOverlay {
   width: 10px;
   height: 10px;
-  opacity: 50%;
   position: absolute;
   top: 2px;
 }
 
 .readDouble {
-  display: flex;
+  position: relative;
+  display: inline-flex;
   overflow: hidden;
   width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
 }
 
 .readDouble .readOverlay:first-child {
