@@ -1,11 +1,11 @@
 {
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRNCtLSHVQSkoybk5WWm02QzMzMlhGSTlibjhFWUVLTFBSbHFDc3k4UnpHSzdwYXA4OERRcDBCZVRxTXQxZnpTenVWSWJqME9hUkRWVFpuNDFEM3hZalIyTXgxS25oa3dFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg1Njg3MTYxCWZpbGU6UGVwZUNoYXRfMC4xLjZfeDY0LXNldHVwLmV4ZQpuUml3cG9KdU90NEloWFdDTUxpU0swYUhIMSszVzNOTFBNbjhyN1JxNzdqV0tzSWxtZ2dBb29XNHprWURxeTc1WUttRFZUbFVVdUQzdDd5blplR1NEdz09Cg==",
-      "url": "https://github.com/Fes11/PepeChat/releases/download/v0.1.6/PepeChat_0.1.6_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRNCtLSHVQSkoybkEySDZyd2k4cWp0Qko5SkV6eVFTbllUdTN4Nk4wMXl3RGljOW5RTnhUVkdsanF3Q2dabnhJWFZZM2c5OXdoSkx1SE1Mamx6NHZkWTJGVFRrSitjSFFNPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg1Njg5NzA5CWZpbGU6UGVwZUNoYXRfMC4xLjdfeDY0LXNldHVwLmV4ZQoyU1Zzbktlbi9NWUVudXI0R3BJTmVqRW1BaVdKTnFOZjRXUmV0SGxtU3JmU09FMkJzc0MvQUtQaXdYemxGZjlsZG5ZcGFDUlZzaXVSM043MGVkNkdDZz09Cg==",
+      "url": "https://github.com/Fes11/PepeChat/releases/download/v0.1.7/PepeChat_0.1.7_x64-setup.exe"
     }
   },
-  "pub_date": "2026-08-02T16:13:50Z",
-  "version": "0.1.6",
-  "notes": "Релиз PepeChat 0.1.6"
+  "pub_date": "2026-08-02T16:55:28Z",
+  "version": "0.1.7",
+  "notes": "Релиз PepeChat 0.1.7"
 }

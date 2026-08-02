@@ -9,6 +9,7 @@ import {
   PASSWORD_MAX_LENGTH,
   USERNAME_MAX_LENGTH,
 } from "../../constants/limits.js";
+import { validateRegistration } from "./registrationValidation.js";
 
 const Registration = function () {
   const navigate = useNavigate();
@@ -17,7 +18,6 @@ const Registration = function () {
   const [avatar, setAvatar] = useState(null);
   const [login, setLogin] = useState("");
   const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [errors, setErrors] = useState({});
@@ -25,7 +25,6 @@ const Registration = function () {
 
   const loginError = getFieldError(errors, "login");
   const usernameError = getFieldError(errors, "username");
-  const emailError = getFieldError(errors, "email");
   const passwordError = getFieldError(errors, "password");
   const passwordConfirmError = getFieldError(errors, "password_confirm");
   const avatarError = getFieldError(errors, "avatar");
@@ -43,19 +42,11 @@ const Registration = function () {
     e.preventDefault();
     if (isSubmitting) return;
 
-    const clientErrors = {};
-    if (!login.trim()) clientErrors.login = ["Введите логин."];
-    if (!email.trim()) {
-      clientErrors.email = ["Введите email."];
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      clientErrors.email = ["Некорректный формат email."];
-    }
-    if (!password) clientErrors.password = ["Введите пароль."];
-    if (!passwordConfirm) {
-      clientErrors.password_confirm = ["Повторите пароль."];
-    } else if (password !== passwordConfirm) {
-      clientErrors.password_confirm = ["Пароли не совпадают."];
-    }
+    const clientErrors = validateRegistration({
+      login,
+      password,
+      passwordConfirm,
+    });
     if (Object.keys(clientErrors).length) {
       setErrors(clientErrors);
       return;
@@ -68,7 +59,6 @@ const Registration = function () {
       const formData = new FormData();
       formData.append("login", login);
       formData.append("username", username);
-      formData.append("email", email);
       formData.append("password", password);
       formData.append("password_confirm", passwordConfirm);
 
