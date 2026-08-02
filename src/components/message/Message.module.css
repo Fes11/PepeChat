@@ -1,11 +1,14 @@
 .message {
   display: flex;
+  flex-direction: row-reverse;
+  justify-content: flex-start;
   margin-bottom: 5px;
+  margin-left: auto;
   gap: 5px;
   text-align: left;
   max-width: 800px;
   min-width: 0;
-  padding-right: 40px;
+  padding-left: 40px;
   align-items: flex-end;
 }
 
@@ -14,7 +17,7 @@
   font-weight: 500;
   background: var(--main-color);
   color: var(--main-contrast-color);
-  border-radius: 10px 10px 10px 0px;
+  border-radius: 10px 10px 0px 10px;
   display: flex;
   align-items: center;
   position: relative;
@@ -46,12 +49,12 @@
 .other_message {
   display: flex;
   justify-content: flex-end;
-  flex-direction: row;
+  flex-direction: row-reverse;
   margin-bottom: 5px;
   gap: 5px;
   min-width: 0;
   align-items: flex-end;
-  padding-left: 40px;
+  padding-right: 40px;
 }
 
 .other_message__bubble {
@@ -60,7 +63,7 @@
   font-weight: 500;
   background: var(--message-other-bg-color);
   padding: 0px 10px;
-  border-radius: 10px 10px 0px 10px;
+  border-radius: 10px 10px 10px 0px;
   padding: 8px 16px 8px 16px;
   text-align: left;
   max-width: min(600px, 70vw);
@@ -97,16 +100,16 @@
 
 @container (min-width: 901px) {
   .message {
-    padding-right: 0px;
-  }
-
-  .other_message {
-    flex-direction: row-reverse;
     padding-left: 0px;
   }
 
+  .other_message {
+    flex-direction: row;
+    padding-right: 0px;
+  }
+
   .other_message__bubble {
-    border-radius: 10px 10px 10px 0px;
+    border-radius: 10px 10px 0px 10px;
   }
 }
 

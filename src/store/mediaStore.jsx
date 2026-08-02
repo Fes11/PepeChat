@@ -1,5 +1,6 @@
 import { makeAutoObservable } from "mobx";
 import { mediaService } from "../services/MediaService";
+import { DEFAULT_MICROPHONE_SETTINGS } from "../constants/audioSettings";
 
 class MediaStore {
   microphones = [];
@@ -14,11 +15,11 @@ class MediaStore {
   selectedDisplay = null;
   permissionRequested = false;
 
-  volume = 1;
-  autoGainControl = false;
-  noiseSuppressionMode = "light";
-  noiseGateEnabled = false;
-  noiseGateThreshold = 0.02;
+  volume = DEFAULT_MICROPHONE_SETTINGS.volume;
+  autoGainControl = DEFAULT_MICROPHONE_SETTINGS.autoGainControl;
+  noiseSuppressionMode = DEFAULT_MICROPHONE_SETTINGS.noiseSuppressionMode;
+  noiseGateEnabled = DEFAULT_MICROPHONE_SETTINGS.noiseGateEnabled;
+  noiseGateThreshold = DEFAULT_MICROPHONE_SETTINGS.noiseGateThreshold;
 
   constructor() {
     makeAutoObservable(this);
@@ -62,16 +63,17 @@ class MediaStore {
     );
   }
 
-  emitAudioSettingsChange() {
+  emitAudioSettingsChange(changedKeys = []) {
     window.dispatchEvent(
       new CustomEvent("pepechat:audiosettingschange", {
-        detail: { settings: this.getAudioSettings() },
+        detail: { settings: this.getAudioSettings(), changedKeys },
       }),
     );
   }
 
   getAudioSettings() {
     return {
+      volume: this.volume,
       autoGainControl: this.autoGainControl,
       noiseSuppressionMode: this.noiseSuppressionMode,
       noiseGateEnabled: this.noiseGateEnabled,
@@ -139,40 +141,64 @@ class MediaStore {
   changeVolume(value) {
     if (!Number.isFinite(value)) return;
 
-    this.volume = Math.min(2, Math.max(0, value));
+    const nextVolume = Math.min(2, Math.max(0, value));
+    if (nextVolume === this.volume) return;
+    this.volume = nextVolume;
     localStorage.setItem("volume", String(this.volume));
-    this.emitAudioSettingsChange();
+    this.emitAudioSettingsChange(["volume"]);
   }
 
   changeAutoGainControl(enabled) {
-    this.autoGainControl = Boolean(enabled);
+    const nextEnabled = Boolean(enabled);
+    if (nextEnabled === this.autoGainControl) return;
+    this.autoGainControl = nextEnabled;
     localStorage.setItem("autoGainControl", String(this.autoGainControl));
-    this.emitAudioSettingsChange();
+    this.emitAudioSettingsChange(["autoGainControl"]);
   }
 
   changeNoiseSuppressionMode(mode) {
     if (!["off", "light", "strong"].includes(mode)) return;
 
+    if (mode === this.noiseSuppressionMode) return;
     this.noiseSuppressionMode = mode;
     localStorage.setItem("noiseSuppressionMode", mode);
-    this.emitAudioSettingsChange();
+    this.emitAudioSettingsChange(["noiseSuppressionMode"]);
   }
 
   changeNoiseGateEnabled(enabled) {
-    this.noiseGateEnabled = Boolean(enabled);
+    const nextEnabled = Boolean(enabled);
+    if (nextEnabled === this.noiseGateEnabled) return;
+    this.noiseGateEnabled = nextEnabled;
     localStorage.setItem("noiseGateEnabled", String(this.noiseGateEnabled));
-    this.emitAudioSettingsChange();
+    this.emitAudioSettingsChange(["noiseGateEnabled"]);
   }
 
   changeNoiseGateThreshold(value) {
     if (!Number.isFinite(value)) return;
 
-    this.noiseGateThreshold = Math.min(0.08, Math.max(0.005, value));
+    const nextThreshold = Math.min(0.08, Math.max(0.005, value));
+    if (nextThreshold === this.noiseGateThreshold) return;
+    this.noiseGateThreshold = nextThreshold;
     localStorage.setItem(
       "noiseGateThreshold",
       String(this.noiseGateThreshold),
     );
-    this.emitAudioSettingsChange();
+    this.emitAudioSettingsChange(["noiseGateThreshold"]);
+  }
+
+  resetAudioSettings() {
+    this.volume = DEFAULT_MICROPHONE_SETTINGS.volume;
+    this.autoGainControl = DEFAULT_MICROPHONE_SETTINGS.autoGainControl;
+    this.noiseSuppressionMode =
+      DEFAULT_MICROPHONE_SETTINGS.noiseSuppressionMode;
+    this.noiseGateEnabled = DEFAULT_MICROPHONE_SETTINGS.noiseGateEnabled;
+    this.noiseGateThreshold =
+      DEFAULT_MICROPHONE_SETTINGS.noiseGateThreshold;
+
+    Object.entries(DEFAULT_MICROPHONE_SETTINGS).forEach(([key, value]) => {
+      localStorage.setItem(key, String(value));
+    });
+    this.emitAudioSettingsChange(Object.keys(DEFAULT_MICROPHONE_SETTINGS));
   }
 }
 

@@ -59,6 +59,51 @@
   opacity: 1;
 }
 
+.room_user_video_screen {
+  object-fit: contain;
+  background: #080808;
+}
+
+.network_issue {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  color: #ffbd59;
+  background: rgba(35, 25, 12, 0.82);
+  border: 1px solid rgba(255, 189, 89, 0.55);
+  border-radius: 9px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.24);
+  pointer-events: auto;
+  animation: network_issue_pulse 1.8s ease-in-out infinite;
+}
+
+.network_issue svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+@keyframes network_issue_pulse {
+  0%,
+  100% {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.24);
+  }
+
+  50% {
+    box-shadow:
+      0 4px 14px rgba(0, 0, 0, 0.24),
+      0 0 0 4px rgba(255, 189, 89, 0.12);
+  }
+}
+
 .room_user_name_row {
   position: absolute;
   bottom: 10px;
@@ -139,5 +184,12 @@
   .room_user_status {
     right: 8px;
     bottom: 8px;
+  }
+
+  .network_issue {
+    top: 8px;
+    left: 8px;
+    width: 28px;
+    height: 28px;
   }
 }

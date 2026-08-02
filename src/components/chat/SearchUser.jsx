@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useId } from "react";
 import styles from "./SearchUser.module.css";
 import UserServices from "../../services/UserService";
 import Avatar from "../UI/Avatar/Avatar";
+import { SEARCH_QUERY_MAX_LENGTH } from "../../constants/limits.js";
 
 const SearchUser = ({ onSelectUser, participants }) => {
   const searchId = useId().replace(/:/g, "");
@@ -70,6 +71,7 @@ const SearchUser = ({ onSelectUser, participants }) => {
             type="text"
             name={searchName}
             placeholder="Поиск по имени или логину"
+            maxLength={SEARCH_QUERY_MAX_LENGTH}
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="off"

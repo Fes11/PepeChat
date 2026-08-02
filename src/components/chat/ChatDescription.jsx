@@ -51,12 +51,12 @@ const ChatDescription = ({
           {chat.is_group ? (
             <Avatar
               src={chat?.avatar}
-              size={36}
+              size={72}
               shape="rounded"
               fallbackSrc="/default_chat_icon.png"
             />
           ) : (
-            <Avatar src={chat?.avatar} size={36} />
+            <Avatar src={chat?.avatar} size={72} />
           )}
 
           <div className={styles.info_box_text}>
@@ -126,7 +126,7 @@ const ChatDescription = ({
         </button>
 
         <div
-          className={`${styles.participantsShell} ${
+          className={`${styles.participantsShell} ${styles.participantsOffline} ${
             expandedSections.offline ? "" : styles.participantsShellCollapsed
           }`}
         >

@@ -28,7 +28,7 @@ select {
 :root {
   color-scheme: dark;
   --ui-scale: 1;
-  --main-border-radius: 20px;
+  --main-border-radius: 25px;
   --title-bar-height: 45px;
   --bg-color: #121212;
   --box-bg-color: #19191a;

@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "typecheck": "tsc --noEmit",
-    "test": "node --test src/updates/updateState.test.js src/utils/mediaUrl.test.js",
+    "test": "node --test src/updates/updateState.test.js src/utils/mediaUrl.test.js src/services/audioProcessingUtils.test.js src/hooks/voiceParticipantState.test.js src/api/voiceRoomSocket.test.js src/constants/screenShareQuality.test.js",
     "test:updates": "node --test src/updates/*.test.js",
     "preview": "vite preview",
     "prepare:webrtc": "node scripts/prepare-webrtc.mjs",

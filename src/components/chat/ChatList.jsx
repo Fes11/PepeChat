@@ -24,6 +24,7 @@ const ChatList = observer(
     onOpenVoiceRoomPanel,
     onLeaveVoiceRoom,
     voiceControls,
+    voiceConnectionState,
     onToggleVoiceMic,
     onToggleVoiceHeadphones,
     onToggleVoiceCamera,
@@ -143,6 +144,7 @@ const ChatList = observer(
             onOpenVoiceRoomPanel={onOpenVoiceRoomPanel}
             onLeaveVoiceRoom={onLeaveVoiceRoom}
             voiceControls={voiceControls}
+            voiceConnectionState={voiceConnectionState}
             onToggleVoiceMic={onToggleVoiceMic}
             onToggleVoiceHeadphones={onToggleVoiceHeadphones}
             onToggleVoiceCamera={onToggleVoiceCamera}

@@ -1,10 +1,16 @@
 import {
   AudioPresets,
+  ConnectionQuality,
   Room,
   RoomEvent,
+  ScreenSharePresets,
   Track,
   VideoPresets,
 } from "livekit-client";
+import {
+  DEFAULT_SCREEN_SHARE_QUALITY,
+  getScreenShareQuality,
+} from "../constants/screenShareQuality";
 
 // LiveKit can briefly remove a participant from ActiveSpeakersChanged between
 // words. Keep the indicator active through natural speech pauses while still
@@ -12,6 +18,7 @@ import {
 const SPEAKING_RELEASE_DELAY = 300;
 const DIAGNOSTIC_STORAGE_KEY = "pepechat:livekit-diagnostics";
 const DIAGNOSTIC_BUFFER_LIMIT = 200;
+const DIAGNOSTIC_MEDIA_INTERVAL = 5_000;
 
 const diagnosticsEnabled = () => {
   if (import.meta.env.VITE_LIVEKIT_DIAGNOSTICS === "true") return true;
@@ -35,6 +42,8 @@ const diagnosticLog = (event, details = {}) => {
   window.__PEPECHAT_LIVEKIT_DIAGNOSTICS__ = buffer;
   console.info("[LiveKit diagnostics]", record);
 };
+
+export const recordLiveKitDiagnostic = diagnosticLog;
 
 const candidateDetails = (candidate) =>
   candidate
@@ -144,7 +153,7 @@ export class LiveKitVoiceTransport {
   constructor(callbacks = {}) {
     this.callbacks = callbacks;
     this.room = new Room({
-      adaptiveStream: true,
+      adaptiveStream: { pixelDensity: "screen" },
       dynacast: true,
       disconnectOnPageLeave: true,
       videoCaptureDefaults: {
@@ -161,6 +170,9 @@ export class LiveKitVoiceTransport {
     this.microphoneUpdateQueue = Promise.resolve();
     this.activeSpeakerIdentities = new Set();
     this.speakerReleaseTimers = new Map();
+    this.diagnosticMediaTimer = null;
+    this.diagnosticStatsHistory = new Map();
+    this.diagnosticStatsInProgress = false;
     this.bindEvents();
     this.bindDiagnostics();
   }
@@ -205,10 +217,12 @@ export class LiveKitVoiceTransport {
         transportSnapshot(manager?.publisher, "publisher"),
         transportSnapshot(manager?.subscriber, "subscriber"),
       ]);
+      const media = await this.mediaStatsSnapshot();
       diagnosticLog("transport-snapshot", {
         reason,
         roomState: this.room.state,
         transports,
+        media,
       });
     } catch (error) {
       diagnosticLog("transport-snapshot-error", {
@@ -216,6 +230,113 @@ export class LiveKitVoiceTransport {
         message: error?.message ?? String(error),
       });
     }
+  }
+
+  mediaRate(key, stats, counterName) {
+    const current = {
+      bytes: stats[counterName] ?? 0,
+      frames: stats.framesDecoded ?? stats.framesSent ?? 0,
+      timestamp: stats.timestamp,
+    };
+    const previous = this.diagnosticStatsHistory.get(key);
+    this.diagnosticStatsHistory.set(key, current);
+    const elapsedMs = current.timestamp - (previous?.timestamp ?? current.timestamp);
+    if (!previous || elapsedMs <= 0) return {};
+    return {
+      bitrate: Math.max(
+        0,
+        Math.round(((current.bytes - previous.bytes) * 8 * 1000) / elapsedMs),
+      ),
+      measuredFps: Math.max(
+        0,
+        Math.round(((current.frames - previous.frames) * 1000) / elapsedMs),
+      ),
+    };
+  }
+
+  async mediaStatsSnapshot() {
+    if (!diagnosticsEnabled() || this.diagnosticStatsInProgress) return [];
+    this.diagnosticStatsInProgress = true;
+    try {
+      const samples = [];
+      const collect = async (participant, direction) => {
+        for (const publication of participant.videoTrackPublications.values()) {
+          if (
+            publication.source !== Track.Source.ScreenShare &&
+            publication.source !== Track.Source.Camera
+          ) {
+            continue;
+          }
+          const track = publication.track;
+          if (!track) continue;
+
+          if (direction === "send" && track.getSenderStats) {
+            const trackStats = await track.getSenderStats();
+            trackStats.forEach((stats) => {
+              const key = `${direction}:${participant.identity}:${publication.trackSid}:${stats.rid}`;
+              samples.push({
+                direction,
+                participantIdentity: participant.identity,
+                source: publication.source,
+                layer: stats.rid,
+                width: stats.frameWidth,
+                height: stats.frameHeight,
+                fps: stats.framesPerSecond,
+                targetBitrate: stats.targetBitrate,
+                packetsLost: stats.packetsLost,
+                rtt: stats.roundTripTime,
+                nack: stats.nackCount,
+                pli: stats.pliCount,
+                qualityLimitation: stats.qualityLimitationReason,
+                ...this.mediaRate(key, stats, "bytesSent"),
+              });
+            });
+          } else if (direction === "receive" && track.getReceiverStats) {
+            const stats = await track.getReceiverStats();
+            if (!stats) continue;
+            const key = `${direction}:${participant.identity}:${publication.trackSid}:${stats.streamId}`;
+            samples.push({
+              direction,
+              participantIdentity: participant.identity,
+              source: publication.source,
+              width: stats.frameWidth,
+              height: stats.frameHeight,
+              packetsLost: stats.packetsLost,
+              jitter: stats.jitter,
+              framesDropped: stats.framesDropped,
+              decoder: stats.decoderImplementation,
+              codec: stats.mimeType,
+              nack: stats.nackCount,
+              pli: stats.pliCount,
+              ...this.mediaRate(key, stats, "bytesReceived"),
+            });
+          }
+        }
+      };
+
+      await collect(this.room.localParticipant, "send");
+      for (const participant of this.room.remoteParticipants.values()) {
+        await collect(participant, "receive");
+      }
+      return samples;
+    } finally {
+      this.diagnosticStatsInProgress = false;
+    }
+  }
+
+  startDiagnosticMonitor() {
+    if (!diagnosticsEnabled() || this.diagnosticMediaTimer) return;
+    this.diagnosticMediaTimer = window.setInterval(() => {
+      void this.logDiagnostics("periodic-media");
+    }, DIAGNOSTIC_MEDIA_INTERVAL);
+  }
+
+  stopDiagnosticMonitor() {
+    if (this.diagnosticMediaTimer) {
+      window.clearInterval(this.diagnosticMediaTimer);
+      this.diagnosticMediaTimer = null;
+    }
+    this.diagnosticStatsHistory.clear();
   }
 
   emitActiveSpeakers() {
@@ -302,12 +423,18 @@ export class LiveKitVoiceTransport {
       .on(RoomEvent.TrackUnsubscribed, (_track, _publication, participant) =>
         changed(participant),
       )
-      .on(RoomEvent.LocalTrackPublished, () =>
-        changed(this.room.localParticipant),
-      )
-      .on(RoomEvent.LocalTrackUnpublished, (publication) =>
-        this.emitParticipant(this.room.localParticipant, publication.source),
-      )
+      .on(RoomEvent.LocalTrackPublished, (publication) => {
+        changed(this.room.localParticipant);
+        if (publication.source === Track.Source.ScreenShare) {
+          this.callbacks.onLocalScreenShareChanged?.(true);
+        }
+      })
+      .on(RoomEvent.LocalTrackUnpublished, (publication) => {
+        this.emitParticipant(this.room.localParticipant, publication.source);
+        if (publication.source === Track.Source.ScreenShare) {
+          this.callbacks.onLocalScreenShareChanged?.(false);
+        }
+      })
       .on(RoomEvent.TrackMuted, (_publication, participant) => {
         this.removeActiveSpeaker(participant.identity);
         changed(participant);
@@ -317,6 +444,9 @@ export class LiveKitVoiceTransport {
       )
       .on(RoomEvent.ActiveSpeakersChanged, (speakers) =>
         this.updateActiveSpeakers(speakers),
+      )
+      .on(RoomEvent.ConnectionQualityChanged, (_quality, participant) =>
+        changed(participant),
       )
       .on(RoomEvent.Reconnecting, () => this.callbacks.onReconnecting?.())
       .on(RoomEvent.Reconnected, () => this.callbacks.onReconnected?.())
@@ -341,6 +471,9 @@ export class LiveKitVoiceTransport {
       identity: ownerIdentity,
       isLocal: owner === this.room.localParticipant,
       isSpeaking: owner.isSpeaking,
+      hasNetworkIssues:
+        owner.connectionQuality === ConnectionQuality.Poor ||
+        owner.connectionQuality === ConnectionQuality.Lost,
       media: {
         ...ownerMedia,
         screen: screenMedia?.screen ?? ownerMedia.screen,
@@ -379,6 +512,7 @@ export class LiveKitVoiceTransport {
       throw error;
     }
     await this.logDiagnostics("connected");
+    this.startDiagnosticMonitor();
     this.emitParticipant(this.room.localParticipant);
     this.room.remoteParticipants.forEach((participant) =>
       this.emitParticipant(participant),
@@ -454,6 +588,12 @@ export class LiveKitVoiceTransport {
     else await publication.mute();
   }
 
+  updateMicrophoneSettings(settings, changedKeys) {
+    return Boolean(
+      this.microphoneStream?.__updateAudioSettings?.(settings, changedKeys),
+    );
+  }
+
   async setCameraEnabled(enabled, deviceId) {
     await this.room.localParticipant.setCameraEnabled(enabled, {
       ...(deviceId ? { deviceId } : {}),
@@ -469,11 +609,63 @@ export class LiveKitVoiceTransport {
     await this.setCameraEnabled(true, deviceId);
   }
 
-  async setScreenShareEnabled(enabled) {
-    await this.room.localParticipant.setScreenShareEnabled(enabled, {
-      audio: false,
-      contentHint: "detail",
+  async setScreenShareEnabled(
+    enabled,
+    {
+      withAudio = false,
+      qualityId = DEFAULT_SCREEN_SHARE_QUALITY,
+    } = {},
+  ) {
+    if (!enabled) {
+      await this.room.localParticipant.setScreenShareEnabled(false);
+      return { active: false, audioAvailable: false };
+    }
+
+    const quality = getScreenShareQuality(qualityId);
+    const lowLayer =
+      quality.id === "economy"
+        ? ScreenSharePresets.h360fps15
+        : ScreenSharePresets.h720fps15;
+    const publication = await this.room.localParticipant.setScreenShareEnabled(
+      true,
+      {
+        audio: withAudio,
+        systemAudio: withAudio ? "include" : "exclude",
+        resolution: {
+          width: quality.width,
+          height: quality.height,
+          frameRate: quality.frameRate,
+        },
+        contentHint: quality.contentHint,
+      },
+      {
+        simulcast: true,
+        videoCodec: "vp8",
+        degradationPreference: "maintain-resolution",
+        screenShareEncoding: {
+          maxBitrate: quality.maxBitrate,
+          maxFramerate: quality.frameRate,
+          priority: "high",
+        },
+        screenShareSimulcastLayers: [lowLayer],
+      },
+    );
+    const audioPublication = this.room.localParticipant.getTrackPublication(
+      Track.Source.ScreenShareAudio,
+    );
+    diagnosticLog("screen-share-started", {
+      quality: quality.id,
+      width: quality.width,
+      height: quality.height,
+      frameRate: quality.frameRate,
+      maxBitrate: quality.maxBitrate,
+      audioRequested: withAudio,
+      audioAvailable: Boolean(audioPublication?.track),
     });
+    return {
+      active: Boolean(publication),
+      audioAvailable: Boolean(audioPublication?.track),
+    };
   }
 
   setDeafened(deafened) {
@@ -498,6 +690,7 @@ export class LiveKitVoiceTransport {
   }
 
   async disconnect() {
+    this.stopDiagnosticMonitor();
     this.clearActiveSpeakers();
     this.stopMicrophoneStream();
     await this.room.disconnect();

@@ -11,7 +11,10 @@ use std::{
 use base64::{engine::general_purpose::STANDARD, Engine};
 use image::{DynamicImage, ImageFormat, RgbaImage};
 use livekit::{
-    options::{TrackPublishOptions, VideoCodec},
+    options::{
+        DegradationPreference, TrackPublishOptions, VideoCodec, VideoEncoderBackend, VideoEncoding,
+        VideoPreset,
+    },
     track::{LocalTrack, LocalVideoTrack, TrackSource},
     webrtc::{
         desktop_capturer::{
@@ -27,12 +30,59 @@ use livekit::{
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, State};
 
-const DEFAULT_FPS: u32 = 30;
-const MAX_FPS: u32 = 30;
-const MAX_WIDTH: u32 = 1920;
-const MAX_HEIGHT: u32 = 1080;
 const CAPTURE_TIMEOUT: Duration = Duration::from_secs(3);
 const MAX_CONSECUTIVE_ERRORS: u32 = 30;
+
+#[derive(Clone, Copy)]
+struct QualityProfile {
+    id: &'static str,
+    width: u32,
+    height: u32,
+    fps: u32,
+    max_bitrate: u64,
+}
+
+const STANDARD_QUALITY: QualityProfile = QualityProfile {
+    id: "standard",
+    width: 1920,
+    height: 1080,
+    fps: 30,
+    max_bitrate: 5_000_000,
+};
+
+fn quality_profile(id: Option<&str>) -> QualityProfile {
+    match id {
+        Some("economy") => QualityProfile {
+            id: "economy",
+            width: 1280,
+            height: 720,
+            fps: 15,
+            max_bitrate: 1_500_000,
+        },
+        Some("detail") => QualityProfile {
+            id: "detail",
+            width: 2560,
+            height: 1440,
+            fps: 20,
+            max_bitrate: 7_000_000,
+        },
+        Some("motion") => QualityProfile {
+            id: "motion",
+            width: 1920,
+            height: 1080,
+            fps: 60,
+            max_bitrate: 8_000_000,
+        },
+        Some("ultra") => QualityProfile {
+            id: "ultra",
+            width: 3840,
+            height: 2160,
+            fps: 30,
+            max_bitrate: 12_000_000,
+        },
+        _ => STANDARD_QUALITY,
+    }
+}
 
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -52,7 +102,9 @@ pub struct StartScreenShareRequest {
     source_id: String,
     url: String,
     token: String,
-    with_audio: bool,
+    quality: Option<String>,
+    // Kept for backwards compatibility with an older webview bundle. New
+    // clients use the named quality profile as the single source of truth.
     max_fps: Option<u32>,
 }
 
@@ -97,6 +149,9 @@ fn source_parts(source_id: &str) -> Result<(DesktopCaptureSourceType, u64), Stri
 
 fn capturer_options(kind: DesktopCaptureSourceType) -> DesktopCapturerOptions {
     let mut options = DesktopCapturerOptions::new(kind);
+    #[cfg(target_os = "windows")]
+    options.set_include_cursor(false);
+    #[cfg(not(target_os = "windows"))]
     options.set_include_cursor(true);
     options
 }
@@ -138,9 +193,9 @@ fn capture_one(source_id: &str) -> Result<CapturedFrame, String> {
     }
 }
 
-fn output_size(width: u32, height: u32) -> (u32, u32) {
-    let scale = (MAX_WIDTH as f64 / width as f64)
-        .min(MAX_HEIGHT as f64 / height as f64)
+fn output_size(width: u32, height: u32, profile: QualityProfile) -> (u32, u32) {
+    let scale = (profile.width as f64 / width as f64)
+        .min(profile.height as f64 / height as f64)
         .min(1.0);
     let even = |value: u32| (value.max(2) / 2) * 2;
     (
@@ -150,55 +205,64 @@ fn output_size(width: u32, height: u32) -> (u32, u32) {
 }
 
 #[cfg(target_os = "windows")]
-fn frame_with_cursor(frame: &DesktopFrame) -> Option<Vec<u8>> {
+fn scaled_frame_with_cursor(
+    frame: &DesktopFrame,
+    output_width: u32,
+    output_height: u32,
+    include_cursor: bool,
+) -> Option<Vec<u8>> {
     use std::{ffi::c_void, mem::size_of, ptr};
     use windows::Win32::{
         Graphics::Gdi::{
-            CreateCompatibleDC, CreateDIBSection, DeleteDC, DeleteObject, SelectObject, BITMAPINFO,
-            BITMAPINFOHEADER, BI_RGB, DIB_RGB_COLORS, HGDIOBJ,
+            CreateCompatibleDC, CreateDIBSection, DeleteDC, DeleteObject, SelectObject,
+            SetStretchBltMode, StretchDIBits, BITMAPINFO, BITMAPINFOHEADER, BI_RGB, DIB_RGB_COLORS,
+            HALFTONE, HGDIOBJ, SRCCOPY,
         },
         UI::WindowsAndMessaging::{
-            DrawIconEx, GetCursorInfo, GetIconInfo, CURSORINFO, CURSOR_SHOWING, DI_NORMAL, ICONINFO,
+            DrawIconEx, GetCursorInfo, GetIconInfo, GetSystemMetrics, CURSORINFO, CURSOR_SHOWING,
+            DI_NORMAL, ICONINFO, SM_CXCURSOR, SM_CYCURSOR,
         },
     };
 
     let width = frame.width();
     let height = frame.height();
-    let row_bytes = width.max(0) as usize * 4;
-    if width <= 0 || height <= 0 || (frame.stride() as usize) < row_bytes {
+    let source_row_bytes = width.max(0) as usize * 4;
+    if width <= 0
+        || height <= 0
+        || output_width == 0
+        || output_height == 0
+        || (frame.stride() as usize) < source_row_bytes
+    {
         return None;
     }
 
     unsafe {
-        let mut cursor = CURSORINFO {
-            cbSize: size_of::<CURSORINFO>() as u32,
-            ..Default::default()
+        let packed_source = if frame.stride() as usize == source_row_bytes {
+            None
+        } else {
+            let mut data = Vec::with_capacity(source_row_bytes * height as usize);
+            for row in 0..height as usize {
+                let start = row * frame.stride() as usize;
+                data.extend_from_slice(&frame.data()[start..start + source_row_bytes]);
+            }
+            Some(data)
         };
-        if GetCursorInfo(&mut cursor).is_err() || cursor.flags != CURSOR_SHOWING {
-            return None;
-        }
-        let mut icon = ICONINFO::default();
-        if GetIconInfo(cursor.hCursor.into(), &mut icon).is_err() {
-            return None;
-        }
-
-        let cursor_x = cursor.ptScreenPos.x - frame.left() - icon.xHotspot as i32;
-        let cursor_y = cursor.ptScreenPos.y - frame.top() - icon.yHotspot as i32;
-        if !icon.hbmMask.is_invalid() {
-            let _ = DeleteObject(HGDIOBJ(icon.hbmMask.0));
-        }
-        if !icon.hbmColor.is_invalid() {
-            let _ = DeleteObject(HGDIOBJ(icon.hbmColor.0));
-        }
-        if cursor_x >= width || cursor_y >= height || cursor_x < -128 || cursor_y < -128 {
-            return None;
-        }
-
-        let mut bitmap_info = BITMAPINFO::default();
-        bitmap_info.bmiHeader = BITMAPINFOHEADER {
+        let source = packed_source.as_deref().unwrap_or(frame.data());
+        let mut source_info = BITMAPINFO::default();
+        source_info.bmiHeader = BITMAPINFOHEADER {
             biSize: size_of::<BITMAPINFOHEADER>() as u32,
             biWidth: width,
             biHeight: -height,
+            biPlanes: 1,
+            biBitCount: 32,
+            biCompression: BI_RGB.0,
+            ..Default::default()
+        };
+        let mut output_info = BITMAPINFO::default();
+        output_info.bmiHeader = BITMAPINFOHEADER {
+            biSize: size_of::<BITMAPINFOHEADER>() as u32,
+            biWidth: output_width as i32,
+            biHeight: -(output_height as i32),
             biPlanes: 1,
             biBitCount: 32,
             biCompression: BI_RGB.0,
@@ -210,7 +274,7 @@ fn frame_with_cursor(frame: &DesktopFrame) -> Option<Vec<u8>> {
         }
         let mut bits: *mut c_void = ptr::null_mut();
         let bitmap =
-            match CreateDIBSection(Some(dc), &bitmap_info, DIB_RGB_COLORS, &mut bits, None, 0) {
+            match CreateDIBSection(Some(dc), &output_info, DIB_RGB_COLORS, &mut bits, None, 0) {
                 Ok(bitmap) => bitmap,
                 Err(_) => {
                     let _ = DeleteDC(dc);
@@ -218,24 +282,82 @@ fn frame_with_cursor(frame: &DesktopFrame) -> Option<Vec<u8>> {
                 }
             };
         let previous = SelectObject(dc, HGDIOBJ(bitmap.0));
-        let target = std::slice::from_raw_parts_mut(bits.cast::<u8>(), row_bytes * height as usize);
-        for row in 0..height as usize {
-            let source_start = row * frame.stride() as usize;
-            let target_start = row * row_bytes;
-            target[target_start..target_start + row_bytes]
-                .copy_from_slice(&frame.data()[source_start..source_start + row_bytes]);
-        }
-        let _ = DrawIconEx(
+        let _ = SetStretchBltMode(dc, HALFTONE);
+        let copied = StretchDIBits(
             dc,
-            cursor_x,
-            cursor_y,
-            cursor.hCursor.into(),
             0,
             0,
+            output_width as i32,
+            output_height as i32,
             0,
-            None,
-            DI_NORMAL,
+            0,
+            width,
+            height,
+            Some(source.as_ptr().cast()),
+            &source_info,
+            DIB_RGB_COLORS,
+            SRCCOPY,
         );
+        if copied <= 0 {
+            SelectObject(dc, previous);
+            let _ = DeleteObject(HGDIOBJ(bitmap.0));
+            let _ = DeleteDC(dc);
+            return None;
+        }
+
+        if include_cursor {
+            let mut cursor = CURSORINFO {
+                cbSize: size_of::<CURSORINFO>() as u32,
+                ..Default::default()
+            };
+            if GetCursorInfo(&mut cursor).is_ok() && cursor.flags == CURSOR_SHOWING {
+                let mut icon = ICONINFO::default();
+                if GetIconInfo(cursor.hCursor.into(), &mut icon).is_ok() {
+                    let scale_x = output_width as f64 / width as f64;
+                    let scale_y = output_height as f64 / height as f64;
+                    let cursor_x = ((cursor.ptScreenPos.x - frame.left() - icon.xHotspot as i32)
+                        as f64
+                        * scale_x)
+                        .round() as i32;
+                    let cursor_y = ((cursor.ptScreenPos.y - frame.top() - icon.yHotspot as i32)
+                        as f64
+                        * scale_y)
+                        .round() as i32;
+                    let cursor_width = (GetSystemMetrics(SM_CXCURSOR) as f64 * scale_x)
+                        .round()
+                        .max(1.0) as i32;
+                    let cursor_height = (GetSystemMetrics(SM_CYCURSOR) as f64 * scale_y)
+                        .round()
+                        .max(1.0) as i32;
+                    if cursor_x < output_width as i32
+                        && cursor_y < output_height as i32
+                        && cursor_x > -cursor_width
+                        && cursor_y > -cursor_height
+                    {
+                        let _ = DrawIconEx(
+                            dc,
+                            cursor_x,
+                            cursor_y,
+                            cursor.hCursor.into(),
+                            cursor_width,
+                            cursor_height,
+                            0,
+                            None,
+                            DI_NORMAL,
+                        );
+                    }
+                    if !icon.hbmMask.is_invalid() {
+                        let _ = DeleteObject(HGDIOBJ(icon.hbmMask.0));
+                    }
+                    if !icon.hbmColor.is_invalid() {
+                        let _ = DeleteObject(HGDIOBJ(icon.hbmColor.0));
+                    }
+                }
+            }
+        }
+
+        let target_size = output_width as usize * output_height as usize * 4;
+        let target = std::slice::from_raw_parts(bits.cast::<u8>(), target_size);
         let output = target.to_vec();
         SelectObject(dc, previous);
         let _ = DeleteObject(HGDIOBJ(bitmap.0));
@@ -244,21 +366,26 @@ fn frame_with_cursor(frame: &DesktopFrame) -> Option<Vec<u8>> {
     }
 }
 
-fn frame_to_i420(frame: &DesktopFrame, include_cursor_overlay: bool) -> I420Buffer {
+fn frame_to_i420(
+    frame: &DesktopFrame,
+    include_cursor_overlay: bool,
+    profile: QualityProfile,
+) -> I420Buffer {
     let width = frame.width().max(2) as u32;
     let height = frame.height().max(2) as u32;
+    let (output_width, output_height) = output_size(width, height, profile);
     #[cfg(target_os = "windows")]
-    let cursor_frame = include_cursor_overlay
-        .then(|| frame_with_cursor(frame))
-        .flatten();
+    let scaled_frame =
+        scaled_frame_with_cursor(frame, output_width, output_height, include_cursor_overlay);
     #[cfg(target_os = "windows")]
-    let (argb, argb_stride) = cursor_frame
+    let (argb, argb_stride, buffer_width, buffer_height) = scaled_frame
         .as_deref()
-        .map(|data| (data, width * 4))
-        .unwrap_or((frame.data(), frame.stride()));
+        .map(|data| (data, output_width * 4, output_width, output_height))
+        .unwrap_or((frame.data(), frame.stride(), width, height));
     #[cfg(not(target_os = "windows"))]
-    let (argb, argb_stride) = (frame.data(), frame.stride());
-    let mut buffer = I420Buffer::new(width, height);
+    let (argb, argb_stride, buffer_width, buffer_height) =
+        (frame.data(), frame.stride(), width, height);
+    let mut buffer = I420Buffer::new(buffer_width, buffer_height);
     let (stride_y, stride_u, stride_v) = buffer.strides();
     let (data_y, data_u, data_v) = buffer.data_mut();
     // libWebRTC DesktopFrame uses little-endian ARGB (BGRA byte order).
@@ -272,11 +399,10 @@ fn frame_to_i420(frame: &DesktopFrame, include_cursor_overlay: bool) -> I420Buff
         stride_u,
         data_v,
         stride_v,
-        width as i32,
-        height as i32,
+        buffer_width as i32,
+        buffer_height as i32,
     );
-    let (output_width, output_height) = output_size(width, height);
-    if output_width != width || output_height != height {
+    if output_width != buffer_width || output_height != buffer_height {
         buffer.scale(output_width as i32, output_height as i32)
     } else {
         buffer
@@ -385,7 +511,8 @@ pub async fn start_screen_share(
             .await
             .map_err(|error| error.to_string())??
     };
-    let (width, height) = output_size(first_frame.width, first_frame.height);
+    let profile = quality_profile(request.quality.as_deref());
+    let (width, height) = output_size(first_frame.width, first_frame.height, profile);
     let (room, _events) = Room::connect(&request.url, &request.token, RoomOptions::default())
         .await
         .map_err(|error| error.to_string())?;
@@ -401,7 +528,18 @@ pub async fn start_screen_share(
             TrackPublishOptions {
                 source: TrackSource::Screenshare,
                 video_codec: VideoCodec::H264,
-                simulcast: false,
+                video_encoding: Some(VideoEncoding {
+                    max_bitrate: profile.max_bitrate,
+                    max_framerate: profile.fps as f64,
+                }),
+                simulcast: true,
+                simulcast_layers: Some(vec![if profile.id == "economy" {
+                    VideoPreset::new(640, 360, 400_000, 15.0)
+                } else {
+                    VideoPreset::new(1280, 720, 1_500_000, 15.0)
+                }]),
+                video_encoder: VideoEncoderBackend::Hardware,
+                degradation_preference: Some(DegradationPreference::MaintainResolution),
                 ..Default::default()
             },
         )
@@ -412,10 +550,10 @@ pub async fn start_screen_share(
     let worker_active = active.clone();
     let source_id = request.source_id.clone();
     let worker_source_id = source_id.clone();
-    let fps = request.max_fps.unwrap_or(DEFAULT_FPS).clamp(1, MAX_FPS);
+    let fps = request.max_fps.unwrap_or(profile.fps).clamp(1, profile.fps);
     let app_handle = app.clone();
     thread::spawn(move || {
-        let include_cursor_overlay = worker_source_id.starts_with("screen:");
+        let include_cursor_overlay = true;
         let (mut capturer, source) = match resolve_source(&worker_source_id) {
             Ok(value) => value,
             Err(error) => {
@@ -431,7 +569,7 @@ pub async fn start_screen_share(
         capturer.start_capture(Some(source), move |result| match result {
             Ok(frame) => {
                 consecutive_errors = 0;
-                let buffer = frame_to_i420(&frame, include_cursor_overlay);
+                let buffer = frame_to_i420(&frame, include_cursor_overlay, profile);
                 let mut video_frame = VideoFrame::new(VideoRotation::VideoRotation0, buffer);
                 video_frame.timestamp_us = capture_started.elapsed().as_micros().max(1) as i64;
                 rtc_source.capture_frame(&video_frame);
@@ -468,7 +606,7 @@ pub async fn start_screen_share(
     let state = ScreenShareState {
         active: true,
         source_id: Some(source_id),
-        audio_available: !request.with_audio,
+        audio_available: false,
     };
     let _ = app.emit("screen-share-started", &state);
     Ok(state)

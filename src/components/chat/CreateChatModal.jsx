@@ -5,6 +5,7 @@ import AvatarPicker from "../UI/AvatarPicker/AvatarPicker.jsx";
 import Participant from "./Participant.jsx";
 import ChatService from "../../services/ChatService";
 import { notifySuccess } from "../../notifications/notificationService";
+import { CHAT_NAME_MAX_LENGTH } from "../../constants/limits.js";
 
 const CreateChatModal = ({ onChatCreated, onClose }) => {
   const [title, setTitle] = useState("");
@@ -86,6 +87,7 @@ const CreateChatModal = ({ onChatCreated, onClose }) => {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             type="text"
+            maxLength={CHAT_NAME_MAX_LENGTH}
             placeholder="Введите название чата"
             className={classes.input}
           />

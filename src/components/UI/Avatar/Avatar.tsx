@@ -14,6 +14,7 @@ export type AvatarProps = {
   className?: string;
   status?: "online" | "offline" | null;
   fallbackSrc?: string;
+  title?: string;
 };
 
 const getCssSize = (size: AvatarProps["size"]): string => {
@@ -36,6 +37,7 @@ const Avatar = ({
   size = DEFAULT_AVATAR_SIZE,
   shape = "circle",
   className,
+  title,
   status = null,
   fallbackSrc = DEFAULT_AVATAR_FALLBACK,
 }: AvatarProps) => {
@@ -64,6 +66,7 @@ const Avatar = ({
       <img
         src={imageSrc}
         alt={alt}
+        title={title}
         className={styles.image}
         onError={() => {
           if (!shouldUseFallback && resolvedSrc) {

@@ -23,6 +23,7 @@ import { notifyError } from "../../notifications/notificationService.js";
 import { getErrorMessage } from "../../utils/errors.js";
 import ContextMenu from "../UI/ContextMenu";
 import VoiceIcon from "../UI/VoiceIcon.jsx";
+import { MESSAGE_MAX_LENGTH } from "../../constants/limits.js";
 import styles from "./ChatWindow.module.css";
 
 const MAX_INPUT_HEIGHT = 200;
@@ -304,7 +305,9 @@ const ChatWindow = observer(
           emoji +
           currentMessage.slice(selectionEnd);
 
-        return nextMessage;
+        return nextMessage.length <= MESSAGE_MAX_LENGTH
+          ? nextMessage
+          : currentMessage;
       });
 
       requestAnimationFrame(() => {
@@ -406,7 +409,7 @@ const ChatWindow = observer(
                   </p>
                 ) : (
                   <p className={styles.headerDescription}>
-                    Онлайн: {onlineParticipantsCount}
+                    {onlineParticipantsCount} Онлайн
                   </p>
                 )}
               </div>
@@ -444,7 +447,15 @@ const ChatWindow = observer(
                   </div>
                 )}
 
-                <VoiceIcon large />
+                {String(activeVoiceRoomChatId) !== String(chat.id) ? (
+                  <VoiceIcon large />
+                ) : (
+                  <img
+                    className={styles.voice_icon}
+                    src="/back.svg"
+                    alt="Назад"
+                  />
+                )}
               </button>
 
               {chat.is_group && !isDescriptionVisible && (
@@ -536,6 +547,7 @@ const ChatWindow = observer(
                 className={styles.input}
                 placeholder="Написать сообщение..."
                 value={inputMessage}
+                maxLength={MESSAGE_MAX_LENGTH}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyDown={handleMessageKeyDown}
                 rows={1}

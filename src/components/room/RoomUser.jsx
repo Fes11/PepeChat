@@ -43,14 +43,16 @@ const RoomUser = function ({
           !participant.media.camera.publication?.isMuted
         ? participant.media.camera
         : null;
+  const isScreenShare = videoMedia === participant.media?.screen;
   const hasActiveVideo = Boolean(
-    videoMedia?.stream &&
+    videoMedia?.track &&
     videoMedia.track?.mediaStreamTrack?.readyState !== "ended",
   );
   const isHeadphonesMuted = Boolean(participant.state?.deafened);
   const isRemoteMicMuted =
     Boolean(participant.state?.muted) && !isHeadphonesMuted;
   const isLocallyMuted = Boolean(userMuted);
+  const hasNetworkIssue = Boolean(participant.state?.networkIssue);
   const hasStatus = isLocallyMuted || isHeadphonesMuted || isRemoteMicMuted;
 
   useEffect(() => {
@@ -88,13 +90,21 @@ const RoomUser = function ({
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
+    const track = videoMedia?.track ?? null;
     const stream = videoMedia?.stream ?? null;
-    video.srcObject = stream;
-    if (stream) video.play().catch(() => {});
+
+    if (track?.attach) {
+      track.attach(video);
+    } else {
+      video.srcObject = stream;
+    }
+    if (track || stream) video.play().catch(() => {});
+
     return () => {
-      if (video.srcObject === stream) video.srcObject = null;
+      if (track?.detach) track.detach(video);
+      else if (video.srcObject === stream) video.srcObject = null;
     };
-  }, [videoMedia?.stream]);
+  }, [videoMedia?.stream, videoMedia?.track]);
 
   useEffect(() => {
     const tile = tileRef.current;
@@ -102,10 +112,10 @@ const RoomUser = function ({
     const screenPublication = participant.media?.screen?.publication;
     if (!tile || (!cameraPublication && !screenPublication)) return;
 
-    screenPublication?.setSubscribed?.(true);
     const observer = new IntersectionObserver(
       ([entry]) => {
         cameraPublication?.setSubscribed?.(entry.isIntersecting);
+        screenPublication?.setSubscribed?.(entry.isIntersecting);
       },
       { threshold: 0.05 },
     );
@@ -176,11 +186,27 @@ const RoomUser = function ({
       />
       <video
         ref={videoRef}
-        className={`${cls.room_user_video} ${hasActiveVideo ? cls.room_user_video_visible : ""}`}
+        className={`${cls.room_user_video} ${isScreenShare ? cls.room_user_video_screen : ""} ${hasActiveVideo ? cls.room_user_video_visible : ""}`}
         autoPlay
         playsInline
         muted
       />
+      {hasNetworkIssue && (
+        <span
+          className={cls.network_issue}
+          role="status"
+          aria-label="Проблемы с сетью"
+          title="У участника проблемы с сетью"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3.5 9.7a13 13 0 0 1 12.1-2.6" />
+            <path d="M6.5 13.1a8.3 8.3 0 0 1 7.2-1.5" />
+            <path d="M9.6 16.5a3.6 3.6 0 0 1 2.8-.5" />
+            <path d="M18.5 7.5v6" />
+            <path d="M18.5 17.2v.1" />
+          </svg>
+        </span>
+      )}
       <div
         className={`${cls.room_user_name_row} ${
           showDetails ? cls.room_user_name_row_visible : ""

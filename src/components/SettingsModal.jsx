@@ -30,6 +30,11 @@ import { getErrorMessage } from "../utils/errors";
 import { invoke } from "@tauri-apps/api/core";
 import EmojiPicker from "./UI/EmojiPicker/EmojiPicker.jsx";
 import EmojiButton from "./UI/EmojiButton/EmojiButton.jsx";
+import {
+  EMAIL_MAX_LENGTH,
+  PASSWORD_MAX_LENGTH,
+  USERNAME_MAX_LENGTH,
+} from "../constants/limits.js";
 
 const SettingsModal = function ({ onClose }) {
   const navigate = useNavigate();
@@ -283,8 +288,25 @@ const SettingsModal = function ({ onClose }) {
   }, [activeTab, isTestingMicrophone]);
 
   useEffect(() => {
-    testStreamRef.current?.__setAudioVolume?.(MediaStore.volume);
+    testStreamRef.current?.__updateAudioSettings?.(
+      MediaStore.getAudioSettings(),
+      ["volume"],
+    );
   }, [MediaStore.volume]);
+
+  useEffect(() => {
+    testStreamRef.current?.__updateAudioSettings?.(
+      MediaStore.getAudioSettings(),
+      ["noiseGateEnabled"],
+    );
+  }, [MediaStore.noiseGateEnabled]);
+
+  useEffect(() => {
+    testStreamRef.current?.__updateAudioSettings?.(
+      MediaStore.getAudioSettings(),
+      ["noiseGateThreshold"],
+    );
+  }, [MediaStore.noiseGateThreshold]);
 
   useEffect(() => {
     if (!isTestingMicrophone) return;
@@ -298,8 +320,6 @@ const SettingsModal = function ({ onClose }) {
   }, [
     MediaStore.autoGainControl,
     MediaStore.noiseSuppressionMode,
-    MediaStore.noiseGateEnabled,
-    MediaStore.noiseGateThreshold,
   ]);
 
   useEffect(
@@ -386,6 +406,11 @@ const SettingsModal = function ({ onClose }) {
 
   const changeSpeaker = (deviceId) => {
     MediaStore.setDisplay(deviceId);
+  };
+
+  const resetMicrophoneSettings = () => {
+    MediaStore.resetAudioSettings();
+    notifySuccess("Настройки микрофона сброшены");
   };
 
   const changeCamera = (deviceId) => {
@@ -503,6 +528,7 @@ const SettingsModal = function ({ onClose }) {
                       type="text"
                       placeholder="Your username"
                       value={username}
+                      maxLength={USERNAME_MAX_LENGTH}
                       onChange={(e) => setUsername(e.target.value)}
                       className={classes.settings_input}
                     />
@@ -513,6 +539,7 @@ const SettingsModal = function ({ onClose }) {
                       type="email"
                       placeholder="your@email.com"
                       value={email}
+                      maxLength={EMAIL_MAX_LENGTH}
                       onChange={(e) => setEmail(e.target.value)}
                       className={classes.settings_input}
                     />
@@ -585,6 +612,7 @@ const SettingsModal = function ({ onClose }) {
                       type="password"
                       placeholder="Новый пароль"
                       value={password}
+                      maxLength={PASSWORD_MAX_LENGTH}
                       onChange={(e) => setPassword(e.target.value)}
                       className={classes.settings_input}
                     />
@@ -595,6 +623,7 @@ const SettingsModal = function ({ onClose }) {
                       type="password"
                       placeholder="Повторите пароль"
                       value={passwordConfirm}
+                      maxLength={PASSWORD_MAX_LENGTH}
                       onChange={(e) => setPasswordConfirm(e.target.value)}
                       className={classes.settings_input}
                     />
@@ -784,6 +813,13 @@ const SettingsModal = function ({ onClose }) {
           <div className={classes.tabcontent}>
             <div className={classes.tabcontent_header}>
               <h3>Устройства</h3>
+              <button
+                type="button"
+                className={classes.reset_device_settings}
+                onClick={resetMicrophoneSettings}
+              >
+                Сбросить настройки
+              </button>
             </div>
 
             <div className={classes.tabcontent_body}>

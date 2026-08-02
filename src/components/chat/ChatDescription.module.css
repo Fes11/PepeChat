@@ -17,7 +17,7 @@
 
 .header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
   min-width: 0;
@@ -45,7 +45,7 @@
   display: flex;
   flex: 1 1 auto;
   gap: 10px;
-  align-items: center;
+  align-items: flex-start;
   min-width: 0;
   overflow: hidden;
 }
@@ -58,6 +58,22 @@
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
+  height: 35px;
+}
+
+.info_box_text p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 16px;
+}
+
+.info_box_text span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
 }
 
 .header button {
@@ -82,7 +98,7 @@
 
 .sectionButton {
   text-align: left;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--text-color);
   cursor: pointer;
@@ -146,6 +162,10 @@
   grid-template-rows: 0fr;
   opacity: 0;
   overflow: hidden;
+}
+
+.participantsOffline {
+  opacity: 40%;
 }
 
 @media (max-width: 1100px) {

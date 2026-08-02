@@ -4,6 +4,11 @@ import classes from "./Registration.module.css";
 import AvatarPicker from "../UI/AvatarPicker/AvatarPicker";
 import { Context } from "../../main";
 import { getFieldError } from "../../utils/errors";
+import {
+  LOGIN_MAX_LENGTH,
+  PASSWORD_MAX_LENGTH,
+  USERNAME_MAX_LENGTH,
+} from "../../constants/limits.js";
 
 const Registration = function () {
   const navigate = useNavigate();
@@ -138,6 +143,7 @@ const Registration = function () {
                   clearFieldError("login");
                 }}
                 type="text"
+                maxLength={LOGIN_MAX_LENGTH}
                 placeholder="Логин"
                 className={`${classes.registration__form_input} ${
                   loginError ? classes.registration__form_input_error : ""
@@ -151,6 +157,7 @@ const Registration = function () {
                   clearFieldError("username");
                 }}
                 type="text"
+                maxLength={USERNAME_MAX_LENGTH}
                 placeholder="Имя пользователя"
                 className={`${classes.registration__form_input} ${
                   usernameError ? classes.registration__form_input_error : ""
@@ -166,6 +173,7 @@ const Registration = function () {
               clearFieldError("password");
             }}
             type="password"
+            maxLength={PASSWORD_MAX_LENGTH}
             placeholder="Пароль"
             className={`${classes.registration__form_input} ${
               passwordError ? classes.registration__form_input_error : ""
@@ -179,6 +187,7 @@ const Registration = function () {
               clearFieldError("password_confirm");
             }}
             type="password"
+            maxLength={PASSWORD_MAX_LENGTH}
             placeholder="Повторите пароль"
             className={`${classes.registration__form_input} ${
               passwordConfirmError ? classes.registration__form_input_error : ""

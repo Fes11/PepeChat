@@ -33,6 +33,7 @@ const Message = function ({ message, isLastInList = false, onContextMenu }) {
           src={message.author?.user?.avatar}
           size={35}
           alt={`Аватар пользователя ${message.author?.user?.username || message.author?.user?.login || "неизвестно"}`}
+          title={authorName}
         />
       </div>
     );
@@ -46,6 +47,7 @@ const Message = function ({ message, isLastInList = false, onContextMenu }) {
           src={message.author?.user?.avatar}
           size={35}
           alt={`Аватар пользователя ${message.author?.user?.username || message.author?.user?.login || "неизвестно"}`}
+          title={authorName}
         />
 
         <div className={classes.message__bubble}>

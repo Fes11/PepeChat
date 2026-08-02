@@ -5,14 +5,15 @@ mod screen_share;
 
 use tauri::{
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    Manager, PhysicalPosition, Position, WebviewUrl, WebviewWindowBuilder, WindowEvent,
+    LogicalSize, Manager, PhysicalPosition, Position, Size, WebviewUrl, WebviewWindowBuilder,
+    WindowEvent,
 };
 #[cfg(target_os = "macos")]
 use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial, NSVisualEffectState};
 
 const WINDOW_ICON: tauri::image::Image<'_> = tauri::include_image!("./icons/32x32.png");
 const TRAY_MENU_WIDTH: f64 = 220.0;
-const TRAY_MENU_HEIGHT: f64 = 172.0;
+const TRAY_MENU_INITIAL_HEIGHT: f64 = 124.0;
 
 fn show_main_window_inner(app: &tauri::AppHandle) -> tauri::Result<()> {
     if let Some(window) = app.get_webview_window("main") {
@@ -47,8 +48,12 @@ fn toggle_tray_menu(app: &tauri::AppHandle, click_position: PhysicalPosition<f64
     }
 
     let scale_factor = menu.scale_factor().unwrap_or(1.0);
-    let width = (TRAY_MENU_WIDTH * scale_factor) as i32;
-    let height = (TRAY_MENU_HEIGHT * scale_factor) as i32;
+    let fallback_width = (TRAY_MENU_WIDTH * scale_factor) as i32;
+    let fallback_height = (TRAY_MENU_INITIAL_HEIGHT * scale_factor) as i32;
+    let (width, height) = menu
+        .outer_size()
+        .map(|size| (size.width as i32, size.height as i32))
+        .unwrap_or((fallback_width, fallback_height));
     let mut x = click_position.x as i32 - width + 24;
     let mut y = click_position.y as i32 - height - 16;
 
@@ -84,6 +89,20 @@ fn hide_tray_menu(app: tauri::AppHandle) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn resize_tray_menu(app: tauri::AppHandle, height: f64) -> Result<(), String> {
+    if !height.is_finite() || !(1.0..=1000.0).contains(&height) {
+        return Err("Некорректная высота TrayMenu".to_string());
+    }
+
+    let menu = app
+        .get_webview_window("tray-menu")
+        .ok_or_else(|| "Окно TrayMenu не найдено".to_string())?;
+
+    menu.set_size(Size::Logical(LogicalSize::new(TRAY_MENU_WIDTH, height)))
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
 fn quit_from_tray(app: tauri::AppHandle) {
     app.exit(0);
 }
@@ -100,6 +119,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             show_main_window,
             hide_tray_menu,
+            resize_tray_menu,
             quit_from_tray,
             screen_share::list_capture_sources,
             screen_share::get_capture_thumbnail,
@@ -124,9 +144,7 @@ fn main() {
                 WebviewUrl::App("index.html?tray=menu".into()),
             )
             .title("PepeChat")
-            .inner_size(TRAY_MENU_WIDTH, TRAY_MENU_HEIGHT)
-            .min_inner_size(TRAY_MENU_WIDTH, TRAY_MENU_HEIGHT)
-            .max_inner_size(TRAY_MENU_WIDTH, TRAY_MENU_HEIGHT)
+            .inner_size(TRAY_MENU_WIDTH, TRAY_MENU_INITIAL_HEIGHT)
             .resizable(false)
             .decorations(false)
             .always_on_top(true)

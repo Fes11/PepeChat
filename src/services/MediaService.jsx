@@ -1,4 +1,5 @@
 import { audioProcessingService } from "./AudioProcessingService";
+import { DEFAULT_MICROPHONE_SETTINGS } from "../constants/audioSettings";
 
 export const DEFAULT_AUDIO_CONSTRAINTS = {
   echoCancellation: true,
@@ -19,6 +20,33 @@ export const DEFAULT_VIDEO_CONSTRAINTS = {
 export const ADDITIONAL_VIDEO_CONSTRAINTS = {
   displaySurface: "window",
   cursor: "motion",
+};
+
+const applyVerifiedNoiseSuppression = async (track, enabled) => {
+  if (!track?.applyConstraints) return false;
+
+  try {
+    await track.applyConstraints({
+      noiseSuppression: { exact: enabled },
+    });
+  } catch (exactError) {
+    try {
+      await track.applyConstraints({ noiseSuppression: enabled });
+    } catch (error) {
+      console.warn(
+        `[MediaService] Cannot ${enabled ? "enable" : "disable"} WebRTC noise suppression`,
+        error,
+      );
+      return false;
+    }
+    console.debug(
+      "[MediaService] Exact noise suppression constraint was unavailable",
+      exactError,
+    );
+  }
+
+  const actual = track.getSettings?.().noiseSuppression;
+  return actual === undefined ? true : actual === enabled;
 };
 
 export const mediaService = {
@@ -63,42 +91,95 @@ export const mediaService = {
   async getMicrophone(deviceId, options = {}) {
     const {
       processAudio = true,
-      volume = 1,
+      volume = DEFAULT_MICROPHONE_SETTINGS.volume,
       audioSettings = {},
     } = options;
     const noiseSuppressionMode =
-      audioSettings.noiseSuppressionMode ?? "light";
+      audioSettings.noiseSuppressionMode ??
+      DEFAULT_MICROPHONE_SETTINGS.noiseSuppressionMode;
+    const supportedConstraints =
+      navigator.mediaDevices.getSupportedConstraints?.() ?? {};
     const rnnoiseSupported = audioProcessingService.isRnnoiseSupported();
-    const useRnnoise =
+    let useRnnoise =
       processAudio &&
       noiseSuppressionMode === "strong" &&
       rnnoiseSupported;
-    const audioConstraints = {
+    let audioConstraints = {
       ...DEFAULT_AUDIO_CONSTRAINTS,
-      autoGainControl: audioSettings.autoGainControl ?? false,
+      autoGainControl:
+        audioSettings.autoGainControl ??
+        DEFAULT_MICROPHONE_SETTINGS.autoGainControl,
       // RNNoise must receive audio which has not already been denoised. AEC is
       // intentionally left enabled because it solves a separate echo problem.
-      noiseSuppression:
-        noiseSuppressionMode === "light" ||
-        (noiseSuppressionMode === "strong" && !useRnnoise),
+      noiseSuppression: useRnnoise
+        ? supportedConstraints.noiseSuppression
+          ? { exact: false }
+          : false
+        : noiseSuppressionMode !== "off",
       ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
     };
 
-    const rawStream = await navigator.mediaDevices.getUserMedia({
-      audio: audioConstraints,
-    });
+    let rawStream;
+    try {
+      rawStream = await navigator.mediaDevices.getUserMedia({
+        audio: audioConstraints,
+      });
+    } catch (error) {
+      const failedToDisableNoiseSuppression =
+        useRnnoise &&
+        error?.name === "OverconstrainedError" &&
+        (!error.constraint || error.constraint === "noiseSuppression");
+
+      if (!failedToDisableNoiseSuppression) throw error;
+
+      console.warn(
+        "[MediaService] Raw microphone audio is unavailable; using WebRTC noise suppression",
+        error,
+      );
+      useRnnoise = false;
+      audioConstraints = {
+        ...audioConstraints,
+        noiseSuppression: true,
+      };
+      rawStream = await navigator.mediaDevices.getUserMedia({
+        audio: audioConstraints,
+      });
+    }
 
     const rawTrack = rawStream.getAudioTracks()[0];
+    let rawTrackSettings = rawTrack?.getSettings?.() ?? {};
+    if (useRnnoise && rawTrackSettings.noiseSuppression === true) {
+      console.warn(
+        "[MediaService] Browser noise suppression remained enabled; skipping RNNoise to avoid double processing",
+      );
+      useRnnoise = false;
+    }
+
+    const expectsBrowserNoiseSuppression =
+      !useRnnoise && noiseSuppressionMode !== "off";
+    if (
+      rawTrack &&
+      rawTrackSettings.noiseSuppression !== undefined &&
+      rawTrackSettings.noiseSuppression !== expectsBrowserNoiseSuppression
+    ) {
+      await applyVerifiedNoiseSuppression(
+        rawTrack,
+        expectsBrowserNoiseSuppression,
+      );
+      rawTrackSettings = rawTrack.getSettings?.() ?? rawTrackSettings;
+    }
+
     console.info("[MediaService] Microphone processing settings", {
       requestedNoiseSuppressionMode: noiseSuppressionMode,
       effectiveNoiseSuppressionMode: useRnnoise
         ? "rnnoise"
-        : audioConstraints.noiseSuppression
+        : rawTrackSettings.noiseSuppression === true ||
+            audioConstraints.noiseSuppression === true
           ? "webrtc"
           : "off",
-      supportedConstraints:
-        navigator.mediaDevices.getSupportedConstraints?.() ?? {},
-      trackSettings: rawTrack?.getSettings?.() ?? {},
+      supportedConstraints,
+      trackConstraints: rawTrack?.getConstraints?.() ?? {},
+      trackSettings: rawTrackSettings,
     });
 
     if (!processAudio) return rawStream;
@@ -108,21 +189,51 @@ export const mediaService = {
         rawStream,
         {
           volume: audioSettings.autoGainControl ? 1 : volume,
-          autoGainControl: audioSettings.autoGainControl ?? false,
-          noiseSuppressionMode: useRnnoise ? "strong" : noiseSuppressionMode,
-          noiseGateEnabled: audioSettings.noiseGateEnabled ?? false,
-          noiseGateThreshold: audioSettings.noiseGateThreshold ?? 0.02,
+          autoGainControl:
+            audioSettings.autoGainControl ??
+            DEFAULT_MICROPHONE_SETTINGS.autoGainControl,
+          noiseSuppressionMode: useRnnoise
+            ? "strong"
+            : noiseSuppressionMode === "strong"
+              ? "light"
+              : noiseSuppressionMode,
+          noiseGateEnabled:
+            audioSettings.noiseGateEnabled ??
+            DEFAULT_MICROPHONE_SETTINGS.noiseGateEnabled,
+          noiseGateThreshold:
+            audioSettings.noiseGateThreshold ??
+            DEFAULT_MICROPHONE_SETTINGS.noiseGateThreshold,
         },
       );
 
+      let cleanedUp = false;
       processed.stream.__audioCleanup = () => {
+        if (cleanedUp) return;
+        cleanedUp = true;
         processed.stream.getTracks().forEach((track) => track.stop());
         processed.cleanup();
-        mediaService.stopStream(rawStream);
+        if (rawStream !== processed.stream) {
+          rawStream.getTracks().forEach((track) => track.stop());
+        }
       };
       processed.stream.__setAudioVolume = processed.setVolume;
+      processed.stream.__updateAudioSettings = (
+        nextSettings = {},
+        changedKeys = [],
+      ) =>
+        processed.updateSettings(
+          {
+            ...nextSettings,
+            volume: nextSettings.autoGainControl
+              ? 1
+              : (nextSettings.volume ?? volume),
+          },
+          changedKeys,
+        );
+      processed.stream.__audioProcessingState = processed.processingState;
 
       console.info("[MediaService] Processed microphone track settings", {
+        processingState: processed.processingState,
         trackSettings:
           processed.stream.getAudioTracks()[0]?.getSettings?.() ?? {},
       });
@@ -131,14 +242,7 @@ export const mediaService = {
     } catch (err) {
       console.warn("[MediaService] Audio processing is unavailable", err);
       if (noiseSuppressionMode === "strong") {
-        await rawTrack
-          ?.applyConstraints?.({ noiseSuppression: true })
-          .catch((fallbackError) =>
-            console.warn(
-              "[MediaService] Cannot enable WebRTC noise suppression fallback",
-              fallbackError,
-            ),
-          );
+        await applyVerifiedNoiseSuppression(rawTrack, true);
       }
       return rawStream;
     }

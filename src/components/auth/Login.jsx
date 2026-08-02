@@ -5,6 +5,10 @@ import classes from "./Login.module.css";
 import { observer } from "mobx-react-lite";
 import { Link } from "react-router-dom";
 import { getFieldError } from "../../utils/errors";
+import {
+  LOGIN_MAX_LENGTH,
+  PASSWORD_MAX_LENGTH,
+} from "../../constants/limits.js";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -83,6 +87,7 @@ const Login = () => {
               clearFieldError("login");
             }}
             type="text"
+            maxLength={LOGIN_MAX_LENGTH}
             placeholder="Enter login"
             className={`${classes.login__form_input} ${
               loginError || formError ? classes.login__form_input_error : ""
@@ -98,6 +103,7 @@ const Login = () => {
               clearFieldError("password");
             }}
             type="password"
+            maxLength={PASSWORD_MAX_LENGTH}
             placeholder="Password"
             className={`${classes.login__form_input} ${
               passwordError || formError ? classes.login__form_input_error : ""

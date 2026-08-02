@@ -3,6 +3,7 @@ import classes from "./Search.module.css";
 import ChatServices from "../../../services/ChatService.jsx";
 import SearchUserElement from "../SearchUserElement.jsx";
 import SearchChatElement from "../SearchChatElement.jsx";
+import { SEARCH_QUERY_MAX_LENGTH } from "../../../constants/limits.js";
 
 const EMPTY_RESULTS = {
   my_chats: [],
@@ -94,6 +95,7 @@ const Search = function (props) {
           className={classes.search}
           type="search"
           {...props}
+          maxLength={SEARCH_QUERY_MAX_LENGTH}
           name={searchName}
           autoComplete="off"
           autoCorrect="off"

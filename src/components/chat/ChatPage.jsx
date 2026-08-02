@@ -22,6 +22,10 @@ const INITIAL_VOICE_CONTROLS = {
   cameraEnabled: false,
   screenShareEnabled: false,
 };
+const INITIAL_VOICE_CONNECTION_STATE = {
+  isJoining: true,
+  latencyMs: null,
+};
 
 const ChatPage = observer(() => {
   const { ChatStore } = useContext(Context);
@@ -45,6 +49,9 @@ const ChatPage = observer(() => {
     useState(true);
   const voiceRoomRef = useRef(null);
   const [voiceControls, setVoiceControls] = useState(INITIAL_VOICE_CONTROLS);
+  const [voiceConnectionState, setVoiceConnectionState] = useState(
+    INITIAL_VOICE_CONNECTION_STATE,
+  );
   const handleVoiceControlsChange = useCallback((nextControls) => {
     setVoiceControls(nextControls);
   }, []);
@@ -92,6 +99,7 @@ const ChatPage = observer(() => {
     setActiveVoiceRoomChatId(nextChatId);
     showVoiceRoom();
     setVoiceControls(INITIAL_VOICE_CONTROLS);
+    setVoiceConnectionState(INITIAL_VOICE_CONNECTION_STATE);
   };
 
   const leaveVoiceRoom = () => {
@@ -99,6 +107,7 @@ const ChatPage = observer(() => {
     setActiveVoiceRoomChatId(null);
     setIsVoiceRoomOpen(false);
     setVoiceControls(INITIAL_VOICE_CONTROLS);
+    setVoiceConnectionState(INITIAL_VOICE_CONNECTION_STATE);
   };
 
   const leaveVoiceRoomFromProfile = () => {
@@ -161,6 +170,7 @@ const ChatPage = observer(() => {
         onOpenVoiceRoomPanel={showVoiceRoom}
         onLeaveVoiceRoom={leaveVoiceRoomFromProfile}
         voiceControls={voiceControls}
+        voiceConnectionState={voiceConnectionState}
         onToggleVoiceMic={() => voiceRoomRef.current?.toggleMic()}
         onToggleVoiceHeadphones={() =>
           voiceRoomRef.current?.toggleHeadphones()
@@ -201,6 +211,7 @@ const ChatPage = observer(() => {
             onHide={() => setIsVoiceRoomOpen(false)}
             onLeaveRoom={leaveVoiceRoom}
             onControlsChange={handleVoiceControlsChange}
+            onConnectionStateChange={setVoiceConnectionState}
           />
         )}
       </div>

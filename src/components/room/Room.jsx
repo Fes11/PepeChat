@@ -22,7 +22,7 @@ import {
 import { notifyInfo } from "../../notifications/notificationService";
 
 const DEFAULT_USER_VOLUME = 1;
-const DEFAULT_STREAM_VOLUME = 0;
+const DEFAULT_STREAM_VOLUME = 1;
 const VOLUME_STEP = 5;
 
 const getRoomGridClass = (participantsCount) => {
@@ -43,6 +43,7 @@ const Room = forwardRef(function Room(
     isOpen = true,
     preserveChatDescription = false,
     onControlsChange,
+    onConnectionStateChange,
   },
   ref,
 ) {
@@ -50,10 +51,11 @@ const Room = forwardRef(function Room(
   const {
     participants,
     isJoining,
+    latencyMs,
+    screenShareActive,
     setMicEnabled,
     setHeadphonesMuted: setRemoteHeadphonesMuted,
     setCameraEnabled,
-    setScreenShareEnabled,
     startScreenShare,
     stopScreenShare,
     disconnect,
@@ -255,15 +257,13 @@ const Room = forwardRef(function Room(
   };
 
   const toggleScreenShare = async () => {
-    if (!screenShareEnabled && isDesktopApp()) {
+    if (!screenShareEnabled) {
       setScreenPickerOpen(true);
       return;
     }
-    const next = !screenShareEnabled;
     try {
-      if (next) await setScreenShareEnabled(true);
-      else await stopScreenShare();
-      setScreenShareEnabledState(next);
+      await stopScreenShare();
+      setScreenShareEnabledState(false);
     } catch (error) {
       console.warn("[VoiceRoom] Cannot toggle screen share", error);
       setScreenShareEnabledState(false);
@@ -281,8 +281,8 @@ const Room = forwardRef(function Room(
     }));
   };
 
-  const shareSelectedSource = async (source, withAudio) => {
-    const state = await startScreenShare(source.id, withAudio);
+  const shareSelectedSource = async (source, withAudio, qualityId) => {
+    const state = await startScreenShare(source?.id, withAudio, qualityId);
     setScreenShareEnabledState(Boolean(state?.active ?? true));
     if (withAudio && state?.audioAvailable === false) {
       notifyInfo("Системный звук недоступен. Трансляция продолжена без звука.");
@@ -308,6 +308,10 @@ const Room = forwardRef(function Room(
   }, []);
 
   useEffect(() => {
+    if (!isDesktopApp()) setScreenShareEnabledState(screenShareActive);
+  }, [screenShareActive]);
+
+  useEffect(() => {
     onControlsChange?.({
       micMuted,
       headphonesMuted,
@@ -321,6 +325,10 @@ const Room = forwardRef(function Room(
     onControlsChange,
     screenShareEnabled,
   ]);
+
+  useEffect(() => {
+    onConnectionStateChange?.({ isJoining, latencyMs });
+  }, [isJoining, latencyMs, onConnectionStateChange]);
 
   useImperativeHandle(ref, () => ({
     leave: leaveRoom,

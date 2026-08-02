@@ -6,6 +6,7 @@ import roomJoinSoundUrl from "../assets/sounds/JoinSound.mp3";
 import roomLeftSoundUrl from "../assets/sounds/LeftSound.mp3";
 import { Context } from "../main";
 import { mediaService } from "../services/MediaService";
+import { isHotAudioSettingsChange } from "../constants/audioSettings";
 
 const HEARTBEAT_INTERVAL = 10_000;
 const RECONNECT_DELAY = 3_000;
@@ -37,6 +38,7 @@ export const useP2PVoiceRoom = (chatId) => {
   const [participants, setParticipants] = useState([]);
   const [localStreamReady, setLocalStreamReady] = useState(false);
   const [isJoining, setIsJoining] = useState(true);
+  const [latencyMs, setLatencyMs] = useState(null);
 
   // localStreamReady в замыканиях устаревает — держим актуальное значение в ref
   const localStreamReadyRef = useRef(false);
@@ -61,6 +63,7 @@ export const useP2PVoiceRoom = (chatId) => {
   const reconnectTimeoutRef = useRef(null);
   const connectTimeoutRef = useRef(null);
   const heartbeatRef = useRef(null);
+  const pingStartedAtRef = useRef(null);
   const manuallyClosedRef = useRef(false);
   const disconnectStartedRef = useRef(false);
   const localJoinSoundPlayedRef = useRef(false);
@@ -175,9 +178,13 @@ export const useP2PVoiceRoom = (chatId) => {
 
   const startHeartbeat = useCallback(() => {
     stopHeartbeat();
-    heartbeatRef.current = setInterval(() => {
-      socketRef.current?.send({ type: "ping" });
-    }, HEARTBEAT_INTERVAL);
+    const sendHeartbeat = () => {
+      if (socketRef.current?.send({ type: "ping" })) {
+        pingStartedAtRef.current = performance.now();
+      }
+    };
+    sendHeartbeat();
+    heartbeatRef.current = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL);
   }, [stopHeartbeat]);
 
   // ── Join new participant ─────────────────────────────────────────────────
@@ -306,6 +313,8 @@ export const useP2PVoiceRoom = (chatId) => {
         stopSpeakingDetection();
         cleanup();
         setParticipants([]);
+        pingStartedAtRef.current = null;
+        setLatencyMs(null);
         setIsJoining(!manuallyClosedRef.current);
 
         if (!manuallyClosedRef.current) {
@@ -386,6 +395,15 @@ export const useP2PVoiceRoom = (chatId) => {
             break;
 
           case "pong":
+            if (pingStartedAtRef.current != null) {
+              setLatencyMs(
+                Math.max(
+                  0,
+                  Math.round(performance.now() - pingStartedAtRef.current),
+                ),
+              );
+              pingStartedAtRef.current = null;
+            }
             break;
 
           default:
@@ -489,7 +507,19 @@ export const useP2PVoiceRoom = (chatId) => {
       }
     };
 
-    const handleAudioSettingsChange = async () => {
+    const handleAudioSettingsChange = async (event) => {
+      const changedKeys = event.detail?.changedKeys ?? [];
+      const settings = event.detail?.settings ?? MediaStore.getAudioSettings();
+      if (
+        isHotAudioSettingsChange(changedKeys) &&
+        localMediaStream.current?.__updateAudioSettings?.(
+          settings,
+          changedKeys,
+        )
+      ) {
+        return;
+      }
+
       try {
         await switchMicrophone(MediaStore.selectedMicrophone);
       } catch (err) {
@@ -544,6 +574,8 @@ export const useP2PVoiceRoom = (chatId) => {
     };
     localParticipantIdRef.current = null;
     connectingParticipantIdsRef.current = new Set();
+    pingStartedAtRef.current = null;
+    setLatencyMs(null);
 
     connectTimeoutRef.current = setTimeout(() => {
       connectTimeoutRef.current = null;
@@ -557,6 +589,7 @@ export const useP2PVoiceRoom = (chatId) => {
     participants,
     localStreamReady,
     isJoining,
+    latencyMs,
     setMicEnabled,
     setHeadphonesMuted,
     send: (data) => socketRef.current?.send(data),

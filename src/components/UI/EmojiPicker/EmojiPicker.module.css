@@ -7,7 +7,7 @@
   overflow: hidden;
   border-radius: 8px;
   border: 1px solid var(--border-color);
-  background: var(--modal-bg-color);
+  background: var(--box-bg-color);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
   z-index: 20;
   contain: layout paint style;
@@ -16,14 +16,10 @@
 .tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 4px;
-  padding: 8px;
-  border-bottom: 1px solid var(--border-color);
 }
 
 .tab {
   height: 32px;
-  border-radius: var(--main-border-radius);
   background: transparent;
   color: var(--muted-text-color);
   font-size: 13px;

@@ -97,7 +97,7 @@ const Participant = ({ user, onClick, onRemove, isInVoiceRoom = false }) => {
         src={user.avatar}
         status={user.status}
         alt={`Аватар пользователя ${user.username || user.login}`}
-        size={32}
+        size={36}
       />
 
       <div className={styles.description}>
