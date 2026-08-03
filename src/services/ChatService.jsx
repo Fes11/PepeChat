@@ -21,6 +21,10 @@ export default class ChatServices {
     return api.post(`/api/chats/${id}/join-by-link/`);
   }
 
+  static async leaveChat(id) {
+    return api.post(`/api/chats/${id}/participants/leave/`);
+  }
+
   static async getChatParticipants(id) {
     return api.get(`/api/chats/${id}/participants/`);
   }

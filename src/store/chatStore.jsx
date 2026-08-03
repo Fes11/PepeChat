@@ -5,6 +5,11 @@ import ChatSocketService from "../services/ChatSocketService";
 import ChatActivityStore from "./chatActivityStore";
 import ChatMessagesStore from "./chatMessagesStore";
 import LocalCacheService from "../services/LocalCacheService";
+import {
+  deduplicateChats,
+  getChatIdentityKey,
+} from "../utils/chatDeduplication.js";
+import { getPresencePatch } from "../utils/presence.js";
 
 const normalizeId = (id) => String(id);
 const sameId = (left, right) => normalizeId(left) === normalizeId(right);
@@ -25,6 +30,7 @@ export default class ChatStore {
   chats = [];
   currentUser = null;
   chatLoadRequests = new Map();
+  privateChatLoadRequests = new Map();
   participantsByChatId = {};
   participantsLoadedAtByChatId = {};
   participantLoadRequests = new Map();
@@ -57,6 +63,7 @@ export default class ChatStore {
       activity: false,
       socketService: false,
       chatLoadRequests: false,
+      privateChatLoadRequests: false,
       participantLoadRequests: false,
       messageLoadRequests: false,
       chatLoadGeneration: false,
@@ -92,7 +99,7 @@ export default class ChatStore {
   }
 
   get sortedChats() {
-    return this.chats.slice().sort((a, b) => {
+    return deduplicateChats(this.chats).sort((a, b) => {
       const aTime = this.getLastMessage(a.id)?.created_at || a.created_at;
       const bTime = this.getLastMessage(b.id)?.created_at || b.created_at;
       return new Date(bTime) - new Date(aTime);
@@ -117,6 +124,9 @@ export default class ChatStore {
   }
   sendWS(data) { return this.socketService.send(data); }
   sendPresenceHeartbeat() { return this.socketService.sendPresenceHeartbeat(); }
+  setVoiceRoomActive(isActive) {
+    this.socketService.setVoiceRoomActive(isActive);
+  }
 
   handleSocketMessage(data) {
     const handlers = {
@@ -137,7 +147,11 @@ export default class ChatStore {
   upsertChat(chat, { prepend = true, unreadCount = chat?.unread_count } = {}) {
     if (chat?.id == null) return;
 
-    const index = this.chats.findIndex((item) => sameId(item.id, chat.id));
+    const identityKey = getChatIdentityKey(chat);
+    const index = this.chats.findIndex((item) =>
+      sameId(item.id, chat.id)
+      || getChatIdentityKey(item) === identityKey,
+    );
     const existing = index >= 0 ? this.chats[index] : null;
     const nextChat = {
       ...existing,
@@ -146,7 +160,10 @@ export default class ChatStore {
         ? 0
         : (unreadCount ?? existing?.unread_count ?? 0),
     };
-    const remaining = this.chats.filter((item) => !sameId(item.id, chat.id));
+    const remaining = this.chats.filter((item) =>
+      !sameId(item.id, chat.id)
+      && getChatIdentityKey(item) !== identityKey,
+    );
 
     if (prepend || index < 0) {
       this.chats = [nextChat, ...remaining];
@@ -162,7 +179,7 @@ export default class ChatStore {
       this.chats.map((chat) => [normalizeId(chat.id), chat]),
     );
     const uniqueChats = new Map();
-    chats.forEach((chat) => {
+    deduplicateChats(chats).forEach((chat) => {
       const existing = existingById.get(normalizeId(chat.id));
       uniqueChats.set(normalizeId(chat.id), {
         ...existing,
@@ -416,8 +433,8 @@ export default class ChatStore {
   }
 
   handlePresenceChanged(data) {
-    const { user_id: userId, status, last_seen: lastSeen } = data;
-    const presence = { status, last_online: lastSeen };
+    const { user_id: userId } = data;
+    const presence = getPresencePatch(data);
     this.activity.setPresence(userId, presence);
 
     if (this.currentUser?.id === userId) this.currentUser = { ...this.currentUser, ...presence };
@@ -489,7 +506,19 @@ export default class ChatStore {
 
   async openPrivateChat(user) {
     const requestId = ++this.openChatRequestId;
-    const { data: chat } = await ChatService.openPrivateChat(user.id);
+    const key = normalizeId(user.id);
+    let request = this.privateChatLoadRequests.get(key);
+
+    if (!request) {
+      request = ChatService.openPrivateChat(user.id).finally(() => {
+        if (this.privateChatLoadRequests.get(key) === request) {
+          this.privateChatLoadRequests.delete(key);
+        }
+      });
+      this.privateChatLoadRequests.set(key, request);
+    }
+
+    const { data: chat } = await request;
     runInAction(() => {
       if (requestId !== this.openChatRequestId) return;
       this.selectedChat = { id: chat.id, data: { ...chat, unread_count: 0 } };
@@ -512,7 +541,20 @@ export default class ChatStore {
   }
 
   removeChat(chatId) {
+    const key = normalizeId(chatId);
     this.chats = this.chats.filter((chat) => !sameId(chat.id, chatId));
+    this.messages.removeChat(chatId);
+    delete this.participantsByChatId[key];
+    delete this.participantsLoadedAtByChatId[key];
+    delete this.messageFirstPageByChatId[key];
+    this.participantLoadRequests.delete(key);
+    this.messageLoadRequests.delete(key);
+    this.clearVoiceParticipants(chatId);
+
+    if (sameId(this.selectedChat?.id, chatId)) {
+      this.selectedChat = null;
+      this.visibleTextChatId = null;
+    }
     this.scheduleCacheWrite();
   }
 
@@ -522,7 +564,9 @@ export default class ChatStore {
     const snapshot = await LocalCacheService.read(accountId);
     if (!snapshot) return cachedProfile;
     runInAction(() => {
-      this.chats = Array.isArray(snapshot.chats) ? snapshot.chats : [];
+      this.chats = Array.isArray(snapshot.chats)
+        ? deduplicateChats(snapshot.chats)
+        : [];
       this.messages.hydrate(snapshot.messages);
     });
     return snapshot.profile ?? cachedProfile;
@@ -561,6 +605,7 @@ export default class ChatStore {
     this.chats = [];
     this.chatLoadGeneration += 1;
     this.chatLoadRequests.clear();
+    this.privateChatLoadRequests.clear();
     this.participantsByChatId = {};
     this.participantsLoadedAtByChatId = {};
     this.participantLoadRequests.clear();

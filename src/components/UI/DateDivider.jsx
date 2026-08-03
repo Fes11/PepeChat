@@ -8,14 +8,21 @@ const getDateLabel = (date) => {
   return format(date, "d MMMM yyyy", { locale: ru });
 };
 
-const DateDivider = ({ date, isFirst = false }) => {
+const DateDivider = ({
+  date,
+  label,
+  isFirst = false,
+  isLast = false,
+  role,
+}) => {
   return (
     <div
       className={`${classes.date_divider} ${
         isFirst ? classes.date_divider_first : ""
-      }`}
+      } ${isLast ? classes.date_divider_last : ""}`}
+      role={role}
     >
-      {getDateLabel(date)}
+      {label ?? getDateLabel(date)}
     </div>
   );
 };

@@ -35,6 +35,8 @@ select {
   --chat-description-width: 300px;
   --chat-content-gap: 8px;
   --hover: rgba(255, 255, 255, 0.1);
+  --profile: #1c1c1d;
+  --active-bg: #252526;
 
   --surface-color: #ffffff05;
   --main-button-color: #1d1d1d;
@@ -73,6 +75,8 @@ select {
 
 [data-theme="light"] {
   color-scheme: light;
+  --profile: #e8e8f1;
+  --active-bg: #dadadf;
   --bg-color: #f2f4f7;
   --box-bg-color: #ffffff;
   --surface-color: #eef1f5;
@@ -94,7 +98,7 @@ select {
   --overlay-color: rgba(20, 24, 31, 0.2);
   --empty-badge-bg-color: rgba(22, 28, 36, 0.06);
   --message-other-bg-color: rgba(22, 28, 36, 0.08);
-  --chat-input-bg: rgba(22, 22, 22, 0.9);
+  --chat-input-bg: rgba(215, 215, 215, 0.3);
   --skeleton-bg-color: rgba(22, 28, 36, 0.08);
   --spinner-track-color: #d9dee8;
   --scrollbar-thumb-color: #c7ceda;

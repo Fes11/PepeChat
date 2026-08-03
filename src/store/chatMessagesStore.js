@@ -124,6 +124,13 @@ export default class ChatMessagesStore {
     return this.lastMessageByChat[chatId] || null;
   }
 
+  removeChat(chatId) {
+    delete this.messagesByChat[chatId];
+    delete this.lastMessageByChat[chatId];
+    delete this.lastReadRequestByChat[chatId];
+    this.pendingReadsByChat.delete(chatId);
+  }
+
   hydrate(snapshot = {}) {
     this.messagesByChat = Object.fromEntries(
       Object.entries(snapshot.messagesByChat || {}).map(([chatId, messages]) => [

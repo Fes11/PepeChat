@@ -1,15 +1,19 @@
 import { refreshAccessToken, redirectToLogin } from "../api";
 import { WS_BASE_URL } from "../config/env";
-
-const HEARTBEAT_INTERVAL = 20_000;
+import PresenceActivityTracker, {
+  getPresenceHeartbeatInterval,
+} from "./PresenceActivityTracker";
 const RECONNECT_DELAY = 1_000;
 const MAX_RECONNECT_DELAY = 30_000;
 
 export default class ChatSocketService {
-  constructor({ onConnectionChange, onMessage, onOpen }) {
+  constructor({ onConnectionChange, onMessage, onOpen, activityTracker }) {
     this.onConnectionChange = onConnectionChange;
     this.onMessage = onMessage;
     this.onOpen = onOpen;
+    this.activityTracker = activityTracker ?? new PresenceActivityTracker({
+      onStateChange: this.setPresenceState,
+    });
   }
 
   socket = null;
@@ -18,12 +22,14 @@ export default class ChatSocketService {
   heartbeatTimer = null;
   shouldReconnect = false;
   reconnectAttempts = 0;
+  presenceState = "online";
 
   connect(token) {
     if (!token) return;
 
     this.token = token;
     this.shouldReconnect = true;
+    this.activityTracker.start();
 
     if (this.socket) return;
 
@@ -75,6 +81,8 @@ export default class ChatSocketService {
     this.shouldReconnect = false;
     this.reconnectAttempts = 0;
     this.token = null;
+    this.presenceState = "online";
+    this.activityTracker.stop();
     this.clearReconnectTimer();
     this.stopHeartbeat();
 
@@ -117,9 +125,10 @@ export default class ChatSocketService {
 
   startHeartbeat() {
     this.stopHeartbeat();
+    const interval = getPresenceHeartbeatInterval(this.presenceState);
     this.heartbeatTimer = setInterval(
       () => this.sendPresenceHeartbeat(),
-      HEARTBEAT_INTERVAL,
+      interval,
     );
   }
 
@@ -136,8 +145,27 @@ export default class ChatSocketService {
   }
 
   sendPresenceHeartbeat() {
-    return this.send({ action: "presence.heartbeat" });
+    return this.send({
+      action: "presence.heartbeat",
+      state: this.presenceState,
+    });
   }
+
+  setVoiceRoomActive(isActive) {
+    this.activityTracker.setActiveHold(Boolean(isActive));
+  }
+
+  setPresenceState = (state) => {
+    if (state === this.presenceState || !["online", "away"].includes(state)) {
+      return;
+    }
+
+    this.presenceState = state;
+    if (this.socket?.readyState === WebSocket.OPEN) {
+      this.startHeartbeat();
+      this.sendPresenceHeartbeat();
+    }
+  };
 
   clearSocket(socket) {
     if (!socket) return;

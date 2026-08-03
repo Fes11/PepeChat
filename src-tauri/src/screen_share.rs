@@ -150,7 +150,10 @@ fn source_parts(source_id: &str) -> Result<(DesktopCaptureSourceType, u64), Stri
 fn capturer_options(kind: DesktopCaptureSourceType) -> DesktopCapturerOptions {
     let mut options = DesktopCapturerOptions::new(kind);
     #[cfg(target_os = "windows")]
-    options.set_include_cursor(false);
+    // WGC's embedded screen cursor is damage-driven in the WebRTC version used
+    // here, so cursor-only movement is not reliably delivered. Screen capture
+    // gets a per-frame overlay below; window capture keeps native composition.
+    options.set_include_cursor(kind == DesktopCaptureSourceType::Window);
     #[cfg(not(target_os = "windows"))]
     options.set_include_cursor(true);
     options
@@ -204,25 +207,107 @@ fn output_size(width: u32, height: u32, profile: QualityProfile) -> (u32, u32) {
     )
 }
 
+#[derive(Clone, Copy)]
+struct CaptureRect {
+    left: i32,
+    top: i32,
+    right: i32,
+    bottom: i32,
+}
+
+#[derive(Debug, PartialEq)]
+struct ScaledCursorRect {
+    x: i32,
+    y: i32,
+    width: i32,
+    height: i32,
+}
+
+fn scaled_cursor_rect(
+    capture: CaptureRect,
+    output_width: u32,
+    output_height: u32,
+    cursor_position: (i32, i32),
+    hotspot: (i32, i32),
+    cursor_size: (i32, i32),
+) -> ScaledCursorRect {
+    let capture_width = (capture.right - capture.left).max(1);
+    let capture_height = (capture.bottom - capture.top).max(1);
+    let scale_x = output_width as f64 / capture_width as f64;
+    let scale_y = output_height as f64 / capture_height as f64;
+    ScaledCursorRect {
+        x: ((cursor_position.0 - capture.left - hotspot.0) as f64 * scale_x).round() as i32,
+        y: ((cursor_position.1 - capture.top - hotspot.1) as f64 * scale_y).round() as i32,
+        width: (cursor_size.0 as f64 * scale_x).round().max(1.0) as i32,
+        height: (cursor_size.1 as f64 * scale_y).round().max(1.0) as i32,
+    }
+}
+
 #[cfg(target_os = "windows")]
-fn scaled_frame_with_cursor(
+unsafe extern "system" fn collect_monitor_rect(
+    _monitor: windows::Win32::Graphics::Gdi::HMONITOR,
+    _dc: windows::Win32::Graphics::Gdi::HDC,
+    rect: *mut windows::Win32::Foundation::RECT,
+    data: windows::Win32::Foundation::LPARAM,
+) -> windows::core::BOOL {
+    let rects = &mut *(data.0 as *mut Vec<CaptureRect>);
+    let rect = *rect;
+    rects.push(CaptureRect {
+        left: rect.left,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+    });
+    windows::core::BOOL(1)
+}
+
+#[cfg(target_os = "windows")]
+fn screen_capture_rect(screen_id: u64) -> Option<CaptureRect> {
+    use windows::Win32::{Foundation::LPARAM, Graphics::Gdi::EnumDisplayMonitors};
+
+    unsafe {
+        let mut rects = Vec::new();
+        let _ = EnumDisplayMonitors(
+            None,
+            None,
+            Some(collect_monitor_rect),
+            LPARAM((&mut rects as *mut Vec<CaptureRect>) as isize),
+        );
+        rects.get(usize::try_from(screen_id).ok()?).copied()
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn use_physical_screen_coordinates() {
+    use windows::Win32::UI::HiDpi::{
+        SetThreadDpiAwarenessContext, DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2,
+    };
+
+    unsafe {
+        let _ = SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn scaled_bgra_frame(
     frame: &DesktopFrame,
     output_width: u32,
     output_height: u32,
-    include_cursor: bool,
+    cursor_capture_rect: Option<CaptureRect>,
 ) -> Option<Vec<u8>> {
     use std::{ffi::c_void, mem::size_of, ptr};
-    use windows::Win32::{
-        Graphics::Gdi::{
-            CreateCompatibleDC, CreateDIBSection, DeleteDC, DeleteObject, SelectObject,
-            SetStretchBltMode, StretchDIBits, BITMAPINFO, BITMAPINFOHEADER, BI_RGB, DIB_RGB_COLORS,
-            HALFTONE, HGDIOBJ, SRCCOPY,
-        },
-        UI::WindowsAndMessaging::{
-            DrawIconEx, GetCursorInfo, GetIconInfo, GetSystemMetrics, CURSORINFO, CURSOR_SHOWING,
-            DI_NORMAL, ICONINFO, SM_CXCURSOR, SM_CYCURSOR,
-        },
+    use windows::Win32::Graphics::Gdi::{
+        CreateCompatibleDC, CreateDIBSection, DeleteDC, DeleteObject, GetObjectW, SelectObject,
+        SetStretchBltMode, StretchDIBits, BITMAP, BITMAPINFO, BITMAPINFOHEADER, BI_RGB,
+        DIB_RGB_COLORS, HALFTONE, HGDIOBJ, SRCCOPY,
     };
+    use windows::Win32::UI::WindowsAndMessaging::{
+        DrawIconEx, GetCursorInfo, GetIconInfo, GetSystemMetrics, CURSORINFO, CURSOR_SHOWING,
+        DI_NORMAL, ICONINFO, SM_CXCURSOR, SM_CYCURSOR,
+    };
+
+    // Some WGC capturers invoke their callback on an internal thread.
+    use_physical_screen_coordinates();
 
     let width = frame.width();
     let height = frame.height();
@@ -305,42 +390,60 @@ fn scaled_frame_with_cursor(
             return None;
         }
 
-        if include_cursor {
+        if let Some(capture_rect) = cursor_capture_rect {
             let mut cursor = CURSORINFO {
                 cbSize: size_of::<CURSORINFO>() as u32,
                 ..Default::default()
             };
+
             if GetCursorInfo(&mut cursor).is_ok() && cursor.flags == CURSOR_SHOWING {
                 let mut icon = ICONINFO::default();
                 if GetIconInfo(cursor.hCursor.into(), &mut icon).is_ok() {
-                    let scale_x = output_width as f64 / width as f64;
-                    let scale_y = output_height as f64 / height as f64;
-                    let cursor_x = ((cursor.ptScreenPos.x - frame.left() - icon.xHotspot as i32)
-                        as f64
-                        * scale_x)
-                        .round() as i32;
-                    let cursor_y = ((cursor.ptScreenPos.y - frame.top() - icon.yHotspot as i32)
-                        as f64
-                        * scale_y)
-                        .round() as i32;
-                    let cursor_width = (GetSystemMetrics(SM_CXCURSOR) as f64 * scale_x)
-                        .round()
-                        .max(1.0) as i32;
-                    let cursor_height = (GetSystemMetrics(SM_CYCURSOR) as f64 * scale_y)
-                        .round()
-                        .max(1.0) as i32;
-                    if cursor_x < output_width as i32
-                        && cursor_y < output_height as i32
-                        && cursor_x > -cursor_width
-                        && cursor_y > -cursor_height
+                    let mut bitmap = BITMAP::default();
+                    let (cursor_width, cursor_height) = if !icon.hbmColor.is_invalid()
+                        && GetObjectW(
+                            HGDIOBJ(icon.hbmColor.0),
+                            size_of::<BITMAP>() as i32,
+                            Some((&mut bitmap as *mut BITMAP).cast()),
+                        ) > 0
+                    {
+                        (bitmap.bmWidth.abs(), bitmap.bmHeight.abs())
+                    } else if !icon.hbmMask.is_invalid()
+                        && GetObjectW(
+                            HGDIOBJ(icon.hbmMask.0),
+                            size_of::<BITMAP>() as i32,
+                            Some((&mut bitmap as *mut BITMAP).cast()),
+                        ) > 0
+                    {
+                        // A monochrome cursor stores AND and XOR masks vertically.
+                        (bitmap.bmWidth.abs(), (bitmap.bmHeight.abs() / 2).max(1))
+                    } else {
+                        (
+                            GetSystemMetrics(SM_CXCURSOR).max(1),
+                            GetSystemMetrics(SM_CYCURSOR).max(1),
+                        )
+                    };
+                    let cursor_rect = scaled_cursor_rect(
+                        capture_rect,
+                        output_width,
+                        output_height,
+                        (cursor.ptScreenPos.x, cursor.ptScreenPos.y),
+                        (icon.xHotspot as i32, icon.yHotspot as i32),
+                        (cursor_width, cursor_height),
+                    );
+
+                    if cursor_rect.x < output_width as i32
+                        && cursor_rect.y < output_height as i32
+                        && cursor_rect.x > -cursor_rect.width
+                        && cursor_rect.y > -cursor_rect.height
                     {
                         let _ = DrawIconEx(
                             dc,
-                            cursor_x,
-                            cursor_y,
+                            cursor_rect.x,
+                            cursor_rect.y,
                             cursor.hCursor.into(),
-                            cursor_width,
-                            cursor_height,
+                            cursor_rect.width,
+                            cursor_rect.height,
                             0,
                             None,
                             DI_NORMAL,
@@ -366,25 +469,85 @@ fn scaled_frame_with_cursor(
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::{scaled_cursor_rect, CaptureRect, ScaledCursorRect};
+
+    #[test]
+    fn cursor_coordinates_follow_monitor_origin_and_output_scale() {
+        let rect = scaled_cursor_rect(
+            CaptureRect {
+                left: 2_560,
+                top: -209,
+                right: 3_640,
+                bottom: 1_711,
+            },
+            540,
+            960,
+            (3_000, 100),
+            (10, 12),
+            (48, 48),
+        );
+
+        assert_eq!(
+            rect,
+            ScaledCursorRect {
+                x: 215,
+                y: 149,
+                width: 24,
+                height: 24,
+            }
+        );
+    }
+
+    #[test]
+    fn cursor_coordinates_support_a_monitor_left_of_primary() {
+        let rect = scaled_cursor_rect(
+            CaptureRect {
+                left: -1_920,
+                top: 127,
+                right: 0,
+                bottom: 1_207,
+            },
+            1_920,
+            1_080,
+            (-1_000, 500),
+            (4, 4),
+            (32, 32),
+        );
+
+        assert_eq!(
+            rect,
+            ScaledCursorRect {
+                x: 916,
+                y: 369,
+                width: 32,
+                height: 32,
+            }
+        );
+    }
+}
+
 fn frame_to_i420(
     frame: &DesktopFrame,
-    include_cursor_overlay: bool,
     profile: QualityProfile,
+    cursor_capture_rect: Option<CaptureRect>,
 ) -> I420Buffer {
     let width = frame.width().max(2) as u32;
     let height = frame.height().max(2) as u32;
     let (output_width, output_height) = output_size(width, height, profile);
     #[cfg(target_os = "windows")]
-    let scaled_frame =
-        scaled_frame_with_cursor(frame, output_width, output_height, include_cursor_overlay);
+    let scaled_frame = scaled_bgra_frame(frame, output_width, output_height, cursor_capture_rect);
     #[cfg(target_os = "windows")]
     let (argb, argb_stride, buffer_width, buffer_height) = scaled_frame
         .as_deref()
         .map(|data| (data, output_width * 4, output_width, output_height))
         .unwrap_or((frame.data(), frame.stride(), width, height));
     #[cfg(not(target_os = "windows"))]
-    let (argb, argb_stride, buffer_width, buffer_height) =
-        (frame.data(), frame.stride(), width, height);
+    let (argb, argb_stride, buffer_width, buffer_height) = {
+        let _ = cursor_capture_rect;
+        (frame.data(), frame.stride(), width, height)
+    };
     let mut buffer = I420Buffer::new(buffer_width, buffer_height);
     let (stride_y, stride_u, stride_v) = buffer.strides();
     let (data_y, data_u, data_v) = buffer.data_mut();
@@ -553,7 +716,16 @@ pub async fn start_screen_share(
     let fps = request.max_fps.unwrap_or(profile.fps).clamp(1, profile.fps);
     let app_handle = app.clone();
     thread::spawn(move || {
-        let include_cursor_overlay = true;
+        #[cfg(target_os = "windows")]
+        use_physical_screen_coordinates();
+        #[cfg(target_os = "windows")]
+        let cursor_capture_rect = source_parts(&worker_source_id).ok().and_then(|(kind, id)| {
+            (kind == DesktopCaptureSourceType::Screen)
+                .then(|| screen_capture_rect(id))
+                .flatten()
+        });
+        #[cfg(not(target_os = "windows"))]
+        let cursor_capture_rect = None;
         let (mut capturer, source) = match resolve_source(&worker_source_id) {
             Ok(value) => value,
             Err(error) => {
@@ -569,7 +741,7 @@ pub async fn start_screen_share(
         capturer.start_capture(Some(source), move |result| match result {
             Ok(frame) => {
                 consecutive_errors = 0;
-                let buffer = frame_to_i420(&frame, include_cursor_overlay, profile);
+                let buffer = frame_to_i420(&frame, profile, cursor_capture_rect);
                 let mut video_frame = VideoFrame::new(VideoRotation::VideoRotation0, buffer);
                 video_frame.timestamp_us = capture_started.elapsed().as_micros().max(1) as i64;
                 rtc_source.capture_frame(&video_frame);

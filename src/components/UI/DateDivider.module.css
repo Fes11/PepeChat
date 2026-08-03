@@ -6,8 +6,15 @@
   font-size: 13px;
   color: var(--muted-text-color);
   width: fit-content;
+  max-width: calc(100% - 32px);
+  overflow-wrap: anywhere;
+  text-align: center;
 }
 
 .date_divider_first {
   margin-top: 60px;
+}
+
+.date_divider_last {
+  margin-bottom: 60px;
 }

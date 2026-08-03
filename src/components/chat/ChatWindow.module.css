@@ -58,7 +58,7 @@
   padding: 16px;
   gap: 10px;
   min-width: 0;
-  background: linear-gradient(#19191a, #19191a90, transparent);
+  background: linear-gradient(var(--box-bg-color), transparent);
   position: absolute;
   width: 100%;
   z-index: 2;
@@ -68,7 +68,7 @@
 
 .hide_btn {
   border-radius: 50%;
-  background: #252526;
+  background: var(--active-bg);
   width: 36px;
   height: 36px;
   display: flex;
@@ -99,7 +99,7 @@
 .headerMain {
   display: flex;
   min-width: 0;
-  background: #252526;
+  background: var(--active-bg);
   border-radius: 100px;
   padding: 8px 24px;
   height: 36px;
@@ -120,6 +120,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 .headerDescription {
@@ -138,14 +140,13 @@
   border: 0;
   cursor: pointer;
   color: inherit;
-  opacity: 0.82;
   height: 36px;
   min-height: 36px;
   max-height: 36px;
   border-radius: 20px;
   padding: 6px 6px 6px 0px;
   gap: 6px;
-  background-color: #252526;
+  background-color: var(--active-bg);
   min-width: 50px;
 }
 
@@ -258,6 +259,50 @@
   padding: 11px 10px;
   background: transparent;
   box-sizing: border-box;
+}
+
+.scrollToBottomButton {
+  position: absolute;
+  top: -34px;
+  left: 50%;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 8px 16px;
+  border: 1px solid var(--shadow-border-color);
+  border-radius: 999px;
+  background: var(--active-bg);
+  color: var(--text-color);
+  box-shadow: 0 4px 16px var(--overlay-color);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  animation: scrollToBottomAppear 0.18s ease-out;
+}
+
+.scrollToBottomButton:hover {
+  filter: brightness(1.15);
+}
+
+.scrollToBottomButton:focus-visible {
+  outline: 2px solid var(--main-color);
+  outline-offset: 2px;
+}
+
+@keyframes scrollToBottomAppear {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
 
 .inputBox {

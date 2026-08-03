@@ -16,6 +16,13 @@ import { Context } from "../../main.jsx";
 import { observer } from "mobx-react-lite";
 import { useNavigate, useParams } from "react-router-dom";
 import Logo from "../UI/Logo.jsx";
+import ContextMenu from "../UI/ContextMenu.jsx";
+import {
+  notifyError,
+  notifySuccess,
+} from "../../notifications/notificationService.js";
+
+const LAST_OPEN_CHAT_ID_KEY = "lastOpenChatId";
 
 const ChatList = observer(
   ({
@@ -36,7 +43,14 @@ const ChatList = observer(
     const [modal, setModal] = useState(false);
     const [loading, setLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);
+    const [contextMenu, setContextMenu] = useState(null);
+    const [leavingChatId, setLeavingChatId] = useState(null);
     const sortedChats = ChatStore.sortedChats;
+    const contextChat = contextMenu
+      ? sortedChats.find(
+          (chat) => String(chat.id) === String(contextMenu.chatId),
+        )
+      : null;
 
     const loadingRef = useRef();
     const pageRef = useRef(1);
@@ -76,6 +90,69 @@ const ChatList = observer(
       ChatStore.upsertChat(newChat);
       navigate(`/chat/${newChat.id}`);
     };
+
+    const closeContextMenu = useCallback(() => setContextMenu(null), []);
+
+    const openChatContextMenu = useCallback((event, chat) => {
+      if (!chat.is_group) {
+        setContextMenu(null);
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      setContextMenu({
+        chatId: chat.id,
+        x: event.clientX,
+        y: event.clientY,
+      });
+    }, []);
+
+    const leaveChat = useCallback(async (chat) => {
+      if (!chat || leavingChatId != null) return;
+
+      setLeavingChatId(chat.id);
+      try {
+        await ChatServices.leaveChat(chat.id);
+
+        if (String(activeVoiceRoomChatId) === String(chat.id)) {
+          onLeaveVoiceRoom?.();
+        }
+
+        const isOpenChat = String(routeChatId) === String(chat.id);
+        ChatStore.removeChat(chat.id);
+
+        if (isOpenChat) {
+          sessionStorage.removeItem(LAST_OPEN_CHAT_ID_KEY);
+          navigate("/chat", { replace: true });
+        }
+
+        notifySuccess(`Вы покинули чат «${chat.name}»`);
+      } catch (error) {
+        notifyError(error, "Не удалось покинуть чат");
+      } finally {
+        setLeavingChatId(null);
+      }
+    }, [
+      ChatStore,
+      activeVoiceRoomChatId,
+      leavingChatId,
+      navigate,
+      onLeaveVoiceRoom,
+      routeChatId,
+    ]);
+
+    const contextMenuItems = contextChat
+      ? [
+          {
+            id: "leave-chat",
+            label: "Покинуть чат",
+            danger: true,
+            disabled: leavingChatId != null,
+            onSelect: () => leaveChat(contextChat),
+          },
+        ]
+      : [];
 
     useEffect(() => {
       const observerInstance = new IntersectionObserver((entries) => {
@@ -131,6 +208,7 @@ const ChatList = observer(
                 chat={chat}
                 isSelected={String(chat.id) === String(routeChatId)}
                 isLast={idx === sortedChats.length - 1}
+                onContextMenu={openChatContextMenu}
               />
             ))}
             <div ref={loadingRef} className={classes.chat_list__loader}>
@@ -151,6 +229,14 @@ const ChatList = observer(
             onToggleVoiceScreenShare={onToggleVoiceScreenShare}
           />
         </div>
+
+        <ContextMenu
+          isOpen={Boolean(contextMenu && contextChat)}
+          x={contextMenu?.x}
+          y={contextMenu?.y}
+          items={contextMenuItems}
+          onClose={closeContextMenu}
+        />
       </div>
     );
   },

@@ -27,7 +27,12 @@ const formatLastMessageDate = (dateValue, now = new Date()) => {
   return format(date, "dd.MM.yyyy");
 };
 
-const ChatListElement = observer(({ chat, isSelected, isLast }) => {
+const ChatListElement = observer(({
+  chat,
+  isSelected,
+  isLast,
+  onContextMenu,
+}) => {
   const { AuthStore, ChatStore } = useContext(Context);
   const navigate = useNavigate();
   const lastMessage = ChatStore.getLastMessage(chat.id);
@@ -37,10 +42,11 @@ const ChatListElement = observer(({ chat, isSelected, isLast }) => {
   const isOwnLastMessage =
     lastMessageAuthor?.id != null &&
     String(lastMessageAuthor.id) === String(AuthStore?.user?.id);
+  const isSystemLastMessage = Boolean(chatLastMessage?.is_system);
   const lastMessageText = chatLastMessage?.text;
   const hasLastMessage = lastMessageText != null && lastMessageText !== "";
   const lastMessagePreview = hasLastMessage
-    ? isOwnLastMessage
+    ? isOwnLastMessage || isSystemLastMessage
       ? lastMessageText
       : `${getUserDisplayName(lastMessageAuthor)}: ${lastMessageText}`
     : "Сообщений пока нет";
@@ -66,6 +72,7 @@ const ChatListElement = observer(({ chat, isSelected, isLast }) => {
     >
       <div
         className={`${styles.content} ${isSelected ? styles.active : ""}`}
+        onContextMenu={(event) => onContextMenu?.(event, chat)}
         onClick={() => {
           navigate(`/chat/${chat.id}`);
         }}
@@ -109,7 +116,7 @@ const ChatListElement = observer(({ chat, isSelected, isLast }) => {
 
           <p className={styles.lastMessage}>
             <span className={styles.lastMessageText}>{lastMessagePreview}</span>
-            {hasLastMessage && isOwnLastMessage && (
+            {hasLastMessage && isOwnLastMessage && !isSystemLastMessage && (
               <span className={styles.deliveryCheck}>
                 <ReadMessageCheck
                   isRead={chatLastMessage?.is_read}

@@ -57,6 +57,11 @@ const ChatPage = observer(() => {
   }, []);
 
   useEffect(() => {
+    ChatStore.setVoiceRoomActive(Boolean(activeVoiceRoomChatId));
+    return () => ChatStore.setVoiceRoomActive(false);
+  }, [ChatStore, activeVoiceRoomChatId]);
+
+  useEffect(() => {
     if (routeChatId) {
       sessionStorage.setItem(LAST_OPEN_CHAT_ID_KEY, routeChatId);
       return;

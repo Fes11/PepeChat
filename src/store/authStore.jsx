@@ -4,6 +4,7 @@ import UserServices from "../services/UserService";
 import { refreshAccessToken } from "../api";
 import LocalCacheService from "../services/LocalCacheService";
 import { normalizeApiErrors } from "../utils/errors";
+import { getPresencePatch } from "../utils/presence.js";
 
 const getRefreshAccountId = (refreshToken) => {
   try {
@@ -29,8 +30,7 @@ export default class authStore {
       if (this.user.id !== event.user_id) return;
       this.setUser({
         ...this.user,
-        status: event.status,
-        last_online: event.last_seen,
+        ...getPresencePatch(event),
       });
     });
   }

@@ -29,6 +29,7 @@
 }
 
 .online,
+.away,
 .offline {
   position: absolute;
   display: block;
@@ -48,4 +49,17 @@
 
 .offline {
   background: #535353;
+}
+
+.away {
+  display: grid;
+  place-items: center;
+  background: #f39a32;
+}
+
+.away svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: #fff3df;
 }

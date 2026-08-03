@@ -12,7 +12,7 @@ export type AvatarProps = {
   size?: number | string;
   shape?: "circle" | "rounded";
   className?: string;
-  status?: "online" | "offline" | null;
+  status?: "online" | "away" | "offline" | null;
   fallbackSrc?: string;
   title?: string;
 };
@@ -46,7 +46,12 @@ const Avatar = ({
   const cssSize = getCssSize(size);
   const shouldUseFallback = !resolvedSrc || failedSrc === resolvedSrc;
   const imageSrc = shouldUseFallback ? fallbackSrc : resolvedSrc;
-  const shouldShowStatus = status === "online" || status === "offline";
+  const shouldShowStatus = ["online", "away", "offline"].includes(status ?? "");
+  const statusLabel = status === "online"
+    ? "В сети"
+    : status === "away"
+      ? "Отошёл"
+      : "Не в сети";
 
   useEffect(() => {
     setFailedSrc(null);
@@ -77,10 +82,16 @@ const Avatar = ({
 
       {shouldShowStatus && (
         <span
-          className={status === "online" ? styles.online : styles.offline}
-          title={status === "online" ? "В сети" : "Не в сети"}
-          aria-label={status === "online" ? "В сети" : "Не в сети"}
-        />
+          className={styles[status as "online" | "away" | "offline"]}
+          title={statusLabel}
+          aria-label={statusLabel}
+        >
+          {status === "away" && (
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M11.8 11.5A5.7 5.7 0 0 1 5.1 4.2a5.2 5.2 0 1 0 6.7 7.3Z" />
+            </svg>
+          )}
+        </span>
       )}
     </span>
   );

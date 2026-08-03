@@ -27,6 +27,7 @@ import { MESSAGE_MAX_LENGTH } from "../../constants/limits.js";
 import styles from "./ChatWindow.module.css";
 
 const MAX_INPUT_HEIGHT = 200;
+const BOTTOM_SCROLL_THRESHOLD = 24;
 
 const ChatWindow = observer(
   ({
@@ -46,6 +47,7 @@ const ChatWindow = observer(
     const [nextCursor, setNextCursor] = useState(null);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [hasMore, setHasMore] = useState(true);
+    const [showScrollToBottom, setShowScrollToBottom] = useState(false);
     const [error, setError] = useState(null);
     const listRef = useRef(null);
     const inputRef = useRef(null);
@@ -80,9 +82,9 @@ const ChatWindow = observer(
 
     const otherUser = ChatStore.getUserPresence(chat.other_user);
     const lastOnlineStatus = getLastOnlineStatus(otherUser?.last_online);
-    const onlineParticipantsCount = participants.filter((participant) => {
+    const connectedParticipantsCount = participants.filter((participant) => {
       const user = ChatStore.getUserPresence(participant.user);
-      return user?.status === "online";
+      return user?.status === "online" || user?.status === "away";
     }).length;
 
     const isFirstLoad = useRef(true);
@@ -103,6 +105,7 @@ const ChatWindow = observer(
       setNextCursor(null);
       setHasMore(true);
       setIsLoadingMore(false);
+      setShowScrollToBottom(false);
       setIsEmojiPickerOpen(false);
       setEmojiTab("emoji");
       setContextMenu(null);
@@ -217,6 +220,7 @@ const ChatWindow = observer(
         container.scrollTop = container.scrollHeight;
         isFirstLoad.current = false;
         shouldStickToBottom.current = true;
+        setShowScrollToBottom(false);
         return;
       }
 
@@ -246,11 +250,14 @@ const ChatWindow = observer(
       if (!container) return;
 
       const onScroll = () => {
-        shouldStickToBottom.current =
+        const isNearBottom =
           container.scrollHeight -
             container.scrollTop -
             container.clientHeight <
-          24;
+          BOTTOM_SCROLL_THRESHOLD;
+
+        shouldStickToBottom.current = isNearBottom;
+        setShowScrollToBottom(!isNearBottom);
 
         if (container.scrollTop <= 0 && hasMore) {
           loadMoreMessages();
@@ -260,6 +267,16 @@ const ChatWindow = observer(
       container.addEventListener("scroll", onScroll);
       return () => container.removeEventListener("scroll", onScroll);
     }, [hasMore, loadMoreMessages]);
+
+    const scrollToBottom = useCallback(() => {
+      const container = listRef.current;
+      if (!container) return;
+
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: "smooth",
+      });
+    }, []);
 
     const sendMessage = async (e) => {
       try {
@@ -405,11 +422,13 @@ const ChatWindow = observer(
                   <p className={styles.headerDescription}>
                     {otherUser?.status === "online"
                       ? "online"
+                      : otherUser?.status === "away"
+                        ? "Отошёл"
                       : (lastOnlineStatus ?? "offline")}
                   </p>
                 ) : (
                   <p className={styles.headerDescription}>
-                    {onlineParticipantsCount} Онлайн
+                    {connectedParticipantsCount} В сети
                   </p>
                 )}
               </div>
@@ -509,17 +528,26 @@ const ChatWindow = observer(
                   : null;
 
                 const showDate = !prevDate || !isSameDay(currentDate, prevDate);
+                const isSystemMessage = Boolean(msg.is_system);
 
                 return (
                   <React.Fragment key={msg.client_id || msg.id}>
                     {showDate && (
                       <DateDivider date={currentDate} isFirst={index === 0} />
                     )}
-                    <Message
-                      message={msg}
-                      isLastInList={index === messages.length - 1}
-                      onContextMenu={openContextMenu}
-                    />
+                    {isSystemMessage ? (
+                      <DateDivider
+                        label={msg.text}
+                        isLast={index === messages.length - 1}
+                        role="status"
+                      />
+                    ) : (
+                      <Message
+                        message={msg}
+                        isLastInList={index === messages.length - 1}
+                        onContextMenu={openContextMenu}
+                      />
+                    )}
                   </React.Fragment>
                 );
               })}
@@ -534,6 +562,31 @@ const ChatWindow = observer(
           />
 
           <div className={styles.composer}>
+            {showScrollToBottom && (
+              <button
+                type="button"
+                className={styles.scrollToBottomButton}
+                onClick={scrollToBottom}
+                aria-label="Перейти к последним сообщениям"
+              >
+                <span>Последние сообщения</span>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M8 2.5V13.5M8 13.5L3.5 9M8 13.5L12.5 9"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            )}
             <div className={styles.inputBox} ref={emojiPickerRef}>
               {isEmojiPickerOpen && (
                 <EmojiPicker
