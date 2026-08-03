@@ -15,11 +15,11 @@ import {
 
 const AUDIO_SAMPLE_RATE = 48000;
 const HIGHPASS_FREQUENCY = 80;
-const GATE_CHECK_INTERVAL = 20;
+const GATE_CHECK_INTERVAL = 10;
 const GATE_CLOSED_GAIN = 0;
-const GATE_ATTACK_SECONDS = 0.006;
-const GATE_RELEASE_SECONDS = 0.12;
-const GATE_HOLD_MS = 220;
+const GATE_ATTACK_SECONDS = 0.003;
+const GATE_RELEASE_SECONDS = 0.08;
+const GATE_HOLD_MS = 180;
 const RNNOISE_READY_TIMEOUT_MS = 2500;
 
 const getAudioContextClass = () =>
@@ -258,7 +258,7 @@ export const audioProcessingService = {
     peakLimiter.curve = createSoftLimiterCurve();
     peakLimiter.oversample = "none";
 
-    gateAnalyser.fftSize = 1024;
+    gateAnalyser.fftSize = 512;
     gateAnalyser.smoothingTimeConstant = 0;
     gainNode.gain.value = autoGainControl ? 1 : volume;
 

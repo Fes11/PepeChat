@@ -16,8 +16,10 @@ export const normalizeGateSensitivity = (value) => {
 export const getAdaptiveGateThresholds = (noiseFloor, sensitivity) => {
   const normalized = normalizeGateSensitivity(sensitivity);
   // Higher UI sensitivity means that quieter speech can open the gate.
-  const minimumOpenRms = 0.012 - normalized * 0.009;
-  const requiredSnrDb = 12 - normalized * 7;
+  // Keep the default threshold near -46 dBFS. The previous -42 dBFS floor
+  // regularly removed quiet consonants before either VAD could see them.
+  const minimumOpenRms = 0.008 - normalized * 0.006;
+  const requiredSnrDb = 10 - normalized * 5;
   const noiseMultiplier = 10 ** (requiredSnrDb / 20);
   const open = Math.max(
     minimumOpenRms,
@@ -25,8 +27,8 @@ export const getAdaptiveGateThresholds = (noiseFloor, sensitivity) => {
   );
 
   return {
-    open: Math.min(open, minimumOpenRms * 2.5),
-    close: Math.min(open, minimumOpenRms * 2.5) * 0.63,
+    open: Math.min(open, minimumOpenRms * 3),
+    close: Math.min(open, minimumOpenRms * 3) * 0.58,
   };
 };
 

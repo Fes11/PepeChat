@@ -115,6 +115,17 @@ const Room = forwardRef(function Room(
     }));
   };
 
+  const getParticipantStreamVolume = (participantId) =>
+    participantStreamVolumes[participantId] ?? DEFAULT_STREAM_VOLUME;
+
+  const setParticipantStreamVolume = (participantId, value) => {
+    const nextVolume = Math.max(0, Math.min(1, Number(value) / 100));
+    setParticipantStreamVolumes((prev) => ({
+      ...prev,
+      [participantId]: nextVolume,
+    }));
+  };
+
   const toggleParticipantMute = (participantId) => {
     setMutedParticipantIds((prev) => {
       const next = new Set(prev);
@@ -268,17 +279,6 @@ const Room = forwardRef(function Room(
       console.warn("[VoiceRoom] Cannot toggle screen share", error);
       setScreenShareEnabledState(false);
     }
-  };
-
-  const getParticipantStreamVolume = (participantId) =>
-    participantStreamVolumes[participantId] ?? DEFAULT_STREAM_VOLUME;
-
-  const setParticipantStreamVolume = (participantId, value) => {
-    const nextVolume = Math.max(0, Math.min(1, Number(value) / 100));
-    setParticipantStreamVolumes((prev) => ({
-      ...prev,
-      [participantId]: nextVolume,
-    }));
   };
 
   const shareSelectedSource = async (source, withAudio, qualityId) => {

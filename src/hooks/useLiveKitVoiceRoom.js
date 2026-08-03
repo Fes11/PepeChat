@@ -25,6 +25,7 @@ import {
   DEFAULT_SCREEN_SHARE_QUALITY,
   normalizeScreenShareQuality,
 } from "../constants/screenShareQuality";
+import useSpeakingDetector from "./useSpeakingDetector";
 
 const HEARTBEAT_INTERVAL = 10_000;
 const MEDIA_RECONNECT_DELAY = 1_000;
@@ -57,6 +58,9 @@ export const useLiveKitVoiceRoom = (chatId) => {
   const microphoneRequestRef = useRef(0);
   const screenShareRequestRef = useRef(0);
   const microphoneEnabledRef = useRef(true);
+  const localMuteStateRef = useRef({ muted: false });
+  const localSpeakingRef = useRef(false);
+  const liveKitSpeakingRef = useRef(new Set());
   const localJoinSoundPlayedRef = useRef(false);
 
   const updateLocalParticipantState = useCallback(
@@ -71,6 +75,27 @@ export const useLiveKitVoiceRoom = (chatId) => {
     },
     [AuthStore.user?.id],
   );
+
+  const handleLocalSpeakingChange = useCallback(
+    (speaking) => {
+      localSpeakingRef.current = speaking;
+      const isReportedByLiveKit = liveKitSpeakingRef.current.has(
+        String(AuthStore.user?.id),
+      );
+      updateLocalParticipantState({
+        speaking:
+          !localMuteStateRef.current.muted &&
+          (speaking || isReportedByLiveKit),
+      });
+    },
+    [AuthStore.user?.id, updateLocalParticipantState],
+  );
+
+  const { startSpeakingDetection, stopSpeakingDetection } =
+    useSpeakingDetector({
+      isMutedRef: localMuteStateRef,
+      onSpeakingChange: handleLocalSpeakingChange,
+    });
 
   const mergeTransportParticipant = useCallback((mediaParticipant) => {
     setParticipants((current) =>
@@ -113,8 +138,9 @@ export const useLiveKitVoiceRoom = (chatId) => {
     await transportRef.current?.setMicrophoneEnabled(
       microphoneEnabledRef.current,
     );
+    await startSpeakingDetection(stream);
     setLocalStreamReady(true);
-  }, [MediaStore]);
+  }, [MediaStore, startSpeakingDetection]);
 
   const disconnect = useCallback(
     async ({ playSound = true } = {}) => {
@@ -125,6 +151,9 @@ export const useLiveKitVoiceRoom = (chatId) => {
       microphoneRequestRef.current += 1;
       screenShareRequestRef.current += 1;
       clearInterval(heartbeatRef.current);
+      stopSpeakingDetection();
+      liveKitSpeakingRef.current.clear();
+      localSpeakingRef.current = false;
       const socket = socketRef.current;
       const transport = transportRef.current;
       socket?.send({ type: "leave" });
@@ -146,7 +175,12 @@ export const useLiveKitVoiceRoom = (chatId) => {
       setScreenShareActive(false);
       ChatStore?.clearVoiceParticipants(chatId);
     },
-    [ChatStore, MediaStore.selectedDisplay, chatId],
+    [
+      ChatStore,
+      MediaStore.selectedDisplay,
+      chatId,
+      stopSpeakingDetection,
+    ],
   );
 
   useEffect(() => {
@@ -209,14 +243,23 @@ export const useLiveKitVoiceRoom = (chatId) => {
           onParticipantLeft: clearTransportParticipant,
           onActiveSpeakers: (identities) => {
             const speaking = new Set(identities.map(String));
+            liveKitSpeakingRef.current = speaking;
             setParticipants((current) =>
-              current.map((item) => ({
-                ...item,
-                state: {
-                  ...item.state,
-                  speaking: speaking.has(String(item.user?.id)),
-                },
-              })),
+              current.map((item) => {
+                const identity = String(item.user?.id);
+                const isLocal =
+                  identity === String(AuthStore.user?.id);
+                return {
+                  ...item,
+                  state: {
+                    ...item.state,
+                    speaking: isLocal
+                      ? !localMuteStateRef.current.muted &&
+                        (localSpeakingRef.current || speaking.has(identity))
+                      : speaking.has(identity),
+                  },
+                };
+              }),
             );
           },
           onLocalScreenShareChanged: setScreenShareActive,
@@ -425,6 +468,8 @@ export const useLiveKitVoiceRoom = (chatId) => {
   const setMicEnabled = useCallback(
     (enabled) => {
       microphoneEnabledRef.current = enabled;
+      localMuteStateRef.current.muted = !enabled;
+      if (!enabled) localSpeakingRef.current = false;
       updateLocalParticipantState({ muted: !enabled, speaking: false });
       transportRef.current?.setMicrophoneEnabled(enabled).catch((error) => {
         console.warn("[VoiceRoom] Cannot change microphone state", error);

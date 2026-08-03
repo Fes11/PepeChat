@@ -49,6 +49,25 @@ const applyVerifiedNoiseSuppression = async (track, enabled) => {
   return actual === undefined ? true : actual === enabled;
 };
 
+const applyVerifiedVoiceIsolation = async (track, enabled) => {
+  if (!track?.applyConstraints) return false;
+
+  try {
+    // Keep this optional. Some Chromium/WebView2 versions advertise the
+    // extension but reject it when expressed as a mandatory constraint.
+    await track.applyConstraints({ voiceIsolation: enabled });
+  } catch (error) {
+    console.warn(
+      `[MediaService] Cannot ${enabled ? "enable" : "disable"} voice isolation`,
+      error,
+    );
+    return false;
+  }
+
+  const actual = track.getSettings?.().voiceIsolation;
+  return actual === undefined ? true : actual === enabled;
+};
+
 export const mediaService = {
   async getMedia(constraints) {},
 
@@ -100,22 +119,33 @@ export const mediaService = {
     const supportedConstraints =
       navigator.mediaDevices.getSupportedConstraints?.() ?? {};
     const rnnoiseSupported = audioProcessingService.isRnnoiseSupported();
-    let useRnnoise =
+    const voiceIsolationSupported =
+      supportedConstraints.voiceIsolation === true;
+    const preferVoiceIsolation =
       processAudio &&
       noiseSuppressionMode === "strong" &&
-      rnnoiseSupported;
+      voiceIsolationSupported;
+    let useRnnoise = false;
+    const needsRawStrongInput =
+      processAudio &&
+      noiseSuppressionMode === "strong" &&
+      (rnnoiseSupported || preferVoiceIsolation);
+    let rawStrongInputAvailable = needsRawStrongInput;
     let audioConstraints = {
       ...DEFAULT_AUDIO_CONSTRAINTS,
       autoGainControl:
         audioSettings.autoGainControl ??
         DEFAULT_MICROPHONE_SETTINGS.autoGainControl,
-      // RNNoise must receive audio which has not already been denoised. AEC is
-      // intentionally left enabled because it solves a separate echo problem.
-      noiseSuppression: useRnnoise
+      // Voice isolation and RNNoise need audio which has not already been
+      // denoised. AEC stays enabled because it solves a separate echo problem.
+      noiseSuppression: needsRawStrongInput
         ? supportedConstraints.noiseSuppression
           ? { exact: false }
           : false
         : noiseSuppressionMode !== "off",
+      ...(voiceIsolationSupported
+        ? { voiceIsolation: preferVoiceIsolation }
+        : {}),
       ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
     };
 
@@ -126,7 +156,7 @@ export const mediaService = {
       });
     } catch (error) {
       const failedToDisableNoiseSuppression =
-        useRnnoise &&
+        needsRawStrongInput &&
         error?.name === "OverconstrainedError" &&
         (!error.constraint || error.constraint === "noiseSuppression");
 
@@ -136,6 +166,7 @@ export const mediaService = {
         "[MediaService] Raw microphone audio is unavailable; using WebRTC noise suppression",
         error,
       );
+      rawStrongInputAvailable = false;
       useRnnoise = false;
       audioConstraints = {
         ...audioConstraints,
@@ -148,16 +179,25 @@ export const mediaService = {
 
     const rawTrack = rawStream.getAudioTracks()[0];
     let rawTrackSettings = rawTrack?.getSettings?.() ?? {};
-    if (useRnnoise && rawTrackSettings.noiseSuppression === true) {
-      console.warn(
-        "[MediaService] Browser noise suppression remained enabled; skipping RNNoise to avoid double processing",
-      );
-      useRnnoise = false;
+    let voiceIsolationActive =
+      preferVoiceIsolation && rawTrackSettings.voiceIsolation === true;
+    if (preferVoiceIsolation && !voiceIsolationActive) {
+      voiceIsolationActive = await applyVerifiedVoiceIsolation(rawTrack, true);
+      rawTrackSettings = rawTrack?.getSettings?.() ?? rawTrackSettings;
     }
 
+    useRnnoise = Boolean(
+      processAudio &&
+        noiseSuppressionMode === "strong" &&
+        rnnoiseSupported &&
+        !voiceIsolationActive &&
+        rawStrongInputAvailable &&
+        rawTrackSettings.noiseSuppression !== true,
+    );
     const expectsBrowserNoiseSuppression =
-      !useRnnoise && noiseSuppressionMode !== "off";
+      !voiceIsolationActive && !useRnnoise && noiseSuppressionMode !== "off";
     if (
+      !voiceIsolationActive &&
       rawTrack &&
       rawTrackSettings.noiseSuppression !== undefined &&
       rawTrackSettings.noiseSuppression !== expectsBrowserNoiseSuppression
@@ -171,12 +211,14 @@ export const mediaService = {
 
     console.info("[MediaService] Microphone processing settings", {
       requestedNoiseSuppressionMode: noiseSuppressionMode,
-      effectiveNoiseSuppressionMode: useRnnoise
-        ? "rnnoise"
-        : rawTrackSettings.noiseSuppression === true ||
-            audioConstraints.noiseSuppression === true
-          ? "webrtc"
-          : "off",
+      effectiveNoiseSuppressionMode: voiceIsolationActive
+        ? "voice-isolation"
+        : useRnnoise
+          ? "rnnoise"
+          : rawTrackSettings.noiseSuppression === true ||
+              audioConstraints.noiseSuppression === true
+            ? "webrtc"
+            : "off",
       supportedConstraints,
       trackConstraints: rawTrack?.getConstraints?.() ?? {},
       trackSettings: rawTrackSettings,
@@ -205,6 +247,13 @@ export const mediaService = {
             DEFAULT_MICROPHONE_SETTINGS.noiseGateThreshold,
         },
       );
+
+      processed.processingState.requestedNoiseSuppressionMode =
+        noiseSuppressionMode;
+      if (voiceIsolationActive) {
+        processed.processingState.effectiveNoiseSuppressionMode =
+          "voice-isolation";
+      }
 
       let cleanedUp = false;
       processed.stream.__audioCleanup = () => {

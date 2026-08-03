@@ -14,7 +14,6 @@ const ChatDescription = ({
   const { ChatStore } = useContext(Context);
   const [expandedSections, setExpandedSections] = useState({
     online: true,
-    away: true,
     offline: true,
   });
 
@@ -31,19 +30,14 @@ const ChatDescription = ({
   }));
 
   const onlineParticipants = participantsWithPresence.filter(
-    (p) => p.user.status === "online",
-  );
-
-  const awayParticipants = participantsWithPresence.filter(
-    (p) => p.user.status === "away",
+    (p) => p.user.status === "online" || p.user.status === "away",
   );
 
   const offlineParticipants = participantsWithPresence.filter(
     (p) => p.user.status === "offline",
   );
 
-  const connectedParticipantsCount =
-    onlineParticipants.length + awayParticipants.length;
+  const connectedParticipantsCount = onlineParticipants.length;
 
   const voiceParticipantUserIds = new Set(
     voiceParticipants.map((participant) => String(participant.user?.id)),
@@ -109,37 +103,6 @@ const ChatDescription = ({
         >
           <div className={styles.participantsList}>
             {onlineParticipants.map((participant) => (
-              <Participant
-                key={participant.user.id}
-                user={participant.user}
-                isInVoiceRoom={isUserInVoiceRoom(participant.user)}
-              />
-            ))}
-          </div>
-        </div>
-
-        <button
-          type="button"
-          className={styles.sectionButton}
-          aria-expanded={expandedSections.away}
-          onClick={() => toggleSection("away")}
-        >
-          <span className={styles.awayIndicator} />
-          <span>
-            ОТОШЛИ
-            <span className={styles.statusCount}>
-              {awayParticipants.length}
-            </span>
-          </span>
-        </button>
-
-        <div
-          className={`${styles.participantsShell} ${
-            expandedSections.away ? "" : styles.participantsShellCollapsed
-          }`}
-        >
-          <div className={styles.participantsList}>
-            {awayParticipants.map((participant) => (
               <Participant
                 key={participant.user.id}
                 user={participant.user}

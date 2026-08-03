@@ -164,9 +164,7 @@
 }
 
 .speaking {
-  box-shadow:
-    0 0 0 1px var(--main-color),
-    0 0 14px var(--main-color);
+  box-shadow: 0 0 0 1px var(--main-color);
 }
 
 @media (max-width: 520px) {

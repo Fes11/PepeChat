@@ -151,7 +151,7 @@
 }
 
 .voiceButton:hover {
-  opacity: 1;
+  background: var(--hover);
 }
 
 .voiceButton:focus-visible {

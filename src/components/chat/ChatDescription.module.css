@@ -124,7 +124,6 @@
 }
 
 .onlineIndicator,
-.awayIndicator,
 .offlineIndicator {
   border-radius: 50%;
   width: 6px;
@@ -133,10 +132,6 @@
 
 .onlineIndicator {
   background: var(--main-color);
-}
-
-.awayIndicator {
-  background: #f39a32;
 }
 
 .offlineIndicator {

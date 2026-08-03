@@ -39,6 +39,16 @@ test("higher gate sensitivity opens for quieter speech", () => {
   assert.ok(highSensitivity.close < highSensitivity.open);
 });
 
+test("default gate keeps quiet close-microphone speech", () => {
+  const thresholds = getAdaptiveGateThresholds(
+    DEFAULT_NOISE_FLOOR,
+    DEFAULT_MICROPHONE_SETTINGS.noiseGateThreshold,
+  );
+
+  assert.ok(thresholds.open <= 0.0055);
+  assert.ok(thresholds.close < thresholds.open);
+});
+
 test("noise floor does not learn a louder open-gate signal as noise", () => {
   assert.equal(updateNoiseFloor(0.004, 0.02, true), 0.004);
   assert.ok(updateNoiseFloor(0.004, 0.002, true) < 0.004);
