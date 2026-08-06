@@ -1,0 +1,257 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.chatFields {
+  display: grid;
+  grid-template-columns: 126px minmax(0, 1fr);
+  gap: 18px;
+  padding: 20px;
+  border-bottom: 1px solid var(--border-color);
+  align-items: center;
+}
+
+.avatarColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.avatarPicker {
+  width: 126px;
+  height: 126px;
+  margin: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+}
+
+.removeAvatarButton {
+  min-height: 30px;
+  padding: 6px 8px;
+  border-radius: 7px;
+  color: #ff7477;
+  background: var(--button-soft-bg-color);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.removeAvatarButton:hover:not(:disabled) {
+  background: color-mix(in srgb, #b91515 42%, var(--button-soft-bg-color));
+}
+
+.avatarRemoved {
+  color: var(--muted-text-color);
+  font-size: 11px;
+  text-align: center;
+}
+
+.nameField {
+  position: relative;
+  align-self: center;
+}
+
+.nameField label {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--muted-text-color);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.nameField input {
+  width: 100%;
+  min-height: 44px;
+  padding: 11px 48px 11px 13px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-color);
+  background: var(--input-bg-color);
+  user-select: text;
+}
+
+.nameField input:focus {
+  border-color: var(--main-color);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--main-faint-color);
+}
+
+.nameField input[aria-invalid="true"] {
+  border-color: #ff7477;
+}
+
+.nameCounter {
+  position: absolute;
+  top: 38px;
+  right: 12px;
+  color: var(--faint-text-color);
+  font-size: 10px;
+}
+
+.fieldError,
+.formError {
+  color: #ff7477;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.fieldError {
+  margin-top: 6px;
+}
+
+.participantsSection {
+  min-height: 0;
+  padding: 16px 20px 6px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+
+.sectionHeader h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.sectionHeader p {
+  margin-top: 3px;
+  color: var(--muted-text-color);
+  font-size: 11px;
+}
+
+.sectionHeader > span {
+  min-width: 26px;
+  height: 24px;
+  padding: 0 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: var(--main-contrast-color);
+  background: var(--main-faint-color);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.participantsList {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 3px;
+}
+
+.participant {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 9px;
+  background: var(--input-bg-color);
+}
+
+.participantInfo {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.participantInfo strong {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.participantInfo span {
+  color: var(--main-color);
+  font-size: 10px;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.kickButton {
+  flex: 0 0 auto;
+  min-height: 32px;
+  padding: 7px 10px;
+  border-radius: 7px;
+  color: #ff7477;
+  background: var(--button-soft-bg-color);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.kickButton:hover:not(:disabled) {
+  background: color-mix(in srgb, #b91515 42%, var(--button-soft-bg-color));
+}
+
+.formError {
+  margin: 8px 20px 0;
+  padding: 9px 11px;
+  border-radius: 7px;
+  background: color-mix(in srgb, #b91515 20%, transparent);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 14px 20px 18px;
+  border-top: 1px solid var(--border-color);
+}
+
+.cancelButton,
+.saveButton {
+  min-height: 40px;
+  padding: 9px 15px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.cancelButton {
+  background: var(--button-soft-bg-color);
+}
+
+.saveButton {
+  color: var(--main-contrast-color);
+  background: var(--main-color);
+}
+
+.cancelButton:hover:not(:disabled) {
+  background: var(--hover-bg-color);
+}
+
+.saveButton:hover:not(:disabled) {
+  background: var(--main-hover-color);
+}
+
+.cancelButton:disabled,
+.saveButton:disabled,
+.kickButton:disabled,
+.removeAvatarButton:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+@media (max-width: 520px) {
+  .chatFields {
+    grid-template-columns: 1fr;
+  }
+
+  .avatarColumn {
+    align-items: center;
+  }
+}

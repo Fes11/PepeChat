@@ -20,7 +20,14 @@ const clampPosition = (x, y, element) => {
   return { left, top };
 };
 
-const ContextMenu = ({ isOpen, x = 0, y = 0, items = [], onClose }) => {
+const ContextMenu = ({
+  isOpen,
+  x = 0,
+  y = 0,
+  items = [],
+  className = "",
+  onClose,
+}) => {
   const menuRef = useRef(null);
   const [position, setPosition] = useState({ left: x, top: y });
 
@@ -56,7 +63,7 @@ const ContextMenu = ({ isOpen, x = 0, y = 0, items = [], onClose }) => {
   const menu = (
     <div
       ref={menuRef}
-      className={cls.context_menu}
+      className={`${cls.context_menu} ${className}`}
       style={{ left: position.left, top: position.top }}
       role="menu"
       onPointerDown={(event) => event.stopPropagation()}

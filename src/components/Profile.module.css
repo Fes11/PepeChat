@@ -215,3 +215,22 @@
 .settingsButton:hover {
   background: var(--button-soft-bg-color);
 }
+
+.settingsModal {
+  width: min(630px, calc(100vw / var(--ui-scale) - 32px));
+  border: 0;
+  border-radius: 19px;
+  background: #1c1c1d;
+}
+
+:global([data-theme="light"]) .settingsModal {
+  background: #f3f4f7;
+}
+
+@media (max-width: 620px) {
+  .settingsModal {
+    width: calc(100vw - 16px);
+    max-height: calc(100vh - 16px);
+    border-radius: 14px;
+  }
+}

@@ -16,6 +16,7 @@ const SearchChatElement = function ({ chat, requiresJoin = false }) {
         return;
       }
 
+      await ChatStore.restoreAndOpenChat(chat.id);
       navigate(`/chat/${chat.id}`);
     } catch (error) {
       console.error("Failed to open chat:", error);

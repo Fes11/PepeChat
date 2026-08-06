@@ -21,12 +21,43 @@ export default class ChatServices {
     return api.post(`/api/chats/${id}/join-by-link/`);
   }
 
-  static async leaveChat(id) {
-    return api.post(`/api/chats/${id}/participants/leave/`);
+  static async updateChat(id, data) {
+    return api.patch(`/api/chats/${id}/`, data);
+  }
+
+  static async leaveChat(id, newCreatorId = null) {
+    return api.post(`/api/chats/${id}/participants/leave/`, {
+      new_creator_id: newCreatorId,
+    });
+  }
+
+  static async deleteChat(id) {
+    return api.delete(`/api/chats/${id}/`);
+  }
+
+  static async restoreChat(id) {
+    return api.post(`/api/chats/${id}/restore/`);
   }
 
   static async getChatParticipants(id) {
     return api.get(`/api/chats/${id}/participants/`);
+  }
+
+  static async getAllChatParticipants(id) {
+    const participants = [];
+    let nextUrl = `/api/chats/${id}/participants/`;
+
+    while (nextUrl) {
+      const { data } = await api.get(nextUrl);
+      participants.push(...(data.results || []));
+      nextUrl = data.next;
+    }
+
+    return participants;
+  }
+
+  static async kickParticipant(chatId, participantId) {
+    return api.delete(`/api/chats/${chatId}/participants/${participantId}/`);
   }
 
   static async globalSearch(query) {

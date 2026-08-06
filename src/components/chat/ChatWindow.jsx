@@ -9,6 +9,7 @@ import React, {
 } from "react";
 import { Context } from "../../main.jsx";
 import MessageService from "../../services/MessageService";
+import ChatService from "../../services/ChatService.jsx";
 import Message from "../message/Message.jsx";
 import ChatDescription from "./ChatDescription.jsx";
 import Spinner from "../UI/Spiner.jsx";
@@ -19,10 +20,15 @@ import { parseISO, isSameDay, formatDistanceToNow } from "date-fns";
 import { enUS } from "date-fns/locale";
 import DateDivider from "../UI/DateDivider.jsx";
 import { observer } from "mobx-react-lite";
-import { notifyError } from "../../notifications/notificationService.js";
+import {
+  notifyError,
+  notifySuccess,
+} from "../../notifications/notificationService.js";
 import { getErrorMessage } from "../../utils/errors.js";
 import ContextMenu from "../UI/ContextMenu";
 import VoiceIcon from "../UI/VoiceIcon.jsx";
+import EditChatModal from "./EditChatModal.jsx";
+import LeaveChatModal from "./LeaveChatModal.jsx";
 import { MESSAGE_MAX_LENGTH } from "../../constants/limits.js";
 import styles from "./ChatWindow.module.css";
 
@@ -38,6 +44,7 @@ const ChatWindow = observer(
     isDescriptionVisible,
     onHideDescription,
     onShowDescription,
+    onChatLeft,
   }) => {
     // const [messages, setMessages] = useState([]);
     const { ChatStore } = useContext(Context);
@@ -90,6 +97,11 @@ const ChatWindow = observer(
     const isFirstLoad = useRef(true);
 
     const [contextMenu, setContextMenu] = useState(null);
+    const [chatMenu, setChatMenu] = useState(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+    const [isLeavingChat, setIsLeavingChat] = useState(false);
+    const [isParticipantsLoading, setIsParticipantsLoading] = useState(false);
     const [deletingMessageId, setDeletingMessageId] = useState(null);
     const selectedMessage = useMemo(
       () =>
@@ -109,6 +121,10 @@ const ChatWindow = observer(
       setIsEmojiPickerOpen(false);
       setEmojiTab("emoji");
       setContextMenu(null);
+      setChatMenu(null);
+      setIsEditModalOpen(false);
+      setIsLeaveModalOpen(false);
+      setIsLeavingChat(false);
       setDeletingMessageId(null);
       isLoadingOlderMessages.current = false;
       previousScrollHeight.current = 0;
@@ -153,9 +169,19 @@ const ChatWindow = observer(
         return;
       }
 
-      ChatStore.ensureChatParticipants(chat.id).catch((error) => {
-        console.error("Ошибка при получении участников чата:", error);
-      });
+      let cancelled = false;
+      setIsParticipantsLoading(true);
+      ChatStore.ensureChatParticipants(chat.id)
+        .catch((error) => {
+          console.error("Ошибка при получении участников чата:", error);
+        })
+        .finally(() => {
+          if (!cancelled) setIsParticipantsLoading(false);
+        });
+
+      return () => {
+        cancelled = true;
+      };
     }, [ChatStore, chat.id, chat.is_group]);
 
     useEffect(() => {
@@ -385,6 +411,58 @@ const ChatWindow = observer(
       ];
     }, [deleteMessage, deletingMessageId, selectedMessage]);
 
+    const currentParticipant = participants.find(
+      (participant) => String(participant.user?.id) === String(ChatStore.currentUser?.id),
+    );
+    const isChatCreator = Boolean(chat.is_creator || currentParticipant?.is_creator);
+    // `can_edit` is deliberately separate from ownership so role permissions can
+    // be added later without changing this menu or the owner-leave flow.
+    const canEditChat = Boolean(chat.can_edit || isChatCreator);
+
+    const openChatMenu = (event) => {
+      const rect = event.currentTarget.getBoundingClientRect();
+      setChatMenu((current) => current
+        ? null
+        : {
+            x: Math.max(8, rect.right - 190),
+            y: rect.bottom + 6,
+          });
+    };
+
+    const chatMenuItems = [
+      ...(canEditChat
+        ? [{
+            id: "edit-chat",
+            label: "Редактировать",
+            icon: <img src="/highlighter.svg" alt="" />,
+            onSelect: () => setIsEditModalOpen(true),
+          }]
+        : []),
+      {
+        id: "leave-chat",
+        label: "Покинуть чат",
+        icon: <img src="/leave-red.svg" alt="" />,
+        danger: true,
+        onSelect: () => setIsLeaveModalOpen(true),
+      },
+    ];
+
+    const leaveChat = async (newCreatorId) => {
+      if (isLeavingChat) return;
+
+      setIsLeavingChat(true);
+      try {
+        await ChatService.leaveChat(chat.id, newCreatorId);
+        setIsLeaveModalOpen(false);
+        notifySuccess(`Вы покинули чат «${chat.name}»`);
+        onChatLeft?.(chat.id);
+      } catch (leaveError) {
+        notifyError(leaveError, "Не удалось покинуть чат");
+      } finally {
+        setIsLeavingChat(false);
+      }
+    };
+
     return (
       <div className={styles.window}>
         <div className={styles.chat}>
@@ -424,7 +502,7 @@ const ChatWindow = observer(
                       ? "online"
                       : otherUser?.status === "away"
                         ? "Отошёл"
-                      : (lastOnlineStatus ?? "offline")}
+                        : (lastOnlineStatus ?? "offline")}
                   </p>
                 ) : (
                   <p className={styles.headerDescription}>
@@ -476,6 +554,19 @@ const ChatWindow = observer(
                   />
                 )}
               </button>
+
+              {chat.is_group && (
+                <button
+                  type="button"
+                  className={styles.hide_btn}
+                  onClick={openChatMenu}
+                  aria-label="Действия с чатом"
+                  title="Действия с чатом"
+                  aria-expanded={Boolean(chatMenu)}
+                >
+                  <img src="/dots.svg" alt="" />
+                </button>
+              )}
 
               {chat.is_group && !isDescriptionVisible && (
                 <button
@@ -561,6 +652,15 @@ const ChatWindow = observer(
             onClose={closeContextMenu}
           />
 
+          <ContextMenu
+            isOpen={Boolean(chatMenu)}
+            x={chatMenu?.x}
+            y={chatMenu?.y}
+            items={chatMenuItems}
+            className={styles.chatActionsMenu}
+            onClose={() => setChatMenu(null)}
+          />
+
           <div className={styles.composer}>
             {showScrollToBottom && (
               <button
@@ -627,6 +727,29 @@ const ChatWindow = observer(
             onHide={onHideDescription}
           />
         )}
+
+        <EditChatModal
+          isOpen={isEditModalOpen}
+          chat={chat}
+          participants={participants}
+          onUpdated={(changes) => ChatStore.updateChat(chat.id, changes)}
+          onParticipantKicked={(participant) => {
+            ChatStore.removeChatParticipant(chat.id, participant.id);
+          }}
+          onClose={() => setIsEditModalOpen(false)}
+        />
+
+        <LeaveChatModal
+          isOpen={isLeaveModalOpen}
+          chat={chat}
+          participants={participants}
+          currentUserId={ChatStore.currentUser?.id}
+          isCreator={isChatCreator}
+          isLoadingParticipants={isParticipantsLoading}
+          isSubmitting={isLeavingChat}
+          onConfirm={leaveChat}
+          onClose={() => setIsLeaveModalOpen(false)}
+        />
       </div>
     );
   },

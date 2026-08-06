@@ -7,8 +7,8 @@ const UI_SCALE_STORAGE_KEY = "ui-scale";
 export const DEFAULT_THEME = "dark";
 export const DEFAULT_MAIN_COLOR = "#7b61ff";
 export const DEFAULT_UI_SCALE = 1;
-export const MIN_UI_SCALE = 1;
-export const MAX_UI_SCALE = 1.5;
+export const MIN_UI_SCALE = 0.75;
+export const MAX_UI_SCALE = 1.75;
 export const ACCENT_COLORS = [
   "#7b61ff",
   "#275EE7",
@@ -192,11 +192,20 @@ export const useThemeSettings = () => {
     }));
   };
 
+  const setThemeSettings = ({ theme, mainColor, uiScale }) => {
+    setSettings({
+      theme: getTheme(theme),
+      mainColor: normalizeHexColor(mainColor),
+      uiScale: normalizeUiScale(uiScale),
+    });
+  };
+
   return {
     ...settings,
     uiScale: settings.uiScale ?? getCurrentUiScale(),
     setTheme,
     setMainColor,
     setUiScale,
+    setThemeSettings,
   };
 };

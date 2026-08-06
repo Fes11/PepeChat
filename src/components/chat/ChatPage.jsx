@@ -81,6 +81,15 @@ const ChatPage = observer(() => {
     navigate("/chat", { replace: true });
   }, [ChatStore, navigate]);
 
+  const handleChatLeft = useCallback((chatId) => {
+    if (String(activeVoiceRoomChatId) === String(chatId)) {
+      voiceRoomRef.current?.leave();
+    }
+    ChatStore.removeChat(chatId);
+    sessionStorage.removeItem(LAST_OPEN_CHAT_ID_KEY);
+    navigate("/chat", { replace: true });
+  }, [ChatStore, activeVoiceRoomChatId, navigate]);
+
   const activeVoiceChat = useMemo(() => {
     return ChatStore.chats.find(
       (chat) => String(chat.id) === String(activeVoiceRoomChatId),
@@ -197,6 +206,7 @@ const ChatPage = observer(() => {
             isDescriptionVisible={isChatDescriptionVisible}
             onHideDescription={() => setIsChatDescriptionVisible(false)}
             onShowDescription={() => setIsChatDescriptionVisible(true)}
+            onChatLeft={handleChatLeft}
           />
         ) : (
           <div className={styles.emptyState}>

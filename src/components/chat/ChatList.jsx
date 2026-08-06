@@ -17,6 +17,7 @@ import { observer } from "mobx-react-lite";
 import { useNavigate, useParams } from "react-router-dom";
 import Logo from "../UI/Logo.jsx";
 import ContextMenu from "../UI/ContextMenu.jsx";
+import LeaveChatModal from "./LeaveChatModal.jsx";
 import {
   notifyError,
   notifySuccess,
@@ -45,6 +46,9 @@ const ChatList = observer(
     const [hasMore, setHasMore] = useState(true);
     const [contextMenu, setContextMenu] = useState(null);
     const [leavingChatId, setLeavingChatId] = useState(null);
+    const [deletingChatId, setDeletingChatId] = useState(null);
+    const [leaveModalChat, setLeaveModalChat] = useState(null);
+    const [isLoadingLeaveParticipants, setIsLoadingLeaveParticipants] = useState(false);
     const sortedChats = ChatStore.sortedChats;
     const contextChat = contextMenu
       ? sortedChats.find(
@@ -94,11 +98,6 @@ const ChatList = observer(
     const closeContextMenu = useCallback(() => setContextMenu(null), []);
 
     const openChatContextMenu = useCallback((event, chat) => {
-      if (!chat.is_group) {
-        setContextMenu(null);
-        return;
-      }
-
       event.preventDefault();
       event.stopPropagation();
       setContextMenu({
@@ -108,12 +107,52 @@ const ChatList = observer(
       });
     }, []);
 
-    const leaveChat = useCallback(async (chat) => {
+    const deleteChat = useCallback(async (chat) => {
+      if (!chat || deletingChatId != null) return;
+
+      setDeletingChatId(chat.id);
+      const isOpenChat = String(routeChatId) === String(chat.id);
+      ChatStore.hideChat(chat.id);
+
+      if (isOpenChat) {
+        sessionStorage.removeItem(LAST_OPEN_CHAT_ID_KEY);
+        navigate("/chat", { replace: true });
+      }
+
+      try {
+        await ChatServices.deleteChat(chat.id);
+        notifySuccess(`Чат «${chat.name}» удалён из списка`);
+      } catch (error) {
+        const restoredChat = await ChatStore.handleChatJoined(chat.id);
+        if (isOpenChat && restoredChat) {
+          ChatStore.openChat(restoredChat);
+          navigate(`/chat/${chat.id}`, { replace: true });
+        }
+        notifyError(error, "Не удалось удалить чат из списка");
+      } finally {
+        setDeletingChatId(null);
+      }
+    }, [ChatStore, deletingChatId, navigate, routeChatId]);
+
+    const openLeaveConfirmation = useCallback(async (chat) => {
+      if (!chat) return;
+      setLeaveModalChat(chat);
+      setIsLoadingLeaveParticipants(true);
+      try {
+        await ChatStore.ensureChatParticipants(chat.id);
+      } catch (error) {
+        notifyError(error, "Не удалось загрузить участников чата");
+      } finally {
+        setIsLoadingLeaveParticipants(false);
+      }
+    }, [ChatStore]);
+
+    const leaveChat = useCallback(async (chat, newCreatorId = null) => {
       if (!chat || leavingChatId != null) return;
 
       setLeavingChatId(chat.id);
       try {
-        await ChatServices.leaveChat(chat.id);
+        await ChatServices.leaveChat(chat.id, newCreatorId);
 
         if (String(activeVoiceRoomChatId) === String(chat.id)) {
           onLeaveVoiceRoom?.();
@@ -128,6 +167,7 @@ const ChatList = observer(
         }
 
         notifySuccess(`Вы покинули чат «${chat.name}»`);
+        setLeaveModalChat(null);
       } catch (error) {
         notifyError(error, "Не удалось покинуть чат");
       } finally {
@@ -145,12 +185,21 @@ const ChatList = observer(
     const contextMenuItems = contextChat
       ? [
           {
-            id: "leave-chat",
-            label: "Покинуть чат",
+            id: "delete-chat",
+            label: "Удалить чат",
             danger: true,
-            disabled: leavingChatId != null,
-            onSelect: () => leaveChat(contextChat),
+            disabled: deletingChatId != null || leavingChatId != null,
+            onSelect: () => deleteChat(contextChat),
           },
+          ...(contextChat.is_group
+            ? [{
+                id: "leave-chat",
+                label: "Покинуть чат",
+                danger: true,
+                disabled: leavingChatId != null || deletingChatId != null,
+                onSelect: () => openLeaveConfirmation(contextChat),
+              }]
+            : []),
         ]
       : [];
 
@@ -236,6 +285,26 @@ const ChatList = observer(
           y={contextMenu?.y}
           items={contextMenuItems}
           onClose={closeContextMenu}
+        />
+
+        <LeaveChatModal
+          isOpen={Boolean(leaveModalChat)}
+          chat={leaveModalChat}
+          participants={leaveModalChat
+            ? ChatStore.getChatParticipants(leaveModalChat.id)
+            : []}
+          currentUserId={ChatStore.currentUser?.id}
+          isCreator={Boolean(
+            leaveModalChat?.is_creator
+            || ChatStore.getChatParticipants(leaveModalChat?.id).some(
+              (participant) => participant.is_creator
+                && String(participant.user?.id) === String(ChatStore.currentUser?.id),
+            )
+          )}
+          isLoadingParticipants={isLoadingLeaveParticipants}
+          isSubmitting={String(leavingChatId) === String(leaveModalChat?.id)}
+          onConfirm={(newCreatorId) => leaveChat(leaveModalChat, newCreatorId)}
+          onClose={() => setLeaveModalChat(null)}
         />
       </div>
     );

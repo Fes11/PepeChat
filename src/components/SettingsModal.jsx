@@ -20,7 +20,6 @@ import {
 } from "../notifications/notificationService";
 import {
   ACCENT_COLORS,
-  DEFAULT_MAIN_COLOR,
   MAX_UI_SCALE,
   MIN_UI_SCALE,
   useThemeSettings,
@@ -28,7 +27,7 @@ import {
 import { useUpdater } from "../updates/UpdateProvider";
 import { getErrorMessage } from "../utils/errors";
 import { invoke } from "@tauri-apps/api/core";
-import EmojiPicker from "./UI/EmojiPicker/EmojiPicker.jsx";
+import DescriptionEmojiPicker from "./UI/EmojiPicker/DescriptionEmojiPicker.jsx";
 import EmojiButton from "./UI/EmojiButton/EmojiButton.jsx";
 import {
   EMAIL_MAX_LENGTH,
@@ -43,7 +42,6 @@ const SettingsModal = function ({ onClose }) {
   const [email, setEmail] = useState("");
   const [description, setDescription] = useState("");
   const [isDescriptionEmojiOpen, setIsDescriptionEmojiOpen] = useState(false);
-  const [descriptionEmojiTab, setDescriptionEmojiTab] = useState("emoji");
   const [descriptionEmojiPosition, setDescriptionEmojiPosition] =
     useState(null);
   const [password, setPassword] = useState("");
@@ -57,12 +55,17 @@ const SettingsModal = function ({ onClose }) {
   const { AuthStore, MediaStore } = useContext(Context);
   const login = AuthStore.user.login || "Login";
   const displayName = AuthStore.user.username || login;
-  const [activeTab, setActiveTab] = useState("Profile");
-  const { theme, mainColor, uiScale, setTheme, setMainColor, setUiScale } =
-    useThemeSettings();
+  const [activeTab, setActiveTab] = useState("App");
+  const { theme, mainColor, uiScale, setThemeSettings } = useThemeSettings();
+  const [pendingTheme, setPendingTheme] = useState(theme);
   const [pendingMainColor, setPendingMainColor] = useState(mainColor);
+  const [pendingUiScale, setPendingUiScale] = useState(uiScale);
   const updater = useUpdater();
-  const tabs = ["Device", "Profile", "App"];
+  const tabs = [
+    { id: "Device", label: "Устройства" },
+    { id: "Profile", label: "Профиль" },
+    { id: "App", label: "Внешний вид", icon: "/paintpalette.svg" },
+  ];
   const testStreamRef = useRef(null);
   const audioContextRef = useRef(null);
   const analyserRef = useRef(null);
@@ -161,8 +164,10 @@ const SettingsModal = function ({ onClose }) {
   }, []);
 
   useEffect(() => {
+    setPendingTheme(theme);
     setPendingMainColor(mainColor);
-  }, [mainColor]);
+    setPendingUiScale(uiScale);
+  }, [mainColor, theme, uiScale]);
 
   useEffect(() => {
     let isMounted = true;
@@ -317,10 +322,7 @@ const SettingsModal = function ({ onClose }) {
     };
 
     restartMicrophoneTest();
-  }, [
-    MediaStore.autoGainControl,
-    MediaStore.noiseSuppressionMode,
-  ]);
+  }, [MediaStore.autoGainControl, MediaStore.noiseSuppressionMode]);
 
   useEffect(
     () => () => {
@@ -422,9 +424,24 @@ const SettingsModal = function ({ onClose }) {
     navigate("/login", { replace: true });
   };
 
-  const applyMainColor = () => {
-    setMainColor(pendingMainColor);
+  const saveAppearance = () => {
+    setThemeSettings({
+      theme: pendingTheme,
+      mainColor: pendingMainColor,
+      uiScale: pendingUiScale,
+    });
   };
+
+  const resetAppearance = () => {
+    setPendingTheme(theme);
+    setPendingMainColor(mainColor);
+    setPendingUiScale(uiScale);
+  };
+
+  const hasAppearanceChanges =
+    pendingTheme !== theme ||
+    pendingMainColor.toLowerCase() !== mainColor.toLowerCase() ||
+    Number(pendingUiScale) !== Number(uiScale);
 
   const requestMediaPermission = async (constraints) => {
     const stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -483,27 +500,50 @@ const SettingsModal = function ({ onClose }) {
 
   return (
     <div className={classes.settings_modal}>
-      <button onClick={onClose} className={classes.close}>
-        <img src="/close.png" />
+      <button
+        type="button"
+        onClick={onClose}
+        className={classes.close}
+        aria-label="Закрыть настройки"
+      >
+        <span aria-hidden="true">×</span>
       </button>
 
       <div className={classes.settings_body}>
-        <div className={classes.settings_tab}>
+        <nav className={classes.settings_tab} aria-label="Разделы настроек">
           {tabs.map((tab) => (
             <button
-              key={tab}
-              className={`${classes.tablinks} ${activeTab === tab ? classes.active : ""}`}
-              onClick={() => setActiveTab(tab)}
+              type="button"
+              key={tab.id}
+              className={`${classes.tablinks} ${activeTab === tab.id ? classes.active : ""}`}
+              onClick={() => setActiveTab(tab.id)}
             >
-              {tab}
+              {tab.icon === "/paintpalette.svg" && (
+                <img src={tab.icon} className={classes.tab_icon} />
+              )}
+              <span>{tab.label}</span>
             </button>
           ))}
-        </div>
+
+          <button
+            type="button"
+            className={`${classes.tablinks} ${classes.sidebar_logout}`}
+            onClick={handleLogout}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M10 5H6.75A1.75 1.75 0 0 0 5 6.75v10.5C5 18.22 5.78 19 6.75 19H10M14.5 8l4 4-4 4M18 12H9" />
+            </svg>
+            <span>Выйти</span>
+          </button>
+        </nav>
 
         {activeTab === "Profile" && (
           <div className={classes.tabcontent}>
             <div className={classes.tabcontent_header}>
-              <h3>Профиль</h3>
+              <div>
+                <h3>Профиль</h3>
+                <p>Измените личные данные и настройки безопасности</p>
+              </div>
             </div>
 
             <form className={classes.tabcontent_body} onSubmit={saveProfile}>
@@ -563,16 +603,10 @@ const SettingsModal = function ({ onClose }) {
                               left: descriptionEmojiPosition.left,
                               width: descriptionEmojiPosition.width,
                               height: descriptionEmojiPosition.height,
-                              "--description-emoji-grid-height": `${Math.max(
-                                0,
-                                descriptionEmojiPosition.height - 50,
-                              )}px`,
                             }}
                           >
-                            <EmojiPicker
+                            <DescriptionEmojiPicker
                               className={classes.description_emoji_picker}
-                              activeTab={descriptionEmojiTab}
-                              onTabChange={setDescriptionEmojiTab}
                               onEmojiSelect={addDescriptionEmoji}
                             />
                           </div>,
@@ -643,13 +677,6 @@ const SettingsModal = function ({ onClose }) {
                 >
                   {isSavingProfile ? "Сохранение..." : "Сохранить"}
                 </button>
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className={classes.logout}
-                >
-                  Выйти
-                </button>
               </div>
             </form>
           </div>
@@ -658,40 +685,56 @@ const SettingsModal = function ({ onClose }) {
         {activeTab === "App" && (
           <div className={classes.tabcontent}>
             <div className={classes.tabcontent_header}>
-              <h3>Приложение</h3>
+              <div>
+                <h3>Внешний вид</h3>
+                <p>Настройте оформление PepeChat под себя</p>
+              </div>
             </div>
 
-            <div className={classes.tabcontent_body}>
-              <p className={classes.settings_label}>Внешний вид</p>
+            <div
+              className={`${classes.tabcontent_body} ${classes.appearance_body}`}
+            >
+              <section className={classes.appearance_section}>
+                <div className={classes.appearance_section_header}>
+                  <h4>Тема интерфейса</h4>
+                  <p>Выберите светлое или тёмное оформление</p>
+                </div>
 
-              <div className={classes.app_settings}>
-                <label className={classes.setting_row}>
-                  <span>
-                    <strong>Светлая тема</strong>
-                  </span>
+                <div className={classes.theme_options}>
+                  {[
+                    {
+                      id: "light",
+                      label: "Светлая тема",
+                      image: "/light-theme.svg",
+                    },
+                    {
+                      id: "dark",
+                      label: "Тёмная тема",
+                      image: "/dark-theme.svg",
+                    },
+                  ].map((option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      className={`${classes.theme_option} ${
+                        pendingTheme === option.id
+                          ? classes.theme_option_active
+                          : ""
+                      }`}
+                      onClick={() => setPendingTheme(option.id)}
+                      aria-label={option.label}
+                      aria-pressed={pendingTheme === option.id}
+                    >
+                      <img src={option.image} alt="" />
+                    </button>
+                  ))}
+                </div>
+              </section>
 
-                  <input
-                    className={classes.theme_switch}
-                    type="checkbox"
-                    checked={theme === "light"}
-                    onChange={(e) =>
-                      setTheme(e.target.checked ? "light" : "dark")
-                    }
-                  />
-                </label>
-
-                <div className={classes.setting_row}>
-                  <span>
-                    <strong>Основной цвет</strong>
-                  </span>
-
-                  <input
-                    className={classes.color_input}
-                    type="color"
-                    value={pendingMainColor}
-                    onChange={(e) => setPendingMainColor(e.target.value)}
-                    aria-label="Main color"
-                  />
+              <section className={classes.appearance_section}>
+                <div className={classes.appearance_section_header}>
+                  <h4>Акцентный цвет</h4>
+                  <p>Выберите основной цвет элементов интерфейса</p>
                 </div>
 
                 <div className={classes.color_grid}>
@@ -700,84 +743,116 @@ const SettingsModal = function ({ onClose }) {
                       key={color}
                       type="button"
                       className={`${classes.color_swatch} ${
-                        pendingMainColor === color
+                        pendingMainColor.toLowerCase() === color.toLowerCase()
                           ? classes.color_swatch_active
                           : ""
                       }`}
                       style={{ "--swatch-color": color }}
                       onClick={() => setPendingMainColor(color)}
-                      aria-label={`Set main color ${color}`}
+                      aria-label={`Выбрать цвет ${color}`}
+                      aria-pressed={
+                        pendingMainColor.toLowerCase() === color.toLowerCase()
+                      }
                     />
                   ))}
 
-                  <button
-                    type="button"
-                    className={classes.reset_color}
-                    onClick={() => setPendingMainColor(DEFAULT_MAIN_COLOR)}
-                  >
-                    Сбросить
-                  </button>
+                  <label className={classes.custom_color}>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 3a9 9 0 0 0 0 18h1.1a2.15 2.15 0 0 0 1.48-3.71 1.6 1.6 0 0 1 1.08-2.78H17A4 4 0 0 0 21 10.5C21 6.36 16.97 3 12 3Z" />
+                      <circle cx="7.7" cy="10.1" r="1.25" />
+                      <circle cx="10.2" cy="6.9" r="1.25" />
+                      <circle cx="14.3" cy="6.7" r="1.25" />
+                    </svg>
+                    <span>Свой</span>
+                    <input
+                      type="color"
+                      value={pendingMainColor}
+                      onChange={(event) =>
+                        setPendingMainColor(event.target.value)
+                      }
+                      aria-label="Выбрать свой акцентный цвет"
+                    />
+                  </label>
+                </div>
+              </section>
 
-                  <button
-                    type="button"
-                    className={classes.apply_color}
-                    onClick={applyMainColor}
-                    disabled={pendingMainColor === mainColor}
-                  >
-                    Применить
-                  </button>
+              <section className={classes.appearance_section}>
+                <div className={classes.appearance_section_header}>
+                  <h4>Масштаб интерфейса</h4>
+                  <p>Настройте удобный размер элементов</p>
                 </div>
 
-                <div className={classes.setting_row}>
-                  <span>
-                    <strong>Масштаб интерфейса</strong>
-                  </span>
+                <div className={classes.scale_control}>
+                  <div className={classes.scale_presets}>
+                    {[0.75, 1, 1.25, 1.5, 1.75].map((scale) => (
+                      <button
+                        key={scale}
+                        type="button"
+                        className={
+                          Number(pendingUiScale) === scale
+                            ? classes.scale_preset_active
+                            : ""
+                        }
+                        onClick={() => setPendingUiScale(scale)}
+                        aria-pressed={Number(pendingUiScale) === scale}
+                      >
+                        <span aria-hidden="true" />
+                        {Math.round(scale * 100)}%
+                      </button>
+                    ))}
+                  </div>
 
-                  <div className={classes.scale_control}>
+                  <div className={classes.scale_slider}>
                     <input
                       type="range"
                       min={MIN_UI_SCALE}
                       max={MAX_UI_SCALE}
-                      step="0.05"
-                      value={uiScale}
-                      onChange={(e) => setUiScale(e.target.value)}
-                      aria-label="Interface scale"
+                      step="0.25"
+                      value={pendingUiScale}
+                      onChange={(event) =>
+                        setPendingUiScale(Number(event.target.value))
+                      }
+                      style={{
+                        "--scale-progress": `${
+                          ((Number(pendingUiScale) - MIN_UI_SCALE) /
+                            (MAX_UI_SCALE - MIN_UI_SCALE)) *
+                          100
+                        }%`,
+                      }}
+                      aria-label="Масштаб интерфейса"
                     />
-                    <strong>{Math.round(uiScale * 100)}%</strong>
-                    <button type="button" onClick={() => setUiScale(null)}>
-                      Сбросить
-                    </button>
                   </div>
                 </div>
-              </div>
+              </section>
 
-              <p className={classes.settings_label}>Обновления</p>
-              <div className={classes.update_card} aria-live="polite">
-                <div className={classes.update_header}>
-                  <span>
-                    <strong>
-                      PepeChat{" "}
-                      {updater.currentVersion && `v${updater.currentVersion}`}
-                    </strong>
-                    <small>
-                      {updater.status === "checking" && "Проверяем обновления…"}
-                      {updater.status === "upToDate" &&
-                        "Установлена последняя версия"}
-                      {updater.status === "available" &&
-                        `Доступна версия ${updater.nextVersion}`}
-                      {updater.status === "downloading" &&
-                        "Загрузка обновления…"}
-                      {updater.status === "installing" &&
-                        "Установка обновления…"}
-                      {updater.status === "installed" &&
-                        "Обновление установлено"}
-                      {updater.status === "error" && updater.error}
-                      {updater.status === "idle" &&
-                        (updater.supported
-                          ? "Автоматическая проверка включена"
-                          : "Доступно только в десктопном приложении")}
-                    </small>
-                  </span>
+              <section
+                className={`${classes.appearance_section} ${classes.update_section}`}
+                aria-live="polite"
+              >
+                <div className={classes.appearance_section_header}>
+                  <h4>Обновления</h4>
+                  <p>
+                    {updater.status === "checking" && "Проверяем обновления…"}
+                    {updater.status === "upToDate" &&
+                      "Установлена последняя версия"}
+                    {updater.status === "available" &&
+                      `Доступна версия ${updater.nextVersion}`}
+                    {updater.status === "downloading" && "Загрузка обновления…"}
+                    {updater.status === "installing" && "Установка обновления…"}
+                    {updater.status === "installed" && "Обновление установлено"}
+                    {updater.status === "error" && updater.error}
+                    {updater.status === "idle" &&
+                      (updater.supported
+                        ? "Автоматическая проверка включена"
+                        : `PepeChat${
+                            updater.currentVersion
+                              ? ` v${updater.currentVersion}`
+                              : ""
+                          } — обновления доступны в приложении`)}
+                  </p>
+                </div>
+
+                <div className={classes.update_actions}>
                   {updater.status === "available" ? (
                     <button type="button" onClick={updater.installUpdate}>
                       Установить
@@ -797,6 +872,9 @@ const SettingsModal = function ({ onClose }) {
                       }
                       onClick={() => updater.checkForUpdates()}
                     >
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M20 12a8 8 0 1 1-2.34-5.66L20 8.68M20 4v4.68h-4.68" />
+                      </svg>
                       {updater.status === "error" ? "Повторить" : "Проверить"}
                     </button>
                   )}
@@ -804,7 +882,30 @@ const SettingsModal = function ({ onClose }) {
                 {updater.status === "available" && updater.notes && (
                   <p className={classes.update_notes}>{updater.notes}</p>
                 )}
-              </div>
+              </section>
+            </div>
+
+            <div className={classes.appearance_footer}>
+              {hasAppearanceChanges && (
+                <button
+                  type="button"
+                  className={classes.cancel_button}
+                  onClick={resetAppearance}
+                >
+                  Отменить
+                  <span aria-hidden="true">×</span>
+                </button>
+              )}
+              <button
+                type="button"
+                className={classes.save_appearance_button}
+                onClick={saveAppearance}
+              >
+                Сохранить
+                <svg viewBox="0 0 20 20" aria-hidden="true">
+                  <path d="m5 10 3 3 7-7" />
+                </svg>
+              </button>
             </div>
           </div>
         )}
@@ -812,7 +913,10 @@ const SettingsModal = function ({ onClose }) {
         {activeTab === "Device" && (
           <div className={classes.tabcontent}>
             <div className={classes.tabcontent_header}>
-              <h3>Устройства</h3>
+              <div>
+                <h3>Устройства</h3>
+                <p>Настройте микрофон, камеру и вывод звука</p>
+              </div>
               <button
                 type="button"
                 className={classes.reset_device_settings}

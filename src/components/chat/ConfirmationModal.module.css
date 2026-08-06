@@ -1,0 +1,58 @@
+.content {
+  padding: 18px 20px;
+  color: var(--muted-text-color);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.content strong {
+  color: var(--text-color);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 20px 18px;
+  border-top: 1px solid var(--border-color);
+}
+
+.cancelButton,
+.confirmButton {
+  min-height: 40px;
+  padding: 9px 15px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.cancelButton {
+  background: var(--button-soft-bg-color);
+}
+
+.confirmButton {
+  color: var(--main-contrast-color);
+  background: var(--main-color);
+}
+
+.cancelButton:hover:not(:disabled) {
+  background: var(--hover-bg-color);
+}
+
+.confirmButton:hover:not(:disabled) {
+  background: var(--main-hover-color);
+}
+
+.dangerButton {
+  background: #c8333a;
+}
+
+.dangerButton:hover:not(:disabled) {
+  background: #dd4249;
+}
+
+.cancelButton:disabled,
+.confirmButton:disabled {
+  cursor: default;
+  opacity: 0.55;
+}

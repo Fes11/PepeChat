@@ -55,6 +55,12 @@
   opacity: 0.82;
 }
 
+.icon img,
+.icon svg {
+  width: 16px;
+  height: 16px;
+}
+
 .label {
   min-width: 0;
   overflow: hidden;

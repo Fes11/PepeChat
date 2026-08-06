@@ -96,6 +96,19 @@
   background: var(--hover);
 }
 
+.chatActionsMenu {
+  min-width: 210px;
+  padding: 9px;
+  border-radius: 20px;
+  background: var(--active-bg);
+}
+
+.chatActionsMenu button {
+  min-height: 40px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
 .headerMain {
   display: flex;
   min-width: 0;

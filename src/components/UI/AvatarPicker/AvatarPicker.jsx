@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { resolveMediaUrl } from "../../../utils/mediaUrl";
 import classes from "./AvatarPicker.module.css";
 
@@ -14,12 +14,16 @@ const AvatarPicker = ({
   ariaLabel = "Выбрать изображение профиля",
 }) => {
   const inputId = useId();
+  const inputRef = useRef(null);
   const [localPreview, setLocalPreview] = useState(null);
   const [hasImageError, setHasImageError] = useState(false);
   const imageSrc = localPreview || resolveMediaUrl(previewSrc);
 
   useEffect(() => {
-    if (!avatar) setLocalPreview(null);
+    if (!avatar) {
+      setLocalPreview(null);
+      if (inputRef.current) inputRef.current.value = "";
+    }
   }, [avatar]);
 
   useEffect(() => {
@@ -63,6 +67,7 @@ const AvatarPicker = ({
       <img src="/photo.svg" alt="" className={classes.icon} aria-hidden="true" />
 
       <input
+        ref={inputRef}
         id={inputId}
         type="file"
         accept={accept}

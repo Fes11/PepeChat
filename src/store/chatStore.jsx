@@ -36,6 +36,8 @@ export default class ChatStore {
   participantLoadRequests = new Map();
   messageFirstPageByChatId = {};
   messageLoadRequests = new Map();
+  inactiveChatIds = new Set();
+  hiddenChatIds = new Set();
   chatLoadGeneration = 0;
   presenceListener = null;
   openChatRequestId = 0;
@@ -66,6 +68,8 @@ export default class ChatStore {
       privateChatLoadRequests: false,
       participantLoadRequests: false,
       messageLoadRequests: false,
+      inactiveChatIds: false,
+      hiddenChatIds: false,
       chatLoadGeneration: false,
       connectionStore: false,
       cacheWriteTimer: false,
@@ -137,7 +141,11 @@ export default class ChatStore {
       ),
       error: () => this.handleMessageError(data),
       messages_read: () => this.handleMessagesRead(data),
-      "chat.created": () => this.ensureChatLoaded(data.chat_id, 0),
+      "chat.created": () => this.handleChatJoined(data.chat_id),
+      "chat.left": () => this.handleChatLeft(data.chat_id),
+      "chat.hidden": () => this.handleChatHidden(data.chat_id),
+      "chat.restored": () => this.handleChatJoined(data.chat_id),
+      "chat.updated": () => this.handleChatUpdated(data.chat_id),
       "presence.changed": () => this.handlePresenceChanged(data),
       "voice_room.state": () => this.handleVoiceRoomState(data),
     };
@@ -237,6 +245,26 @@ export default class ChatStore {
     return this.participantsByChatId[normalizeId(chatId)] || [];
   }
 
+  setChatParticipants(chatId, participants) {
+    const key = normalizeId(chatId);
+    this.participantsByChatId[key] = participants;
+    this.participantsLoadedAtByChatId[key] = Date.now();
+  }
+
+  removeChatParticipant(chatId, participantId) {
+    const key = normalizeId(chatId);
+    const participants = this.getChatParticipants(key);
+    const nextParticipants = participants.filter(
+      (participant) => !sameId(participant.id, participantId),
+    );
+    this.setChatParticipants(key, nextParticipants);
+    this.updateChat(chatId, { participants_qty: nextParticipants.length });
+  }
+
+  invalidateChatParticipants(chatId) {
+    this.participantsLoadedAtByChatId[normalizeId(chatId)] = 0;
+  }
+
   async ensureChatParticipants(chatId) {
     const key = normalizeId(chatId);
     const cached = this.getChatParticipants(key);
@@ -249,13 +277,11 @@ export default class ChatStore {
     if (pendingRequest) return pendingRequest;
 
     const generation = this.chatLoadGeneration;
-    const request = ChatService.getChatParticipants(chatId)
-      .then(({ data }) => {
-        const participants = data.results || [];
+    const request = ChatService.getAllChatParticipants(chatId)
+      .then((participants) => {
         if (generation === this.chatLoadGeneration) {
           runInAction(() => {
-            this.participantsByChatId[key] = participants;
-            this.participantsLoadedAtByChatId[key] = Date.now();
+            this.setChatParticipants(key, participants);
           });
         }
         return participants;
@@ -356,6 +382,33 @@ export default class ChatStore {
     this.setVoiceParticipants(chatId, participants);
   }
 
+  handleChatJoined(chatId) {
+    this.inactiveChatIds.delete(normalizeId(chatId));
+    this.hiddenChatIds.delete(normalizeId(chatId));
+    return this.ensureChatLoaded(chatId, 0);
+  }
+
+  handleChatLeft(chatId) {
+    this.removeChat(chatId);
+  }
+
+  handleChatHidden(chatId) {
+    this.hideChat(chatId);
+  }
+
+  handleChatUpdated(chatId) {
+    const key = normalizeId(chatId);
+    if (this.inactiveChatIds.has(key) || this.hiddenChatIds.has(key)) return;
+
+    this.invalidateChatParticipants(chatId);
+    this.refreshChat(chatId).catch((error) => {
+      console.error("Failed to refresh updated chat", error);
+    });
+    this.ensureChatParticipants(chatId).catch((error) => {
+      console.error("Failed to refresh chat participants", error);
+    });
+  }
+
   markChatRead(chatId, upToMessageId = null, force = false) {
     if (!this.isTextChatVisible(chatId)) return false;
 
@@ -392,6 +445,9 @@ export default class ChatStore {
   }
 
   handleIncomingMessage(chatId, message, unreadCount) {
+    if (this.inactiveChatIds.has(normalizeId(chatId))) return;
+    this.hiddenChatIds.delete(normalizeId(chatId));
+
     this.addMessage(chatId, message);
     this.setLastMessage(chatId, message);
     this.ensureChatLoaded(chatId, unreadCount);
@@ -456,6 +512,8 @@ export default class ChatStore {
 
   async ensureChatLoaded(chatId, unreadCount = null) {
     const key = normalizeId(chatId);
+    if (this.inactiveChatIds.has(key) || this.hiddenChatIds.has(key)) return null;
+
     const existingChat = this.chats.find((chat) => sameId(chat.id, chatId));
     if (existingChat) return existingChat;
 
@@ -465,7 +523,11 @@ export default class ChatStore {
     const generation = this.chatLoadGeneration;
     const request = ChatService.getChat(chatId)
       .then(({ data: chat }) => {
-        if (generation !== this.chatLoadGeneration) return null;
+        if (generation !== this.chatLoadGeneration
+          || this.inactiveChatIds.has(key)
+          || this.hiddenChatIds.has(key)) {
+          return null;
+        }
         if (chat) runInAction(() => this.upsertChat(chat, { unreadCount }));
         return chat ?? null;
       })
@@ -481,6 +543,23 @@ export default class ChatStore {
 
     this.chatLoadRequests.set(key, request);
     return request;
+  }
+
+  async refreshChat(chatId) {
+    const key = normalizeId(chatId);
+    if (this.inactiveChatIds.has(key) || this.hiddenChatIds.has(key)) return null;
+
+    const { data: chat } = await ChatService.getChat(chatId);
+    runInAction(() => {
+      this.upsertChat(chat, { prepend: false });
+      if (sameId(this.selectedChat?.id, chatId)) {
+        this.selectedChat = {
+          ...this.selectedChat,
+          data: { ...this.selectedChat.data, ...chat },
+        };
+      }
+    });
+    return chat;
   }
 
   openChat(chat) {
@@ -521,6 +600,7 @@ export default class ChatStore {
     const { data: chat } = await request;
     runInAction(() => {
       if (requestId !== this.openChatRequestId) return;
+      this.hiddenChatIds.delete(normalizeId(chat.id));
       this.selectedChat = { id: chat.id, data: { ...chat, unread_count: 0 } };
       this.upsertChat(chat, { unreadCount: 0 });
     });
@@ -533,6 +613,8 @@ export default class ChatStore {
     this.isOpening = true;
     try {
       await ChatService.joinChat(chatId);
+      this.inactiveChatIds.delete(normalizeId(chatId));
+      this.hiddenChatIds.delete(normalizeId(chatId));
       const { data: chat } = await ChatService.getChat(chatId);
       if (requestId === this.openChatRequestId) this.openChat(chat);
     } finally {
@@ -540,7 +622,17 @@ export default class ChatStore {
     }
   }
 
-  removeChat(chatId) {
+  async restoreAndOpenChat(chatId) {
+    const requestId = ++this.openChatRequestId;
+    await ChatService.restoreChat(chatId);
+    this.inactiveChatIds.delete(normalizeId(chatId));
+    this.hiddenChatIds.delete(normalizeId(chatId));
+    const { data: chat } = await ChatService.getChat(chatId);
+    if (requestId === this.openChatRequestId) this.openChat(chat);
+    return chat;
+  }
+
+  clearChatState(chatId, { clearVoice = true } = {}) {
     const key = normalizeId(chatId);
     this.chats = this.chats.filter((chat) => !sameId(chat.id, chatId));
     this.messages.removeChat(chatId);
@@ -549,13 +641,27 @@ export default class ChatStore {
     delete this.messageFirstPageByChatId[key];
     this.participantLoadRequests.delete(key);
     this.messageLoadRequests.delete(key);
-    this.clearVoiceParticipants(chatId);
+    if (clearVoice) this.clearVoiceParticipants(chatId);
 
     if (sameId(this.selectedChat?.id, chatId)) {
       this.selectedChat = null;
       this.visibleTextChatId = null;
     }
     this.scheduleCacheWrite();
+  }
+
+  hideChat(chatId) {
+    const key = normalizeId(chatId);
+    this.inactiveChatIds.delete(key);
+    this.hiddenChatIds.add(key);
+    this.clearChatState(chatId, { clearVoice: false });
+  }
+
+  removeChat(chatId) {
+    const key = normalizeId(chatId);
+    this.inactiveChatIds.add(key);
+    this.hiddenChatIds.delete(key);
+    this.clearChatState(chatId);
   }
 
   async useAccount(accountId, cachedProfile = null) {
@@ -611,6 +717,8 @@ export default class ChatStore {
     this.participantLoadRequests.clear();
     this.messageFirstPageByChatId = {};
     this.messageLoadRequests.clear();
+    this.inactiveChatIds.clear();
+    this.hiddenChatIds.clear();
     this.messages.reset();
     this.activity.reset();
     CHAT_SESSION_KEYS.forEach((key) => sessionStorage.removeItem(key));

@@ -183,6 +183,7 @@ const Profile = ({
         isOpen={modal}
         onClose={() => setModal(false)}
         size="large"
+        className={styles.settingsModal}
         contentFlush
       >
         <SettingsModal onClose={() => setModal(false)} />

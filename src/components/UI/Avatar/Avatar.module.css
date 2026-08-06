@@ -54,12 +54,13 @@
 .away {
   display: grid;
   place-items: center;
-  background: #f39a32;
+  background: var(--profile);
 }
 
 .away svg {
   display: block;
-  width: 100%;
-  height: 100%;
-  fill: #fff3df;
+  width: 140%;
+  height: 140%;
+  fill: #ffa200;
+  transform: rotate(240deg);
 }

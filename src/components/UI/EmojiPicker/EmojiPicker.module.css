@@ -2,6 +2,8 @@
   position: absolute;
   right: 0;
   bottom: calc(100% + 10px);
+  display: flex;
+  flex-direction: column;
   width: min(320px, calc(100vw / var(--ui-scale) - 96px));
   max-height: 250px;
   overflow: hidden;
@@ -14,6 +16,7 @@
 }
 
 .tabs {
+  flex: 0 0 auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
 }
@@ -34,7 +37,10 @@
 
 .grid {
   display: grid;
+  flex: 1 1 auto;
   grid-template-columns: repeat(8, 1fr);
+  align-content: start;
+  min-height: 0;
   gap: 2px;
   padding: 8px;
   max-height: 292px;
@@ -55,6 +61,16 @@
 
 .item:hover {
   background: var(--hover-bg-color);
+}
+
+.loadMore {
+  grid-column: 1 / -1;
+  height: 1px;
+  pointer-events: none;
+}
+
+.emojiOnlyPicker .grid {
+  max-height: none;
 }
 
 .empty {
